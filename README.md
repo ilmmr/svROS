@@ -29,34 +29,3 @@ configure ROS2 to run with security guarantees using the SROS2 toolset [4].
 ROS2 continues to provide a simple, uniform message passing interface to allow components to
 communicate with each other, meaning it’s relatively straightforward for a developer to add and
 integrate a new component into an existing system.
-
----
-
-## References
-
-* [1] https://www.ros.org
-
-* [2] Nicholas DeMarinis, Stefanie Tellex, Vasileios P. Kemerlis, George Dimitri Konidaris,
-Rodrigo Fonseca: Scanning the Internet for ROS: A View of Security in Robotics Research. ICRA
-2019: 8514-8521
-
-* [3] Object Management Group. Data Distribution Service (DDS). https://www.omg.org/omg-dds-
-portal/
-
-* [4] ROS 2 DDS-Security integration https://design.ros2.org/articles/ros2_dds_security.html
-
-* [5] Renato Carvalho, Alcino Cunha, Nuno Macedo, André Santos: Verification of system-wide
-safety properties of ROS applications. IROS 2020: 7249-7254
-https://www.autoware.auto
-
-* [6] Shinpei Kato, Shota Tokunaga, Yuya Maruyama, Seiya Maeda, Manato Hirabayashi, Yuki
-Kitsukawa, Abraham Monrroy, Tomohito Ando, Yusuke Fujii, Takuya Azumi: Autoware on
-board: enabling autonomous vehicles with embedded systems. ICCPS 2018: 287-296
-https://www.autoware.auto
-
-* [7] Daniel Jackson: Alloy: a language and tool for exploring software designs. Commun. ACM
-62(9): 66-76 (2019), http://alloytools.org/
-
-* [8] Nuno Macedo, Julien Brunel, David Chemouil, Alcino Cunha, Denis Kuperberg: Lightweight
-specification and analysis of dynamic systems with rich configurations. SIGSOFT FSE 2016: 373-
-383, https://haslab.github.io/formal-software-design/
