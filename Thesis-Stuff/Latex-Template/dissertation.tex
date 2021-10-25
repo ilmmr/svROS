@@ -1,0 +1,285 @@
+
+% book example for classicthesis.sty
+\documentclass[
+  % Replace twoside with oneside if you are printing your thesis on a single side
+  % of the paper, or for viewing on screen.
+  oneside,
+  %twoside,
+  11pt, a4paper,
+  footinclude=true,
+  headinclude=true,
+  cleardoublepage=empty
+]{scrbook}
+
+\usepackage{dissertation}
+%---
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+%---
+\usepackage[titles]{tocloft}
+%% Aesthetic spacing redefines that look nicer to me than the defaults.
+\setlength{\cftbeforechapskip}{2ex}
+\setlength{\cftbeforesecskip}{0.5ex}
+%% Use Helvetica-Narrow Bold for Chapter entries
+\renewcommand{\cftpartfont}{%
+  \fontsize{12}{14}\usefont{OT1}{phv}{bc}{n}\selectfont
+}
+\renewcommand{\cftchapfont}{%
+  \fontsize{11}{13}\usefont{OT1}{phv}{bc}{n}\selectfont
+}
+\renewcommand{\cftsecfont}{%
+  \fontsize{10}{11}\usefont{OT1}{phv}{}{n}\selectfont
+}
+\renewcommand{\cftsubsecfont}{%
+  \fontsize{9}{10}\usefont{OT1}{phv}{}{n}\selectfont
+}
+\renewcommand{\cftfigfont}{%
+  \fontsize{9}{10}\usefont{OT1}{phv}{}{n}\selectfont
+}
+\renewcommand{\cfttabfont}{%
+  \fontsize{9}{10}\usefont{OT1}{phv}{}{n}\selectfont
+}
+%---
+%usepackage[scaled=.92]{helvet}
+\usepackage[all]{xy}
+\usepackage{circuitikz}
+
+% Title
+
+\titleA{Dissertation title}
+\titleB{Second line in title (if any)}
+\titleC{Third  line in title (if any)}
+
+% Author
+
+\author{Student full name here}
+
+% Supervisor(es)
+
+\supervisor{Supervisor}
+
+\cosupervisor{Co-supervisor (if any)}
+
+% Date
+
+\date{\myear} % change to text if date is not today
+
+\makeglossaries  %  either use this ...
+
+\makeindex	% ... or this
+
+\begin{document}\fontfamily{phv}\fontseries{mc}\selectfont
+	
+% Add acronym definitions
+    
+% Cover page ---------------------------------------------
+%	\thispagestyle{empty}
+	\input{def/title}
+%rm
+	\cleardoublepage
+%---------------------------------------------------------
+	\pagenumbering{alph}
+	\setcounter{page}{0}
+%---------------------------------------------------------
+% Add acknowledgements
+
+\chapter*{Copyright and Terms of Use for Third Party Work}
+
+This dissertation reports on academic work that can be used by third parties as long as the internationally accepted standards and good practices are respected concerning copyright and related rights.
+\vskip 1em
+\noindent This work can thereafter be used under the terms established in the license below.
+\vskip 1em
+\noindent Readers needing authorization conditions not provided for in the indicated licensing should contact the author through the RepositóriUM of the University of Minho.
+
+\section*{License granted to users of this work:}
+
+\CCBY % or replace by one in***************** the list below, cf https://alunos.uminho.pt/PT/estudantes/Formataes/3_Despacho_RT-31_2019_Anexo%203-Informa%c3%a7%c3%a3o-Direitor%20de%20Autor.docx 
+%---------
+%\CBYNCND
+%\CCBYNCSA
+%\CCBYNC
+%\CCBYND
+%\CCBYSA
+
+
+%---------
+
+\chapter*{Acknowledgements}
+Write your acknowledgements here. Do not forget to mention the projects and grants that you have benefited from while doing your research, if any. Ask your supervisor about the specific textual format to use. (Funding agencies are quite strict about this.) 
+
+	\cleardoublepage
+	
+%---------
+
+\chapter*{Statement of Integrity}
+
+I hereby declare having conducted this academic work with integrity.
+\vskip 1em\noindent
+I confirm that I have not used plagiarism or any form of undue use of information or falsification of results along the process leading to its elaboration. 
+\vskip 1em\noindent
+I further declare that I have fully acknowledged the Code of Ethical Conduct of the University of Minho.
+	
+%---------
+
+% Uncomment as wished
+	
+% Add abstracts (en,pt) -----------------------------------------------------------
+\chapter*{Abstract}
+	Write abstract here (en) or import corresponding file
+
+\paragraph{Keywords} keywords, here, comma, separated.
+
+	\cleardoublepage
+
+\chapter*{Resumo}
+	Escrever aqui resumo (pt) ou importar respectivo ficheiro
+	
+\paragraph{Palavras-chave} palavras, chave, aqui, separadas, por, v\'{\i}rgulas
+
+
+	\cleardoublepage
+	
+	\pagenumbering{roman}
+	\setcounter{page}{3}
+	%pagestyle{fancy}   % -------- removed
+	%rm
+	
+	% Document
+	\cleardoublepage
+    \phantomsection
+    \addcontentsline{toc}{chapter}{Contents}
+	\tableofcontents
+	
+	\cleardoublepage
+	\listoffigures
+	
+	\cleardoublepage
+	\listoftables
+	
+	\cleardoublepage
+	\lstlistoflistings
+	
+	% Add list of acronyms
+	\cleardoublepage
+	\pagenumbering{arabic}
+	\setcounter{page}{3}
+
+\part{Introductory material}
+
+\chapter{Introduction}
+	Context, motivation, main aims	
+
+\chapter{State of the art}
+	State of the art review; related work
+
+\section{Citations}
+Example of a citation: \cite{GRM97}, cf.\ this entry in the \Bibtex\ file.
+Another way of citing is \citep{KeR88}
+
+\subsection{Optional}
+You may wish to use the \conexp{Concept-Explorer} tool.
+
+\section{Structure of the dissertation}
+This is the standard way to complete the introduction chapter. Write it at the end, as the structure my change while writing up.
+
+\chapter{The problem and its challenges}
+         The problem and its challenges.
+
+\section{Images}
+	Example of inserting an image as displyed text,
+\begin{center}
+	\includegraphics[width=0.2\textwidth]{img/mei-logo-03.jpg}
+\end{center}
+
+\begin{wrapfigure}{r}{0.25\textwidth}	
+	\includegraphics[width=0.2\textwidth]{img/mei-logo-03.jpg}
+\end{wrapfigure}
+\noindent --- wrapped into the text,
+bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla
+bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla
+bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla
+bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla
+bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla
+bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla bla-bla
+
+\noindent --- or as a floating body.
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.5\textwidth]{img/mei-logo-03.jpg}
+\end{center}
+\caption{Caption}
+\end{figure}
+
+You can also use an image as an icon, eg.\ \MEI, in the main tex.
+Click on it to visit the website. It is also listed in the list of terms.
+Another example of an item to appear in the term index: \UM (needs \Makeindex)
+
+\begin{table}[]
+\begin{tabular}{lllll}
+ &  &  &  &  \\
+ &  &  &  &  \\
+ &  &  &  &  \\
+ &  &  &  & 
+\end{tabular}
+\caption{Caption}
+\end{table}
+
+\part{Core of the dissertation}
+
+\chapter{Contribution}
+	Main result(s) and their scientific evidence
+\section{Introduction}
+\section{Summary}
+
+\chapter{Applications}
+	Application of main result (examples and case studies)
+\section{Introduction}
+\section{Summary}
+
+\chapter{Conclusions and future work}
+	Conclusions and future work.
+\section{Conclusions}
+\section{Prospect for future work}
+		
+\bookmarksetup{startatroot} % Ends last part.
+\addtocontents{toc}{\bigskip} % Making the table of contents look good.
+\cleardoublepage
+
+%----------------- Bibliography (needs bibtex) --------------------------------%
+\bibliography{dissertation}
+%----------------- Index of terms (needs  makeindex) --------------------------%
+\printindex
+%------------------------------------------------------------------------------%
+	
+	\appendix
+	\renewcommand\chaptername{Appendix}
+
+	% Add appendix chapters
+
+\part{Appendices}
+
+\chapter{Support work}
+	Auxiliary results which are not main-stream
+
+\chapter{Details of results}
+         Details of results whose length would compromise readability of main text.
+
+\chapter{Listings}
+	Should this be the case
+
+\chapter{Tooling}
+	(Should this be the case)
+
+	Anyone using \Latex\ should consider having a look at \TUG,
+	the \tug{\TeX\ Users Group}
+	
+\begin{backcover}
+\thispagestyle{empty} \pagecolor{white} \textcolor{black} {\fontfamily{phv}\fontseries{mc}\selectfont ~\vfill
+\noindent
+NB: place here information about funding, FCT project, etc in which the work is framed. Leave empty otherwise.
+%
+\vfill ~}
+\end{backcover}
+
+\end{document}
+
