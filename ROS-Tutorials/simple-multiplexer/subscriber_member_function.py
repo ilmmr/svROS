@@ -22,14 +22,16 @@ class MinimalSubscriber(Node):
 
     def __init__(self):
         super().__init__('minimal_subscriber')
-        self.timer_period = 9
+        self.timer_period = 9 # Default value - multiple of 3 (preferably) -> 3 messages per publisher
         self.priority = 1
         self.topic = ''
 
         if self.priority == 1:
           self.topic = 'topic_1'
+          # self.timer_period = 15 -> 5 messages
         else:
           self.topic = 'topic_2'
+          # self.timer_period = 9 -> 3 messages
 
         self.subscription = self.create_subscription(
             String,

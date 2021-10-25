@@ -6,6 +6,7 @@
 * 4 - Build and run using colcon - `colcon build --packages-select <package name>` and source the setup files on your bash/zsh config file.
 * 5 - Run each publisher and the subscriber.
 
+* OPTIONAL - If you want to set different timers for each publisher, check the commented code on the `subscriber` node related to the timers.
 ---
 
 ### Summary
