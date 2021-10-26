@@ -20,11 +20,12 @@ from interfaces.msg import PubSub
 
 class MinimalSubscriber(Node):
 
-    def __init__(self, topic, nmr_pubs):
+    def __init__(self, topic, nmr_pubs, publishers):
         super().__init__('minimal_subscriber')
         self.timer_n = 3
         self.priority = 1
         self.nmr_pubs = nmr_pubs
+        self.info_pubs = publishers
         self.topic = topic
         # self.nmr = nmr
 
@@ -50,7 +51,8 @@ class MinimalSubscriber(Node):
     def callback(self, msg):
 
       # Arcaic method :: Checking the priority on the name since each publisher name has a value attached to it.
-      if str(self.priority) in msg.pub_name:
+      # Update :: New method, instead of checking by the name, I now have the names related to each publisher in the list publishers.
+      if self.info_pubs[self.priority - 1] == msg.pub_name:
         self.get_logger().info('I heard from [%s - %d]: "%s"' % (msg.pub_name, msg.pub_id, msg.data))
 
     def timer_callback(self):
@@ -65,14 +67,30 @@ def main(args=None):
     rclpy.init(args=args)
 
     topic = 'topic'
-    # check how many publishers there are
-    cmd = f'ros2 topic info /{topic}'
-    arr = os.popen(cmd).readlines()
-    nmr_pub = int(re.split(':', arr[1])[1].strip())
+    # check how many publishers there are related to the topic
+    cmd_topic_info = f'ros2 topic info /{topic}'
+    topic_info = os.popen(cmd_topic_info).readlines()
+    nmr_pub = int(re.split(':', topic_info[1])[1].strip())
+
+    # check who are the nodes related to the topic
+    publishers = []
+    cmd_node_list = f'ros2 node list'
+    node_list = os.popen(cmd_node_list).readlines()
+    for node in node_list:
+      node = node.strip()
+      cmd_node_info = f'ros2 node info {node}'
+      node_info = os.popen(cmd_node_info).read()
+      publisher_info = re.search(r'Publishers:\n(.|\n)*(?=Service Servers)', node_info).group(0)
+
+      # if topic in the info of the publisher
+      if f'/{topic}:' in publisher_info:
+        publishers.append(node[1:])
+
+    # print(publishers) - Debug
 
     # Priority will at maximum the same as the nmr of pubs
     # Timers should be treated in a different way since you may want to assign different timers
-    minimal_subscriber = MinimalSubscriber(topic, nmr_pub)
+    minimal_subscriber = MinimalSubscriber(topic, nmr_pub, publishers)
 
     rclpy.spin(minimal_subscriber)
 
