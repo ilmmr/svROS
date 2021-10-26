@@ -39,6 +39,7 @@ class MinimalSubscriber(Node):
             lambda msg: self.get_logger().info('I heard: "%s"' % msg.data) if topic['priority'] == self.priority else False
             , 10)
 
+      # I only create the timer when its time to run the prioritized one - and then this timer will get destroyed.
       if self.priority == topic['priority']:
         self.timer = self.create_timer(timer, self.timer_callback)
       self.subscription
