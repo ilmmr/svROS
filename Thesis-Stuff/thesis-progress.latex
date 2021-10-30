@@ -1,0 +1,322 @@
+\documentclass[11pt,a4paper]{report}%especifica o tipo de documento que tenciona escrever: carta, artigo, relatório... neste caso é um relatório
+% [11pt,a4paper] Define o tamanho principal das letras do documento. caso não especifique uma delas, é assumido 10pt
+% a4paper -- Define o tamanho do papel.
+
+\usepackage[english]{babel}%Babel -- irá activar automaticamente as regras apropriadas de hifenização para a língua todo o
+                                   %-- o texto gerado é automaticamente traduzido para Português.
+                                   %  Por exemplo, “chapter” irá passar a “capítulo”, “table of contents” a “conteúdo”.
+                                   % portuges -- específica para o Português.
+\usepackage[utf8]{inputenc} % define o encoding usado texto fonte (input)--usual "utf8" ou "latin1
+
+\usepackage{graphicx} %permite incluir graficos, tabelas, figuras
+\usepackage{url} % para utilizar o comando \url{}
+\usepackage{enumerate} %permite escolher, nas listas enumeradas, se os iems sao marcados com letras ou numeros-romanos em vez de numeracao normal
+
+\usepackage{hyperref}
+
+%\usepackage{apalike} % gerar biliografia no estilo 'named' (apalike)
+
+\usepackage{color} % Para escrever em cores
+
+\usepackage{multirow} %tabelas com multilinhas
+\usepackage{array} %formatação especial de tabelas em array
+
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec, blindtext, color}
+\definecolor{gray75}{gray}{0.75}
+\newcommand{\hsp}{\hspace{20pt}}
+\titleformat{\chapter}[hang]{\Huge\bfseries}{\thechapter\hsp\textcolor{gray75}{|}\hsp}{0pt}{\Huge\bfseries}
+\usepackage{tabularx}
+
+
+\usepackage{minted}
+\usepackage{tcolorbox}
+
+%Exemplos de fontes -- nao e vulgar mudar o tipo de fonte
+%\usepackage{tgbonum} % Fonte de letra: TEX Gyre Bonum
+%\usepackage{lmodern} % Fonte de letra: Latin Modern Sans Serif
+%\usepackage{helvet}  % Fonte de letra: Helvetica
+%\usepackage{charter} % Fonte de letra:Charter
+
+\definecolor{saddlebrown}{rgb}{0.55, 0.27, 0.07} % para definir uma nova cor, neste caso 'saddlebrown'
+\newcommand\tab[1][1cm]{\hspace*{#1}}
+
+\usepackage{listings}  % para utilizar blocos de texto verbatim no estilo 'listings'
+%paramerização mais vulgar dos blocos LISTING - GENERAL
+\lstset{
+	basicstyle=\small, %o tamanho das fontes que são usadas para o código
+	numbers=left, % onde colocar a numeração da linha
+	numberstyle=\tiny, %o tamanho das fontes que são usadas para a numeração da linha
+	numbersep=5pt, %distancia entre a numeração da linha e o codigo
+	breaklines=true, %define quebra automática de linha
+    frame=tB,  % caixa a volta do codigo
+	mathescape=true, %habilita o modo matemático
+	escapeinside={(*@}{@*)}, % se escrever isto  aceita tudo o que esta dentro das marcas e nao altera
+	gobble=8, tabsize=4
+}
+%
+%\lstset{ %
+%	language=Java,							% choose the language of the code
+%	basicstyle=\ttfamily\footnotesize,		% the size of the fonts that are used for the code
+%	keywordstyle=\bfseries,					% set the keyword style
+%	%numbers=left,							% where to put the line-numbers
+%	numberstyle=\scriptsize,				% the size of the fonts that are used for the line-numbers
+%	stepnumber=2,							% the step between two line-numbers. If it's 1 each line
+%											% will be numbered
+%	numbersep=5pt,							% how far the line-numbers are from the code
+%	backgroundcolor=\color{white},			% choose the background color. You must add \usepackage{color}
+%	showspaces=false,						% show spaces adding particular underscores
+%	showstringspaces=false,					% underline spaces within strings
+%	showtabs=false,							% show tabs within strings adding particular underscores
+%	frame=none,								% adds a frame around the code
+%	%abovecaptionskip=-.8em,
+%	%belowcaptionskip=.7em,
+%	tabsize=2,								% sets default tabsize to 2 spaces
+%	captionpos=b,							% sets the caption-position to bottom
+%	breaklines=true,						% sets automatic line breaking
+%	breakatwhitespace=false,				% sets if automatic breaks should only happen at whitespace
+%	title=\lstname,							% show the filename of files included with \lstinputlisting;
+%											% also try caption instead of title
+%	escapeinside={\%*}{*)},					% if you want to add a comment within your code
+%	morekeywords={*,...}					% if you want to add more keywords to the set
+%}
+
+\usepackage{xspace} % deteta se a seguir a palavra tem uma palavra ou um sinal de pontuaçao se tiver uma palavra da espaço, se for um sinal de pontuaçao nao da espaço
+
+\parindent=0pt %espaço a deixar para fazer a  indentação da primeira linha após um parágrafo
+\parskip=2pt % espaço entre o parágrafo e o texto anterior
+
+\setlength{\oddsidemargin}{-1cm} %espaço entre o texto e a margem
+\setlength{\textwidth}{18cm} %Comprimento do texto na pagina
+\setlength{\headsep}{-1cm} %espaço entre o texto e o cabeçalho
+\setlength{\textheight}{23cm} %altura do texto na pagina
+
+%\input{LPgeneralDefintions} %permite ler de um ficheiro de texto externo mais definições
+%\lhead{lado esquerdo do cabeçalho}
+%\chead{parte central do cabeçalho}
+%\rhead{lado direito do cabeçalho}
+%\lfoot{lado esquerdo do rodapé}
+%\cfoot{parte central do rodapé}
+%\rfoot{lado direito do rodapé}
+
+\begin{document} % corpo do documento
+%\maketitle % apresentar titulo, autor e data
+
+
+\begin{titlepage}
+    \centering
+    {\Large
+        \huge Thesis Dissertation\\
+    }
+
+    \Large Formalizing ROS2 security configuration with Alloy
+
+    \vfill
+    \begin{center}\large
+
+        \begin{tabular}{ll}
+            \textbf{a85954} & \textbf{Luís Ribeiro}
+        \end{tabular}
+
+    \end{center}
+    \includegraphics[width=8cm]{images/UM.jpg} % also works with logo.pdf
+    \begin{center}
+        \large Mestrado em Engenharia Informática\\
+            Universidade do Minho
+
+    \end{center}
+
+    \vfill
+    \vfill
+    \vfill
+\end{titlepage}
+
+\newpage
+\tableofcontents{}
+\newpage
+
+%\let\clearpage\relax
+%\titlespacing*{\chapter}{pt}{-20pt}{20pt}
+%\chapter{Introduction}
+
+%This assignment revolves around the Travelling Salesman Problem (TSP). This problem is one of those that can be easily formulated but whose answer cannot be efficiently obtained. For that reason, our task in this assignment aims to model and analyse different variants of TSP via \textbf{monads} and their facilities.\\
+%Every exercise has its own section, so that
+
+
+\titlespacing*{\chapter}{pt}{-20pt}{20pt}
+\chapter{Concepts Introduction}
+
+    \section{Robotic Operating System}
+
+        This dissertation focus on the exploration of potential non-studied properties related to the security of the robotic world. Therefore, before taking consideration about security matters, \textbf{R}obotic \textbf{O}perating \textbf{S}ystem, known simply as \textbf{ROS}, must be introduced. At first it may seem that its being dealt with an Operating System, but its actually a open-source framework, composed by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch. ROS was designed to be flexible, since working with robots requires experimentation, given the variety of different hardware and software. This flexibility enables the combination between existing components with new ones.
+
+        ROS provides a distributed architecture that operates as a publish-subscribe service to distribute data among nodes in a system. The first version of ROS includes its own communication middleware, which does not scale well, and is unsuitable for safety-critical and real-time systems. This lead to the creation of ROS2, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol. This means that it continues to be relatively straightforward for a developer to add and integrate a new component into an existing system. The differences between versions are presented in the following subsection, \textbf{Evolving into ROS2}.
+
+
+        \subsection{Evolving into ROS2}
+
+        -- ROS1 Architecture --\\
+        -- The need of a new middleware --\\
+
+
+        \subsection{Data Distribution Service: A Data-Centric Approach}
+
+            \textbf{Data Distributed System}, known as DDS, is a middleware Object Management Group (OMG) standard, directly addressing data communication between nodes that belong to a \textit{publish-subscribe} communication architecture, for real-time and embedded systems, that relies on a data-centric approach.
+
+            A middleware, such as DDS, is the software layer that comes between the \textbf{Platform layer}, where configuration about operating systems and network transport is covered, and the \textbf{Application layer}. By that, developers can mainly focus on their applications purposes, instead of concerning about information passing between layers.
+
+            \begin{figure}[H]
+                    \centering
+                     \includegraphics[width=0.5\linewidth]{images/middleware.png}
+            \end{figure}
+
+            Usually, middlewares are implemented by distributed systems, that rely on timing-measures and efficiency when it comes to data-delivering between nodes. DDS aims to ease the complexity of building their own middleware. Complex network configuration, communication establishment, data sharing and low-level details are handled by DDS. The specification of \textbf{Quality of Service} (QoS) parameters is a great feature, because of the versatility that each one offers to the system. Re-sending messages that did not reach their destination, multicast updates, dynamic resizing of messages, version tracking and many other parameters can be useful to satisfy some system requirements.
+            When it comes to easing the communication establishment, DDS features a \textbf{Dynamic Discovery} within nodes, by providing automatic discovery between endpoints and useful information about them. Network configuration is also guaranteed by this feature, where DDS participants are accessible across the network, as the application uses the same DDS API for communications. \textbf{Security} features are also considered, where DDS sets a Plugin interface, that combine different plugins that interact with DDS API. These security matters will be later discussed.
+
+            \subsubsection{Data-Centric Approach}
+
+                Initially, systems used to prioritized the message as the establishment of the interaction, meaning that the system was mainly concerned if the message was correctly passed between nodes. This way of structuring is called Message-Centric approach, where the key is the message itself, and not its content.
+
+                DDS architecture approach is based on a concept named \textbf{Data-Centric}, that instead of focusing on the reliable transmission of the message, the distributed infrastructure takes more responsibility, where the message-data itself is the focal point. Here, the infrastructure formally defines the data and imposes rules over it (\textbf{modular}), with the continuous awareness of the contents in the data space, where known structures exchange these contents. Therefore, the data is independent of any particular functionally of any application that uses it, because the data is described by its state, making it easily \textbf{scalable}.
+
+                The essence of data centricity is that DDS must know the data schemas, treating the data values as known objects and controls how the data is retrieved to the applications. Thus, DDS is responsible for providing the definition of 'truth' regarding the message management.  Whereas, in the traditional message-centric approach, each application must store the message state and treated them as its own, meaning that the 'truth' of the message state is subjective. Even though this offers some flexibility to the application developers, state managing often leads to inconsistency. Rather than forcing each application to deal with this complexity of defining the data space, DDS directly implements and provides controlled, managed, secure data sharing.
+
+            \subsubsection{DDS Architecture}
+
+                The Data-Centric approach does not define the full DDS architecture, but only how messaging is treated as a technique. Other technologies, such as Databases supports data-centricity, but usually these are not scalable when it comes to accessing data by multiple applications, updates are slow and highly centralized, meaning that reliability of data could be potentially compromised. Since DDS uses the concept of a \textbf{Data Bus}, scalability is not a issue, since network resources are efficiently used and there is no centralization whatsoever, maintaining the awareness on the information flow.
+
+                DDS is really about distributing stateful data, acessing it and querying it in motion, in a analogous way to how its done in a database or another data-centric technology, by improving these architectures and making them available for a much wider class of applications and problems.
+
+                \begin{figure}[H]
+                    \centering
+                     \includegraphics[width=0.5\linewidth]{images/dds-architecture.png}
+                \end{figure}
+
+                DDS communications are also governed with explicit Quality of Service, that allows the system to manage and monitor which applications are able to communicate in which ways with the Data Bus and with each other.
+
+                \begin{figure}[H]
+                    \centering
+                     \includegraphics[width=0.5\linewidth]{images/dds-scalable-architecture.png}
+                \end{figure}
+
+                DDS provides flexibility and scalibilty to every sort of systems, from small devices, located at the "Edge" where DDS can be used for high-speed machine to machine communications, up to large systems, where DDS provides scalable access and distribution of information over the whole cloud.
+
+                (Performance and Reliable)
+
+            \subsubsection{Understanding DDS in ROS2}
+
+                As stated in the previous section...
+
+
+        \subsection{ROS2 Data Model}
+
+
+        \subsection{The need for Security}
+
+            A major factor behind its popularity and widespread adoption is its flexibility and interoperability. In ROS, this flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS applications tend to face increased security risks. The low barrier to entry and open nature of the ROS ecosystem means a malicious actor could potentially inject code or vulnerabilities into a library, which could then be reused by another unsuspecting developer.
+
+            These concerns about security take on particular importance, since robots are becoming more frequently used and can directly affect the physical world, by sensing or even actuating. Sensing becomes relevant when it comes to the potential leak of information about the surroundings of its robot. Whereas, actuating is related to the functionality of the robot, where physical safety is the main concern.
+
+            Many researches were made regarding this issue, one in particular that explored the IPv4 address space of the Internet for instances of ROS, named \textit{Scanning the Internet for ROS: A View of Security in Robotics Research}, with the goal of identifying ROS vulnerable hosts, mostly master nodes since they provide information about their related topics and node's parameters, mainly by port scanning, so that developers could be aware of the possibility of exposure of their robots. It's mentioned that, besides their work on this subject, a lot of tools have been developed to correct the vulnerabilities that ROS formerly had. Secure Robot Operating System (SROS) was initially developed as an experimental tool (later evolved to SROS2 as a supporting tool for ROS2), which supports TLS for all socket transport, node restrictions and chains of trust, guaranteeing publishers authorization when it comes to publish to a specific topic. Another worth-mentioned tool is Rosbridge, which provides a WebSocket interface to ROS and corresponding server to allow interaction between applications and ROS nodes, by using TLS as support and also access control over topics and API calls. Other tools were also mentioned, that mainly report security concerns. The performed scans furnished information about hosts that could either be a sensor, an actuator or even a simulator. Topics were also identified since they provide evidence of what is likely to be available to an attacker. This study is rather relevant because of how easily can attackers gather information about potential robots, and control them further on, through the public Internet, making it unavoidable to develop mechanisms concerning security.
+
+            As discussed previously, this is mainly due to the fact that ROS had its own middleware, which didn't provide any security features. The 'centralization' behind ROS architecture, where everything was controlled and connected to the ROS Master node, was also a major fact to the need of a new implementation where the middleware could not also facilitate the establishment of communications, but also could provide security features. ROS2 adoption of middleware interface for data exchange offers a flexible way to build appropriate defenses for a given application.
+
+            DDS ensures not also communication features, but also guarantees security properties, where ROS's flexibility is preserved despite this increase on security. The \textbf{DDS-Security} is a specification that serves as an add-on to the DDS specification, defined by a set of plugins combined in a Service Plugin Interface (SPI) architecture. The main plugins provided by DDS-Security are the following ones:
+
+            \begin{itemize}
+                \item[---] \textbf{Authentication}: Verification of each identity of a given Domain Participant, by assigning a private key and a public key to each one, as well as an certificate that relates the participant's public key to its corresponding specific name.
+                \item[---] \textbf{Access control}: Provides control over DDS-related operations with the support of the Authentication plugin. It requires two files per domain participant signed by a Certificated Authority, that specifies how the domain should be secured and their permissions.
+                \item[---] \textbf{Cryptographic}: Operations related to cryptographic purposes, such as encryption are handled by this plugin.
+                \item[---] \textbf{Logging}: Provides logging over events.
+                \item[---] \textbf{Data tagging}: Add tags to data samples.
+            \end{itemize}
+
+            \begin{figure}[H]
+                \centering
+                \includegraphics[width=0.5\linewidth]{images/dds-security.png}
+            \end{figure}
+
+            These plugins can be customized since different applications require different needs when it comes to security. That is why, as depicted above, there must be a \textbf{Standardized Plugin API} that acts as an interface between modules and DDS security protocols, while including all aspects of secure communications.
+
+            ROS2 is deployed without security mechanisms by default, but DDS can provide security guarantees such as authentication and access control with a variant called DDS-Security. Using DDS-Security it is possible to configure ROS2 to run with security guarantees using the \textbf{SROS2} toolset. Most of these tools supported by SROS 2 is contained within the ROS Client Library (RCL), and includes the following features:
+
+            \begin{itemize}
+                \item[---] Support for security files for each domain participant, where in ROS2 are seen as a process, and each process must be associated with a set of these files.
+                \item[---] Support for both permissive and strict enforcement of security, meaning that can be considered two approaches when it comes to dealing with security files.
+                \item[---] Support for a master “on/off” switch, that enables or disables every security feature.
+            \end{itemize}
+
+            Since this security process involves a lot of new technology, the user must be aware of improper configuration, that can still lead to security problems. However, SROS 2 CLI include a tool, named \texttt{ros2 security}, that aims to help those who don’t want to set it all up by themselves.
+
+
+
+
+%\let\clearpage\relax
+\titlespacing*{\chapter}{pt}{-20pt}{20pt}
+\chapter{Third Part}
+
+    \section{Exercise 5}
+    \textbf{Monads} allows us to improve our programming practices in various ways. It definitely comes associated with some drawbacks but, hopefully, the idea is still strong enough to prove itself useful in several scenarios.
+
+	A interesting example of a monad being very useful passes through converting partial functions into total ones which allows us to express the absence of value really well. This concept exists in none functional programming languages too, like in C with pointers, for example. Just as the Maybe monad captures this functionality, other monads cover other interesting useful features. We can use the Writer monad to log information, the Powerset monad to bruteforce problems, the IO monad to interact with real-time input/output operations and many others. Therefore, they are a way to approach and easily solve specific problems (Adding functionality).
+
+	Now, the cherry on top using monads to add functionality also passes through them being able to solve, otherwise rather difficult, tasks more naturally. The previous exercises are good examples of how the Powerset monad recurs to backtracking to obtain every possible solution to a problem. It managed to turn an algorithm that usually needs to keep a list of visited nodes into a much more trivial problem where we easily guarantee to touch every node. (Compact way to develop complex solutions).
+
+	Another big advantage that we only saw a glimpse off during the previous exercises passes by the fact of monads having a very generic meaning. It's basically guaranteed that one can just replace the outer monad of a certain function and arrive to something with a valuable meaning in a different concept. % (Generic meaning/Reusing stuff --- Add example).
+
+	However, as we mentioned right on opening, they do have drawbacks. The first and, probably, the one that justifies the most the lack of effort to actually interact with this interfaces passes through the steep learning curve. Coming from category theory, monads definitely require some background understanding to actually see how the concept manages to apply so well to different problems. (Steep learning curve)
+
+	Another, more important, drawback comes from the fact that monads don't scale particularly well. It's all fine when we are using maybe 2 or 3 monads on a stack because the boilerplate code is still tolerable. With very big stacks, despite having access to various composed functionalities that can cover entirely anything that a piece of software might need (state, reading data, logging data, etc), comes a lot of boilerplate code due to constantly needing to relocate the context to the operation that one needs to do. We do lack some experience when it comes to working with real-world examples of monad stacks so we might actually be missing our point here, and perhaps it's actually not as bad as we've noticed so far.
+
+	Either way, monads are definitely worth learning especially due to the way that they influence our way of thinking about a problem. Modelling before solving is the way to actually develop software and monads are one of the best proofs of that fact.
+
+
+%\let\clearpage\relax
+\titlespacing*{\chapter}{pt}{-20pt}{20pt}
+\chapter{Fourth Part}
+
+    \section{Exercise 6}
+    As requested in this exercise, we tried our best to create significant functionalities whilst recurring to monadic machinery. In order to try to explain our motivation for each chosen monad, in the following subsections we describe every functionality that we added and how it was naturally (and easily) represented with a certain monad.
+
+    \subsection{IO monad - Generic graphs}
+    Our first intention was to generalize the base graph, allowing the user to adjust the graph to his own needs. As mentioned by the teacher, this was done by using the IO monad. At first, this required us to have a lot more arguments in our functions (a list of adjacencies and nodes) but later they were simply included in our state.
+
+    \subsection{State monad - Eletric bus and the free, complete, rides!}
+    Despite the teacher mentioning that we should try to avoid using functionalities that other groups might use, we've always been particularly curious about the State monad. It looks a lot harder than what it actually is. It was used, as suggested, to create a notion of battery and understand if there were paths that could be done by an electric bus without ever losing it's battery entirely.
+
+    \subsection{The necessity of a list monad transformer}
+    While we were implementing the above functionality we incurred in a problem. The State was covering every path which didn't allowed us to represent the battery "individually". To solve that problem, we started using a list monad transformer that gave us the ability to produce a state for each path.
+
+    \subsection{Exception monad - Traffic info and other potential mishap's}
+    Another interesting functionality that we felt would fit well in the problem was the possibility of, by some specific reason, not being able to complete the path. This could occur because there was a sinkhole on a street or maybe the bus had a flat tire! To implement this, we used the Exception monad.
+
+    We created 2 types of errors, one representing local failures that might happen to a specific bus and another type to represent failures that are known by external sources, for example, a road block on an edge.
+
+    \subsection{Writer Monad - Knowing what path was being followed until a failure}
+    The previous functionality, despite being relevant, brought some redundancy to our final output. It could happen that multiple paths failed for the same reason, which would be displayed simply as the same error 3 times. This motivated us to use the Writer monad to be aware of what path was being followed until the failure happened!
+
+    \subsection{Summing up}
+    We know we might have gone a bit overboard by using so many functionalities, but our main motivation to doing this was to "test" our written essay about why monads matter. Every time we added a new monad to our stack, the changes were very, very minimal. We also managed to isolate each monad functionality in a very visible way and managed to have somewhat generic functions all around our program.
+    None of us had a lot of experience with monad transformers until this point, but this project definitely showed us that they are very interesting and powerful.
+
+
+\newpage
+\titlespacing*{\chapter}{pt}{-20pt}{20pt}
+\chapter{Conclusion}
+    In conclusion, this was a great project to finish our last “typical” semester. We have always been told that formal methods associates with a lot of advantages but, in many occasions, we don’t get to see their use in complex, real world scenarios.
+
+    With this project, however, we got a taste of what seems to be real world Haskell and worked with very advanced concepts that are core to develop software recurring to functional programming.
+
+    On pair with the above, we also grasped this concepts in a more theoretical manner due to the lambda calculus exercises which gave us a different perspective of these matters.
+
+    Our main difficulties differed between the Haskell and the lambda calculus parts. Regarding the Haskell exercises, we only encountered difficulties in the last exercise, especially when it came to understanding exactly what real world concept could be represented by a certain monad. Code-wise it went fairly well since we already had some background in the language.
+
+    Regarding lambda calculus, our main difficulties were finding which was the right applying rule, so that the logical process of deducting was preserved and consequently each $\lambda$-term had the proper interpreted function.
+
+    It was an interesting project that shed a light on many important concepts and we think that other previous projects should try to force us to deal with more real examples and concepts.
+
+\newpage
+\end{document}
