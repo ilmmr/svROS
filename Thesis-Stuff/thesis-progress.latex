@@ -153,13 +153,19 @@
 
         This dissertation focus on the exploration of potential non-studied properties related to the security of the robotic world. Therefore, before taking consideration about security matters, \textbf{R}obotic \textbf{O}perating \textbf{S}ystem, known simply as \textbf{ROS}, must be introduced. At first it may seem that its being dealt with an Operating System, but its actually a open-source framework, composed by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch. ROS was designed to be flexible, since working with robots requires experimentation, given the variety of different hardware and software. This flexibility enables the combination between existing components with new ones.
 
-        ROS provides a distributed architecture that operates as a publish-subscribe service to distribute data among nodes in a system. The first version of ROS includes its own communication middleware, which does not scale well, and is unsuitable for safety-critical and real-time systems. This lead to the creation of ROS2, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol. This means that it continues to be relatively straightforward for a developer to add and integrate a new component into an existing system. The differences between versions are presented in the following subsection, \textbf{Evolving into ROS2}.
-
-
         \subsection{Evolving into ROS2}
 
-        -- ROS1 Architecture --\\
-        -- The need of a new middleware --\\
+            ROS provides a distributed architecture that operates as a publish-subscribe service to distribute data among nodes in a system. The first version of ROS, namely ROS1, uses a custom serialization format, a custom transport protocol as well as a custom central discovery mechanism, meaning that the interface layer, called the communication middleware, was implemented by them.
+
+            The main ideia behind having implemented their own middleware is that there was a need to have a \textbf{Master node}, that controlled every aspect of the communication establishment, acting as DNS server to the nodes that want to exchange information. Before running any node, a ROS Master node must be initialized, in order to retrieve information to the node that is running. Also, the location of the ROS Master must be addressable by the network nodes. The parameters, which in ROS provides useful runtime information about nodes, was also handled by the ROS Master. This \textbf{centralization} fits the purposes of a research tool, because of the vast capabilities that is controlled by the master, but does not scale well, making it unsuitable for safety-critical and real-time systems. It is considered a performance bottleneck because everything has to go through the master. If the master goes down then the whole system goes down, representing a single-point of failure.
+
+            \begin{figure}[H]
+                    \centering
+                     \includegraphics[width=0.5\linewidth]{images/former-ros1-architecture.png}
+            \end{figure}
+
+            This lead to the creation of \textbf{ROS2}, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol as middleware. This means that there is no need to implement a master, making the system fully distributed. The discovery process between nodes is distributed and guaranteed by DDS, giving theses nodes the capacity to discover other nodes. Considering that there is no ROS Master implemented, the approach when dealing with the parameters also changed. Instead of having a global parameter server, in ROS2 each node declares and manages its own parameters. All these aspects related to ROS2 will be later discussed.
+
 
 
         \subsection{Data Distribution Service: A Data-Centric Approach}
@@ -186,7 +192,9 @@
 
             \subsubsection{DDS Architecture}
 
-                The Data-Centric approach does not define the full DDS architecture, but only how messaging is treated as a technique. Other technologies, such as Databases supports data-centricity, but usually these are not scalable when it comes to accessing data by multiple applications, updates are slow and highly centralized, meaning that reliability of data could be potentially compromised. Since DDS uses the concept of a \textbf{Data Bus}, scalability is not a issue, since network resources are efficiently used and there is no centralization whatsoever, maintaining the awareness on the information flow.
+                The Data-Centric approach does not define the full DDS architecture, but only how messaging is treated as a technique. Other technologies, such as Databases supports data-centricity, but usually these are not scalable when it comes to accessing data by multiple applications, updates are slow and highly centralized, meaning that reliability of data could be potentially compromised. Since DDS uses the concept of a transport-independent virtualized \textbf{Data Bus}, scalability is not a issue, since network resources are efficiently used, and inside local networks DDS uses multicast, so that the load on the network is independent of the number of applications. There is no centralization whatsoever, maintaining the awareness on the information flow.
+
+                Reliability is ensured by implementing a buffer mechanism, where both publisher and subscriber has a corresponding buffer where the samples of data are processed. The subscriber receives these data samples on the receive buffer, and acknowledges them back to the publisher. The sending of data is multicast, because there might be multiple subscribers to a specific topic, whereas acknowledgments and the re-sending process, that happens if a sample drops, are unicast.
 
                 DDS is really about distributing stateful data, acessing it and querying it in motion, in a analogous way to how its done in a database or another data-centric technology, by improving these architectures and making them available for a much wider class of applications and problems.
 
@@ -194,6 +202,8 @@
                     \centering
                      \includegraphics[width=0.5\linewidth]{images/dds-architecture.png}
                 \end{figure}
+
+                As previously mentioned, DDS uses network resources very efficiently, meaning that hardware footprint can be reduced, or even with the same hardware, DDS offers significantly greater performance and functionality. Since DDS supports a distributed peer-to-peer topology, with no single points of failure, these capabilities are provided in a more deterministic and reliable way.
 
                 DDS communications are also governed with explicit Quality of Service, that allows the system to manage and monitor which applications are able to communicate in which ways with the Data Bus and with each other.
 
@@ -204,14 +214,29 @@
 
                 DDS provides flexibility and scalibilty to every sort of systems, from small devices, located at the "Edge" where DDS can be used for high-speed machine to machine communications, up to large systems, where DDS provides scalable access and distribution of information over the whole cloud.
 
-                (Performance and Reliable)
 
             \subsubsection{Understanding DDS in ROS2}
 
-                As stated in the previous section...
+                As stated in the previous section, ROS2 was developed with the goal of easing the former ROS architecture, by implementing an abstract middleware interface, through which serialization, transport and discovery is being provided. This means that it continues to be relatively straightforward for a developer to add and integrate a new component into an existing system. % These implementations of this interface are based on the DDS standard.
+
+                ROS2 is built on the DDS framework, so ROS2 applications are actually considered DDS applications, which leads to flexibility and compatibility.
+                Native DDS applications can freely interoperate with ROS2 DDS applications, but some restrictions have to be respected.
+
+                \begin{figure}[H]
+                    \centering
+                     \includegraphics[width=0.5\linewidth]{images/ROS2-architecture.png}
+                \end{figure}
+
+                ROS2 aims to support multiple DDS implementations, even though each of these implementations API specification differ from each other. In order to abstract from the specifics of these APIs, an abstract interface is being introduced, which can be implemented for different DDS implementations, depicted above as \textbf{Abstract DDS Layer}. This layer could be removed, if there was no need to use more than one DDS implementation. But this is not the wanted scenario, since it is way more practical to switch the DDS implementation depending on the application needs.
+                This layer was already customized and implemented in ROS1, defined by the Client Library which allows the communication between the Application Layer, where the Master is implemented, and the communication protocols. The main reason behind implementing this middleware layer is so that ROS2 developers can focus on their application, instead of also focusing on all these aspects of communication configuration.
+
+                Note that, these implementations offered by DDS are low-level of abstraction, specified by its API, with predefined functions defined by vendors. DDS only defines basic procedures in a more higher level of abstraction.
+
 
 
         \subsection{ROS2 Data Model}
+
+            % In ROS2, there is a convention about how to write your nodes. You have to create a class which inherits from the Node object. This is great because it will save everyone a lot of time. You already have a good, modular structure for writing your node -> cleaner programs.
 
 
         \subsection{The need for Security}
