@@ -22,7 +22,8 @@ class MinimalSubscriber(Node):
 
     def __init__(self):
         super().__init__('minimal_subscriber')
-        self.timer_n = 3
+        self.timer_major = 3
+        self.timer_minor = 1
         self.priority = 1
         self.nmr_pubs = 2
 
@@ -36,8 +37,8 @@ class MinimalSubscriber(Node):
         # create a subscription for each publisher
         # for i in range(nmr):
           # self.init_subscription(self.timer_n, topics_info[i+1])
-        self.init_subscription(self.timer_n, self.low_topic, 1)
-        self.init_subscription(self.timer_n, self.high_topic, 2)
+        self.init_subscription(self.timer_major, self.high_topic, 1)
+        self.init_subscription(self.timer_minor, self.low_topic, 2)
 
     def init_subscription(self, timer, topic, priority):
 
