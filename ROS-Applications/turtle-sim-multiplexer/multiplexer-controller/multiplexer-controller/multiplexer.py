@@ -16,14 +16,16 @@ import rclpy, sys, os, re
 from rclpy.node import Node
 
 from std_msgs.msg import String
+from geometry_msgs.msg import Twist
 from interfaces.msg import PubSub
+from interfaces.msg import Pose
 
 class Multiplexer(Node):
 
     def __init__(self):
 
         super().__init__('multiplexer_controller')
-        self.timer_major = 5
+        self.timer_major = 10
 
         self.priority = True # can also start False, but random will take control firstly
         self.nmr_pubs = 2
@@ -34,7 +36,7 @@ class Multiplexer(Node):
         self.high_topic = 'high_topic'
 
 
-        self.publisher_ = self.create_publisher(PubSub, 'main_topic', 10)
+        self.publisher_ = self.create_publisher(Twist, 'main_topic', 10)
 
         # create a subscription for each publisher
         # for i in range(nmr):
@@ -45,7 +47,7 @@ class Multiplexer(Node):
     def init_subscription(self, timer, topic, priority):
 
       self.subscription = self.create_subscription(
-            PubSub,
+            Twist,
             topic,
             self.high_callback if priority == 1 else self.low_callback, 10)
             # lambda msg: self.publisher_.publish(msg) if self.priority == priority else False
@@ -62,7 +64,7 @@ class Multiplexer(Node):
     def high_callback(self, msg):
 
         self.priority = True
-        msg.data = f'{msg.data}, with timer set to {self.timer_major}'
+        # msg.data = f'{msg.data}, with timer set to {self.timer_major}'
         self.publisher_.publish(msg)
 
         # the timer must be reset, otherwise after the 10s it will not be considered as a new timer.

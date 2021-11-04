@@ -16,8 +16,9 @@ import rclpy, random, os
 from rclpy.node import Node
 
 from std_msgs.msg import String
+from geometry_msgs.msg import Twist
 from interfaces.msg import PubSub
-
+from interfaces.msg import Pose
 
 # turn - rigth/left move - forward/back
 global turn
@@ -35,7 +36,7 @@ class RandomController(Node):
 
         # create_publisher declares that the node publishes messages of type String (imported from the std_msgs.msg module), over a topic named topic, and that the “queue size” is 10.
         # Queue size is a required QoS (quality of service) setting that limits the amount of queued messages if a subscriber is not receiving them fast enough.
-        self.publisher_ = self.create_publisher(PubSub, 'random', 10)
+        self.publisher_ = self.create_publisher(Twist, 'random', 10)
 
         timer_period = 10  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
