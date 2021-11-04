@@ -21,8 +21,9 @@ from interfaces.msg import PubSub
 class Multiplexer(Node):
 
     def __init__(self):
+
         super().__init__('multiplexer_controller')
-        self.timer_major = 10
+        self.timer_major = 5
 
         self.priority = True # can also start False, but random will take control firstly
         self.nmr_pubs = 2
