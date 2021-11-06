@@ -16,9 +16,8 @@ import rclpy, sys, os, re
 from rclpy.node import Node
 
 from std_msgs.msg import String
-from geometry_msgs.msg import Twist
 from interfaces.msg import PubSub
-from interfaces.msg import Pose
+from geometry_msgs.msg import Twist
 
 class Multiplexer(Node):
 
@@ -27,7 +26,7 @@ class Multiplexer(Node):
         super().__init__('multiplexer_controller')
         self.timer_major = 10
 
-        self.priority = True # can also start False, but random will take control firstly
+        self.priority = False # can also start False, but random will take control firstly
         self.nmr_pubs = 2
         self.timer = None
 

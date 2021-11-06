@@ -85,7 +85,7 @@ public:
           *c = KEYCODE_DOWN;
           return;
         }
-        else if (buffer.Event.KeyEvent.wVirtualKeyCode == 0x42)
+       /*  else if (buffer.Event.KeyEvent.wVirtualKeyCode == 0x42)
         {
           *c = KEYCODE_B;
           return;
@@ -114,12 +114,12 @@ public:
         {
           *c = KEYCODE_G;
           return;
-        }
+        } */
         else if (buffer.Event.KeyEvent.wVirtualKeyCode == 0x51)
         {
           *c = KEYCODE_Q;
           return;
-        }
+        /* }
         else if (buffer.Event.KeyEvent.wVirtualKeyCode == 0x52)
         {
           *c = KEYCODE_R;
@@ -134,7 +134,7 @@ public:
         {
           *c = KEYCODE_V;
           return;
-        }
+        } */
       }
     }
 #endif
@@ -184,7 +184,7 @@ TeleopTurtle::TeleopTurtle():
   nh_->get_parameter("scale_linear", l_scale_);
 
   twist_pub_ = nh_->create_publisher<geometry_msgs::msg::Twist>("turtle1/cmd_vel", 1);
-  rotate_absolute_client_ = rclcpp_action::create_client<turtlesim::action::RotateAbsolute>(nh_, "turtle1/rotate_absolute");
+  // rotate_absolute_client_ = rclcpp_action::create_client<turtlesim::action::RotateAbsolute>(nh_, "turtle1/rotate_absolute");
 }
 
 void TeleopTurtle::sendGoal(float theta)
@@ -266,7 +266,7 @@ int TeleopTurtle::keyLoop()
   puts("Reading from keyboard");
   puts("---------------------------");
   puts("Use arrow keys to move the turtle.");
-  puts("Use G|B|V|C|D|E|R|T keys to rotate to absolute orientations. 'F' to cancel a rotation.");
+  // puts("Use G|B|V|C|D|E|R|T keys to rotate to absolute orientations. 'F' to cancel a rotation.");
   puts("'Q' to quit.");
 
 
@@ -308,7 +308,7 @@ int TeleopTurtle::keyLoop()
         linear_ = -1.0;
         dirty = true;
         break;
-      case KEYCODE_G:
+     /*  case KEYCODE_G:
         RCLCPP_DEBUG(nh_->get_logger(), "G");
         sendGoal(0.0f);
         break;
@@ -344,6 +344,7 @@ int TeleopTurtle::keyLoop()
         RCLCPP_DEBUG(nh_->get_logger(), "F");
         cancelGoal();
         break;
+      */
       case KEYCODE_Q:
         RCLCPP_DEBUG(nh_->get_logger(), "quit");
         return 0;

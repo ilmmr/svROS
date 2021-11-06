@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'multiplexer-controller'
+package_name = 'turtle_random'
 
 setup(
     name=package_name,
@@ -13,14 +13,14 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='mariolas',
+    maintainer='luis',
     maintainer_email='luismarioribeiro01@gmail.com',
-    description='Multiplexer package to control the instructions to the turtle node.',
+    description='RANDOM',
     license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-          'multiplexer = multiplexer-controller.multiplexer:main'
+          'random = turtle_random.random:main'
         ],
     },
 )
