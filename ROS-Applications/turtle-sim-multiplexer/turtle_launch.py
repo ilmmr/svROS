@@ -27,13 +27,14 @@ def generate_launch_description():
                 ('/turtlesim_node/turtle1/cmd_vel', '/multiplexer/main_topic'),
             ]
         ),
-        Node(
-           package='turtlesim',
-           namespace='turtle_teleop_key',
-           executable='turtle_teleop_key',
-           name='turtle_teleop_key',
-           remappings=[
-             ('/turtle_teleop_key/turtle1/cmd_vel', '/multiplexer/high_topic'),
-           ]
-        ),
+        # turtle keyboard reader.
+        # Node(
+        #   package='turtlesim',
+        #   namespace='turtle_teleop_key',
+        #   executable='turtle_teleop_key',
+        #   name='turtle_teleop_key',
+        #   remappings=[
+        #     ('/turtle_teleop_key/turtle1/cmd_vel', '/multiplexer/high_topic'),
+        #   ]
+        # ),
     ])

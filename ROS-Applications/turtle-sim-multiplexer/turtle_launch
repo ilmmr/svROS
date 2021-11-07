@@ -1,0 +1,9 @@
+#!/bin/bash
+
+LAUNCH_FILE='/home/luis/dev_ws/launch/turtle_launch.py'
+KEYBOARD_NODE='ros2 run turtlesim turtle_teleop_key'
+
+echo 'This script will launch all the turtle nodes, and the keyboard reader will be executed in a different terminal.'
+echo '================================'
+
+termite -e '/opt/ros2/foxy/lib/turtlesim/turtle_teleop_key --ros-args -r __node:=turtle_teleop_key -r __ns:=/turtle_teleop_key -r /turtle_teleop_key/turtle1/cmd_vel:=/multiplexer/high_topic' & ros2 launch $LAUNCH_FILE

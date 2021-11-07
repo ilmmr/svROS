@@ -62,7 +62,7 @@ class RandomController(Node):
         self.r = random.choice(rotate)
         self.m = random.choice(move)
 
-        timer_period = 1  # seconds
+        timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     # timer_callback creates a message with the counter value appended, and publishes it to the console with get_logger().info.
@@ -75,14 +75,16 @@ class RandomController(Node):
             temp = str(self.a) + str(self.m) + str(self.r)
           else:
             temp = str(self.a) + str(self.r)
-          cmd_aux = commands[temp]
-          cmd.linear.x = cmd_aux[0]
-          cmd.linear.y = cmd_aux[1]
-          cmd.linear.z = cmd_aux [2]
 
-          cmd.angular.x = cmd_aux[3]
-          cmd.angular.y = cmd_aux[4]
-          cmd.angular.z = cmd_aux[5]
+          cmd_aux = commands[temp]
+
+          cmd.linear.x  = random.choice(range(1,4)) * cmd_aux[0] if not cmd_aux[0] == 0.0 else 0.0
+          cmd.linear.y  = random.choice(range(1,4)) * cmd_aux[1] if not cmd_aux[1] == 0.0 else 0.0
+          cmd.linear.z  = random.choice(range(1,4)) * cmd_aux[2] if not cmd_aux[2] == 0.0 else 0.0
+
+          cmd.angular.x = random.choice(range(1,4)) * cmd_aux[3] if not cmd_aux[3] == 0.0 else 0.0
+          cmd.angular.y = random.choice(range(1,4)) * cmd_aux[4] if not cmd_aux[4] == 0.0 else 0.0
+          cmd.angular.z = random.choice(range(1,4)) * cmd_aux[5] if not cmd_aux[5] == 0.0 else 0.0
 
 
           # msg.data = f'Turn {self.t} and Go {self.m}'
