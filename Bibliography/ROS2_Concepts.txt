@@ -63,3 +63,8 @@ Default Values, Constant Values, etc.
 
 ROS parameters are associated with ROS nodes. Parameters are used to externally configure nodes at runtime (and during runtime).
 The lifetime of a parameter is tied to the lifetime of the node (though the node could implement some sort of persistence to reload values after restart).
+
+-- MORE LINKS --
+ .  http://wiki.ros.org/ROS/Master API.
+ .  http://wiki.ros.org/ros control.
+ .  https://github.com/ros2/ros2/wiki.

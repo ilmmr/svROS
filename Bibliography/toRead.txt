@@ -1,7 +1,0 @@
-- Related to [2] Scanning the Internet for ROS -
-  Bernhard Dieber, Severin Kacianka, Stefan Rass, and Peter Schartner. Application-level security for ros- based applications. In Intelligent Robots and Systems (IROS), 2016 IEEE/RSJ International Conference on, pages 4477–4482. IEEE, 2016.
-  Jarrod McClean, Christopher Stull, Charles Farrar, and David Mascareñas. A preliminary cyber-physical security assessment of the robot operating system (ros).
-  Morgan Quigley, Ken Conley, Brian Gerkey, Josh Faust, Tully Foote, Jeremy Leibs, Rob Wheeler, and Andrew Y Ng. Ros: an open-source robot operating system. In ICRA workshop on open source software, volume 3, page 5. Kobe, 2009.
-  http://wiki.ros.org/ROS/Master API.
-  http://wiki.ros.org/ros control.
-  https://github.com/ros2/ros2/wiki.
