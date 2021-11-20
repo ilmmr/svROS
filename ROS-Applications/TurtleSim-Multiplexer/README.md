@@ -1,1 +1,2 @@
-This folder was divided in two equally working projetcs, one accepting actions sent from the keyboard node (`action_server`), and other who just works over topics (`no_action_server`).
+This folder contains two different folders, one containing the source code relative to the turtlesim application.
+The other is regarding security that provides several features to the application module. Scripts and a tutorial is furnished.
