@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export ROS_SECURITY_KEYSTORE=~/dev_ws/security/sros2/turtlesim_keys
+export ROS_SECURITY_KEYSTORE=~/dev_ws/security/turtlesim_keystore
 export ROS_SECURITY_ENABLE=true
 export ROS_SECURITY_STRATEGY=Enforce
 echo '  ✔️ DDS configurations exported'

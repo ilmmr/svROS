@@ -157,7 +157,7 @@
 
         When it comes to writing software code for robot applications, multiple aspects must be considered properly, as the complexity of robotics is continuously growing. Robots tend to be designed for a particular purpose, resulting in a wide variety of hardware combined, consequently making already written software code extremely difficult to understand and implement. Typically, code perception and reasoning are way to complex for any single programmer, when abstraction strategies are not taking into account. Even though, many robotics researchers have previously created frameworks to deal with these problems, simplifying complexity issues by providing rapid prototyping, they tend to not scale to feature a wide community of robotics programmers. ROS aims to solve this concern, by providing a modular package-based framework, designed to be built upon by robot software developers. Their software can then be utilized by a variety of platforms and applications.
 
-        At first it may seem that its being dealt with an Operating System, but its actually a open-source framework, composed by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch. ROS was designed to be flexible, since working with robots requires experimentation, given the variety of different hardware and software. This flexibility enables the combination between existing components with new ones.
+        At first it may seem that its being dealt with an Operating System, because of its name but its actually a framework. Even though ROS doesn't have a GUI, it fits within the concept of an Operating System because of its modularity, since it provides modules that function together to complete tasks. So, ROS is an open-source framework, composed by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch. ROS was designed to be flexible, since working with robots requires experimentation, given the variety of different hardware and software. This flexibility enables the combination between existing components with new ones.
 
         % The need for ROS - a framework that had a different approach (LER ROS_open_source.pdf)
 
@@ -332,11 +332,13 @@
             \end{figure}
 
 
-            \subsubsection{Other ROS concepts}
+            \subsubsection{--- Other ROS concepts ---}
 
                 The \texttt{TurtleSim} application given as example above, so the reader could get familiar with the basics concepts about ROS, does not address all the existing ways of data-exchanging between nodes.
 
                 Even though topics are the most conventional way of communication, because of its multicast scheme, subscribers can not be perceived by the publishers, so logging and matching becomes rather difficult. Node synchronization within the network is also not featured by topics.
+
+                \subsubsection{Services}
 
                 \textbf{Services} allows a client, that can also be seen as a topic subscriber, to request data from a server, that likewise a topic publisher, furnish data through a service. Services works under a synchronous policy, since the data is only provided when the client node makes a request. Each service is always linked to just one server node, and does not maintain active connections.
 
@@ -361,6 +363,8 @@
     string name
 \end{verbatim}
 
+                \subsubsection{Actions}
+
                 Another way of exchanging data is by setting goals through \textbf{Actions}. Actions, likewise services, also uses a client-server model, but they were design for other purposes rather than only processing a request and sending back a response. Actions are intended to process long-running tasks, where the client sends a goal request to the server node, that confirms the receiving of this goal. Before returning a response back to the client, the server can send feedback back to the client. Unlike services, actions can be cancelled, so the return response could not be acknowledge.
 
                 \begin{figure}[H]
@@ -384,7 +388,11 @@ float32 remaining
 
                 Note that, in both interfaces introduced, the \texttt{---} divides the each structure that are used in each communication. In services, the request structure must be separated from the response structure. In actions, there is also the feedback structure which is the last structure defined.
 
+               \subsubsection{Parameters}
+
                Another relevant concept behind ROS is the existence of nodes \textbf{Parameters}, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a shared \textbf{Parameter Server}, managed by each ROS Master node responsible for the its corresponding network. As stated before, in ROS2 each node declares and manages its own parameters. Usually parameters are saved using files related to the nodes, but parameters can also be updated and checked using \texttt{get} and \texttt{set}, respectively. Additionally, using a parameter function callback, the node's parameters can easily be edited.
+
+               \subsubsection{Interfaces}
 
                Although it was already mentioned, since it was needed for explaining each method of communication for nodes in ROS, \textbf{Interfaces} should be duly studied.
                As explained before, each type of communication has its different corresponding interface, and they must be specified in different folders with unique namespaces.
@@ -408,8 +416,23 @@ float32 remaining
     turtlesim/msg/Boxes
 \end{verbatim}
 
+               \subsubsection{Lifecycled Node}
 
                ROS2 introduces a new definition of node, called \textbf{lifecycled node}, as addition to the traditional one. A lifecycled node is defined by its current state. Its state can either be unconfigured, inactive, active or finalized. This can be useful, since it provides a structural way of setting up the node and separating all its state functionalities. The transition through states are done by running a callback function. Nodes that need initial configuration before exchanging data within the network can be perceived as lifecycled nodes, like sensors, where its detection must be ensured before the data reading/publishing process.
+
+               \subsubsection{Node Composition}
+
+               A concept that both ROS and ROS2 provides is the idea of composing nodes into a single \textbf{process}. Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single porcess, structurally abstracting some network parts.
+
+               There is a slight difference about how ROS and ROS2 approaches the node composition. In the former version of ROS, node composition was done over the combination of \texttt{nodelets}. In ROS2, instead of calling it a \texttt{nodelet}, it is called a \texttt{Component}.
+
+               Formerly, \texttt{nodelets} were designed to ease the cost of overusing TCP for message-passing between nodes, that if the message consisted huge sized data could negatively affect the performance on the network communications. By grouping performance critical nodes, nodelets provided a local way of message-passing between the considered nodes.
+
+                Supported by the former idea of \texttt{nodelets}, \texttt{components} are compiled into shared libraries. A component itself does not furnish node composition, since a component is a node with special features. Although,  each component can be loaded into a \textbf{component container} process at runtime in the network. By loading components into these containers, the node composition is ensured.
+
+                Note that, nodes do not provide this feature since they are compiled into executables that need to be previously compiled. Components can be also be configured to be loaded at compile-time, where a single executable runs multiple components. Components can be also configured in a ROS launch file, using containers as well.
+
+               % Node composition can be also useful for security matters, since it can ease the creation of \textbf{security enclaves}. An enclave is a set of nodes that follow the same set of policy rules. This is will be later explained in the \texttt{security} section.
 
 
         \subsection{The need for Security}
@@ -425,8 +448,8 @@ float32 remaining
 
             Besides these referred solutions, it was proposed a different kind of approach when it comes to protecting the ROS network, which primarily focused on applying security measures on the application layer, treating ROS architecture as a black-box. In the paper where this solution is addressed, its proposed an architecture where features such as authentication, authorization, integrity and confidentiality is ensured, by mainly running an Authentication Server, that acts a trust-center, storing certificates and files related to trusted domain participants, while controlling and providing session keys related to the communication process. This seems promising as it prevents unauthorized nodes from accessing to data, achieved by topic-specific encryption keys assigned only to authorized application modules. Even though the message data can not be perceived, unauthorized nodes can still collect information about the flow of the data, since ROS architecture is responsible for the publish-subscribe interaction, meaning that security issues still persist which cannot be handled on the application level alone.
 
-            ROS faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing a world distribution of a modular robot. However, this modularity results in the exposure of TCP ports, that usually leads to cyber-attacks that compromised data.
-            Also, ROS node-to-node communications are settled in plain text. Despite the fact that this way of handle communications bring certain benefits, especially better performance and data recovery, it is evident that data content is vulnerable to unauthorized usage.
+            ROS faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing robots to be built using several modules, that can be distributed. However, this modularity results in the exposure of TCP ports, that usually leads to attacks that compromise the data itself.
+            There is also a concern about how ROS manages the communication between nodes. In ROS, the node-to-node communications are settled in plain text. Despite the fact that this way of handling communications bring certain benefits, especially better performance and data recovery, it is evident that data content is vulnerable to unauthorized usage.
 
             As discussed previously, this is mainly due to the fact that ROS had its own middleware, which didn't provide any security features. The 'centralization' behind ROS architecture, where everything was controlled and connected to the ROS Master node, was also a major fact to the need of a new implementation where the middleware could not also facilitate the establishment of communications, but also could provide security features. ROS2 adoption of middleware interface for data exchange offers a flexible way to build appropriate defenses for a given application.
 
@@ -478,33 +501,33 @@ float32 remaining
             The keystore is a created directory where DDS security features are stored. By creating a keystore directory, then it can be later sourced to be used by RCL to provide security to the associated ROS2 network.
 
 \begin{verbatim}
-    ros2 security create_keystore turtlesim_keys
+    ros2 security create_keystore turtlesim_keystore
 \end{verbatim}
-
-            \newpage
 
             The created keystore directory structure is displayed bellow:
 
             \begin{figure}[H]
                 \centering
-                \includegraphics[width=0.4\linewidth]{images/ts_keystore_tree.png}
+                \includegraphics[width=0.6\linewidth]{images/ts_keystore_tree.png}
             \end{figure}
 
             By creating the keystore, three different sub-directories will be generated.
 
             \begin{itemize}
-                \item[--] The \texttt{enclaves} directory contains the security tools related to each enclave/key created. An \textit{enclave} is a group of nodes, controlled by the same set of security rules, defined in its corresponding enclave directory. Later, it will be explained how to create each enclave for the \texttt{TurtleSim} example.
-                \item[--] The \texttt{private} directory contains material that is considered private. Private keys used in Certificate Authorities are stored in this directory.
-                \item[--] The \texttt{public} directory contains material that is permissible as public. Certificates, public keys or permissions set by the Certificate Authorities are stored in this directory.
+                \item[--] The \texttt{enclaves} directory contains the security tools related to each enclave created. An \textit{enclave} is a group of nodes, controlled by the same set of security rules, defined in its corresponding enclave directory. Each enclave includes files needed to enable security, such as CA certificates and their own private key (\texttt{key.pem}). Besides containing each enclave created (for instance, in the figure above, a \texttt{/turtlesim/enclave} enclave is created), this directory also has a governance policy document \texttt{governance.xml}, as well as a signed copy file related to the CA permissions, \texttt{governance.p7s}.
+                \item[--] The \texttt{public} directory contains material that is permissible as public. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory. This file stores the CA \textbf{public key} and it is used to validate the identity and permissions of each ROS network node by the CA. Note the existence of \texttt{identity} and \texttt{permissions} folders with their respective certificate/key file. This is due to the fact that DDS supports the separation of identity and permission chains, however ROS usually uses the former \texttt{ca.cert.perm} file, meaning that only a CA is used for both these processes.
+                \item[--] The \texttt{private} directory contains material that is considered private. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory. This file stores the CA \textbf{private key}. It is used to modify the network policies, such as access permissions, and to add new participants. Similar to the \texttt{public} directory, the CA key corresponding to its identity and permissions can be stored in their corresponding individual directories.
             \end{itemize}
 
-            Once the keystore has been created, the respective enclaves can be implemented. By using the tag \texttt{create\_key}, with the keystore namespace provided (in this case is \texttt{turtlesim\_keys}), each enclave can be created.
+            The reader may want to create as many keystores as needed, but RCL can only use a keystore's artifacts at once. The directory is defined by the SROS2 environment variable \texttt{ROS\_SECURITY\_KEYSTORE}, that needs to be previously sourced. Environment variables sourcing will be explained further on.
+
+            Once the keystore has been created, the respective enclaves can be implemented. By using the tag \texttt{create\_key}, with the keystore namespace provided (in this case is \texttt{turtlesim\_keystore}), each enclave can be created.
 
             The \textbf{Access Restricted Area} can not be implemented as illustrated above, since each key stored into the keystore previously initiated, is directly related to two different packages. So two different keys must be created, one for the \texttt{multiplexer} and other for the \texttt{turtlesim} node.
 
 \begin{verbatim}
-    ros2 security create_key turtlesim_keys /multiplexer/multiplexer
-    ros2 security create_key turtlesim_keys /turtlesim_node/turtlesim_node
+    ros2 security create_key turtlesim_keystore /multiplexer/multiplexer
+    ros2 security create_key turtlesim_keystore /turtlesim_node/turtlesim_node
 \end{verbatim}
 
             In order to run these nodes concerning the created keys, all the packages related to the network must be re-built using the \textbf{Fast-DDS} additional flag.
@@ -557,7 +580,7 @@ float32 remaining
                 Now, the created policy file can be used as a reference to automate the process of key generation. To do this, both keystore and policy must be given as arguments to the following SROS2 command.
 
 \begin{verbatim}
-    ros2 security generate_artifacts -k turtlesim_keys -p policy.xml
+    ros2 security generate_artifacts -k turtlesim_keystore -p policy.xml
 \end{verbatim}
 
 
