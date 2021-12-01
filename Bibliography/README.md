@@ -10,5 +10,12 @@
 * [8] Nuno Macedo, Julien Brunel, David Chemouil, Alcino Cunha, Denis Kuperberg: Lightweight specification and analysis of dynamic systems with rich configurations - `https://haslab.github.io/formal-software-design/`
 
 ---
+## Folder Description
 
-**Additional notes were added to this directory.**
+This folder contains relevant bibliography papers and notes used as study reference to the thesis writting. The bibliography was divided into sections dependind on its topic.
+The topics are the following:
+* **Alloy**
+* **ROS** - Robotic Operating System
+
+---
+**Additional notes were added to each directory.**
