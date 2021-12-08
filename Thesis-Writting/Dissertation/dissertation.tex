@@ -48,7 +48,7 @@
 
 % Title
 
-\titleA{Secure Data Streaming Solution for Apache Spark}
+\titleA{Formalizing ROS2 security configuration with Alloy}
 
 % Author
 
@@ -56,9 +56,9 @@
 
 % Supervisor(es)
 
-\supervisor{Alcino caga na saquinha}
+\supervisor{Manuel Alcino Pereira da Cunha}
 
-\cosupervisorA{André Piça Caída}
+\cosupervisorA{André Filipe Faria dos Santos}
 
 % Date
 
@@ -105,7 +105,7 @@
 %---------
 
 \chapter*{Acknowledgements}
-Write your acknowledgements here. Do not forget to mention the projects and grants that you have benefited from while doing your research, if any. Ask your supervisor about the specific textual format to use. (Funding agencies are quite strict about this.)
+% Write your acknowledgements here. Do not forget to mention the projects and grants that you have benefited from while doing your research, if any. Ask your supervisor about the specific textual format to use. (Funding agencies are quite strict about this.)
 
 	\cleardoublepage
 
@@ -125,16 +125,23 @@ I further declare that I have fully acknowledged the Code of Ethical Conduct of 
 
 % Add abstracts (en,pt) -----------------------------------------------------------
 \chapter*{Abstract}
-	Write abstract here (en) or import corresponding file
+	
+	One of the most popular open-source software platforms for building robotic systems is the Robot Operating System (ROS) \cite{ros}. A major factor behind its popularity and widespread adoption is its flexibility and interoperability. One drawback of this flexibility, however, lies in the increased security risks that ROS applications face. The low barrier to entry and open nature of the ROS ecosystem means a malicious actor could potentially inject code or vulnerabilities into a library, which could then be reused by another unsuspecting developer.
 
-\paragraph{Keywords} keywords, here, comma, separated.
+	The first version of ROS includes its own communication middleware, which does not scale well, and is unsuitable for safety-critical and real-time systems. This lead to the creation of ROS2, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) [3] communication protocol. This means that it continues to be relatively straightforward for a developer to add and integrate a new component into an existing system.
 
+	ROS2 is deployed without security mechanisms by default, but DDS can provide security guarantees such as authentication and access control with a variant called DDS-Security. Using DDS-Security it is possible to configure ROS2 to run with security guarantees using the SROS2 toolset [4]. However, improper configuration can still lead security problems.
+	
+	Alloy [7] is a formal specification language and analysis tool that has been successfully applied in the verification of safety and security properties in several domains. This thesis intends to explore the usage of Alloy in the analysis of the security configuration of ROS2 applications.
+
+\paragraph{Keywords} Alloy, DDS, ROS, ROS2, SROS2
 	\cleardoublepage
 
 \chapter*{Resumo}
-	Escrever aqui resumo (pt) ou importar respectivo ficheiro
+	
+	
 
-\paragraph{Palavras-chave} palavras, chave, aqui, separadas, por, v\'{\i}rgulas
+\paragraph{Palavras-chave} Alloy, DDS, ROS, ROS2, SROS2
 
 
 	\cleardoublepage
