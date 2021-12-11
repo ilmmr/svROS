@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<alloy>
+
+<view>
+
+<defaultnode/>
+
+<defaultedge/>
+
+<node>
+   <type name="Bw"/>
+   <type name="Controller"/>
+   <type name="Fw"/>
+   <type name="HighTopic"/>
+   <type name="Int"/>
+   <type name="LowTopic"/>
+   <type name="Message"/>
+   <type name="Multiplexer"/>
+   <type name="Node"/>
+   <type name="Pose"/>
+   <type name="Position"/>
+   <type name="String"/>
+   <type name="Topic"/>
+   <type name="Turtle"/>
+   <type name="Twist"/>
+   <type name="univ"/>
+   <type name="Velocity"/>
+   <type name="natural/Natural"/>
+   <type name="open$4/Ord"/>
+   <type name="ordering/Ord"/>
+   <type name="seq/Int"/>
+   <type name="natural/ord/Ord"/>
+   <set name="natural/One" type="natural/Natural"/>
+   <set name="natural/Zero" type="natural/Natural"/>
+</node>
+
+<node visible="no" numberatoms="no">
+   <type name="Direction"/>
+</node>
+
+<edge constraint="no">
+   <relation name="advertises"> <type name="Node"/> <type name="Topic"/> </relation>
+</edge>
+
+<edge visible="no">
+   <relation name="direction"> <type name="Twist"/> <type name="Direction"/> </relation>
+</edge>
+
+<edge visible="no" attribute="yes">
+   <relation name="inbox"> <type name="Node"/> <type name="Message"/> </relation>
+   <relation name="outbox"> <type name="Node"/> <type name="Message"/> </relation>
+   <relation name="topic"> <type name="Message"/> <type name="Topic"/> </relation>
+   <relation name="where"> <type name="Pose"/> <type name="natural/Natural"/> </relation>
+</edge>
+
+<edge visible="no" attribute="yes" constraint="no">
+   <relation name="count"> <type name="Multiplexer"/> <type name="Int"/> </relation>
+</edge>
+
+</view>
+
+</alloy>
