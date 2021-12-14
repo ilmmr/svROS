@@ -1,30 +1,13 @@
-/* open util/natural */
-
-/* Abstract Notations of the ROS elements */
-abstract sig Node {
-	subscribes, advertises : set Topic,
-	var inbox, outbox : set Message
-}
-
-abstract sig Message {
-	topic : one Topic
-}
+open ros-topic
 
 /* Turtle topics */
-enum Topic {HighTopic, LowTopic, Velocity, Position}
+one HighTopic, LowTopic, Velocity, Position extends Interface {}
 
 /* Nodes involved in the Turtle Multiplexer example */
 some sig Controller extends Node {} {
 	no subscribes
 	advertises in LowTopic + HighTopic
 }
-
-/*
-one sig Keyboard extends Node {} {
-	no subscribes
-	advertises = HighTopic
-}
-*/
 
 one sig Multiplexer extends Node {var count : one Int} {
 	subscribes = HighTopic + LowTopic
@@ -40,7 +23,7 @@ one sig Turtle extends Node {} {
 /* Message definition */
 sig Twist extends Message {
 	direction : one Direction
-} { topic in Position }
+} { interface in Position }
 enum Direction {Fw,Bw}
 
 /* Pose definition */
@@ -51,13 +34,12 @@ sig Pose extends Message {
 /* Network Functionality */
 fact functionality {
 	Pose = where.0
-
 	no inbox + outbox
 	always (some Turtle.inbox implies vel2pose)
 	always (nop or low or high or multiplexer or some n: Node | some n.outbox implies send[n])
 }
 
-fact nodes_assumptions {
+fact turtle_network_assumptions {
 	/* Each node has its corresponding topic */
 	Topic = Node.advertises
 	advertises.~advertises in iden
