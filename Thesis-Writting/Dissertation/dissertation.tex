@@ -14,6 +14,7 @@
 
 \usepackage{indentfirst}
 \usepackage{dissertation}
+\usepackage{float}
 %---
 \usepackage[T1]{fontenc}
 \usepackage{textcomp}
@@ -45,6 +46,9 @@
 %usepackage[scaled=.92]{helvet}
 \usepackage[all]{xy}
 \usepackage{circuitikz}
+
+\titleclass{\subsubsubsection}{straight}[\subsection]
+
 
 % Title
 
@@ -126,7 +130,7 @@ I further declare that I have fully acknowledged the Code of Ethical Conduct of 
 % Add abstracts (en,pt) -----------------------------------------------------------
 \chapter*{Abstract}
 	
-	One of the most popular open-source software platforms for building robotic systems is the Robot Operating System (ROS) \cite{ros}. A major factor behind its popularity and widespread adoption is its flexibility and interoperability. One drawback of this flexibility, however, lies in the increased security risks that ROS applications face. The low barrier to entry and open nature of the ROS ecosystem means a malicious actor could potentially inject code or vulnerabilities into a library, which could then be reused by another unsuspecting developer.
+	One of the most popular open-source software platforms for building robotic systems is the Robot Operating System (ROS) \cite{1}. A major factor behind its popularity and widespread adoption is its flexibility and interoperability. One drawback of this flexibility, however, lies in the increased security risks that ROS applications face. The low barrier to entry and open nature of the ROS ecosystem means a malicious actor could potentially inject code or vulnerabilities into a library, which could then be reused by another unsuspecting developer.
 
 	The first version of ROS includes its own communication middleware, which does not scale well, and is unsuitable for safety-critical and real-time systems. This lead to the creation of ROS2, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) \cite{3} communication protocol. This means that it continues to be relatively straightforward for a developer to add and integrate a new component into an existing system.
 
@@ -172,13 +176,28 @@ I further declare that I have fully acknowledged the Code of Ethical Conduct of 
 
 \part{Introductory material}
 
-\input{chapters/intro.tex}
+\chapter{Robot Operating System}\label{c:intro-ros}
 
-\input{chapters/sota.tex}
+	This dissertation focus on the exploration of potential non-studied properties related to the security of the Robotic World.\\
+	Therefore, before taking consideration about security matters, \textbf{R}obot \textbf{O}perating \textbf{S}ystem, known simply as \textbf{ROS}, must be introduced. 
 
-\input{chapters/curr_work.tex}
+	\input{ros/intro.tex}
 
-\input{chapters/conc.tex}
+	\input{ros/sota.tex}
+
+	%\input{ros/curr_work.tex}
+
+	%\input{ros/conc.tex}
+
+\chapter{Alloy}\label{c:intro-alloy}
+
+	%\input{alloy/intro.tex}
+
+	%\input{alloy/sota.tex}
+
+	%\input{alloy/curr_work.tex}
+
+	%\input{alloy/conc.tex}
 
 %\section{Citations}
 %Example of a citation: \cite{GRM97}, cf.\ this entry in the \Bibtex\ file.
