@@ -1,7 +1,7 @@
-open ros-topic
+open ros_abstract
 
 /* Turtle topics */
-one HighTopic, LowTopic, Velocity, Position extends Interface {}
+one sig HighTopic, LowTopic, MainTopic, TurtlePosition extends Topic {}
 
 /* Nodes involved in the Turtle Multiplexer example */
 some sig Controller extends Node {} {
@@ -11,23 +11,23 @@ some sig Controller extends Node {} {
 
 one sig Multiplexer extends Node {var count : one Int} {
 	subscribes = HighTopic + LowTopic
-	advertises = Velocity
+	advertises = MainTopic
 	count = 0
 }
 
 one sig Turtle extends Node {} {
-	subscribes = Velocity
-	advertises = Position
+	subscribes = MainTopic
+	advertises = TurtlePosition 
 }
 
 /* Message definition */
-sig Twist extends Message {
+one sig Twist extends Interface {
 	direction : one Direction
-} { interface in Position }
+} // { interface in Position }
 enum Direction {Fw,Bw}
 
 /* Pose definition */
-sig Pose extends Message {
+one sig Pose extends Interface {
 	var where : one Int
 }
 
@@ -70,7 +70,7 @@ pred high {
 	some (advertises.HighTopic).outbox {
 		(advertises.HighTopic).outbox = none
 	}
-	some m : Twist | outbox' = outbox + (advertises.HighTopic)->m
+	some m : Message | outbox' = outbox + (advertises.HighTopic)->m
 	inbox' = inbox
 	where' = where
 }

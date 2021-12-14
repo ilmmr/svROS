@@ -1,5 +1,5 @@
 /* open util/natural */
-module ros-topic
+module ros_topic
 
 /* Abstract Notations of the ROS elements */
 abstract sig Node {
@@ -14,7 +14,7 @@ abstract sig Message {
 
 abstract sig Interface {}
 
-sig Topic {
+abstract sig Topic {
 	type : one Interface
 }
 
