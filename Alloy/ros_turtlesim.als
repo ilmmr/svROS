@@ -41,7 +41,7 @@ fact functionality {
 
 fact turtle_network_assumptions {
 	/* Each node has its corresponding topic */
-	Topic = Node.advertises
+	~advertises.advertises in iden
 	advertises.~advertises in iden
 
 	/* Inbox and Outbox messages must consider its Topic message type */
@@ -120,7 +120,7 @@ pred send[n: Node] {
 	where' = where
 }
 
-run main {} for exactly 2 Controller, 10 Message
+run main {} for exactly 2 Controller, exactly 5 Message
 
 check {
     always (some Turtle.outbox implies once some Controller.outbox)

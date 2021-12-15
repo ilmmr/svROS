@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<alloy>
+
+<view fontsize="10">
+
+<defaultnode/>
+
+<defaultedge/>
+
+<node>
+   <type name="Bw"/>
+   <type name="Controller"/>
+   <type name="Fw"/>
+   <type name="HighTopic"/>
+   <type name="LowTopic"/>
+   <type name="MainTopic"/>
+   <type name="Multiplexer"/>
+   <type name="Pose"/>
+   <type name="String"/>
+   <type name="Turtle"/>
+   <type name="TurtlePosition"/>
+   <type name="Twist"/>
+   <type name="univ"/>
+   <type name="ordering/Ord"/>
+   <type name="seq/Int"/>
+</node>
+
+<node shape="Box" color="Gray">
+   <type name="ros_abstract/Topic"/>
+</node>
+
+<node shape="Ellipse" color="Blue">
+   <type name="ros_abstract/Node"/>
+</node>
+
+<node shape="Ellipse" color="Green">
+   <type name="ros_abstract/Message"/>
+</node>
+
+<node visible="no">
+   <type name="Direction"/>
+   <type name="Int"/>
+   <type name="ros_abstract/Interface"/>
+</node>
+
+<edge attribute="yes" constraint="no">
+   <relation name="advertises"> <type name="ros_abstract/Node"/> <type name="ros_abstract/Topic"/> </relation>
+   <relation name="count"> <type name="Multiplexer"/> <type name="Int"/> </relation>
+   <relation name="interface"> <type name="ros_abstract/Message"/> <type name="ros_abstract/Interface"/> </relation>
+   <relation name="subscribes"> <type name="ros_abstract/Node"/> <type name="ros_abstract/Topic"/> </relation>
+   <relation name="type"> <type name="ros_abstract/Topic"/> <type name="ros_abstract/Interface"/> </relation>
+</edge>
+
+<edge visible="no" attribute="yes">
+   <relation name="direction"> <type name="Twist"/> <type name="Direction"/> </relation>
+</edge>
+
+<edge visible="no" attribute="yes" constraint="no">
+   <relation name="topic"> <type name="ros_abstract/Message"/> <type name="ros_abstract/Topic"/> </relation>
+</edge>
+
+</view>
+
+</alloy>
