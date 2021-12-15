@@ -1,10 +1,24 @@
-\section{State of the art}\label{c:sota}
+\chapter{State of the art}\label{c:sota}
 
+As aforementioned, this thesis aims to explore the security configuration within Robot Operating System 2 (ROS2) and its security toolset Secure Robot Operating System 2 (SROS2), enabling the specification and model checking using Alloy. 
 
-\subsection{Background}\label{s:back}
+In this chapter, it is intended to explore technologies that are relevant to give background context (2.1) as well as previous developed work that has the same or similar goals as this thesis (2.2).
 
+\section{Background}\label{s:back}
 
-\subsubsection{Evolving into ROS2}
+This section introduces necessary background information over the major concepts on which this thesis rests. 
+
+First, concepts around Robot Operating System (ROS) are introduced, as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand. 
+
+Then, Alloy is introduced, supported by a predefined, and previously configured, ROS example, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain.
+
+\subsection{Robot Operating System (ROS)}
+
+The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications.\cite{diluoffo2018robot} So, ROS is an open-source framework, mainly designed for the robotic industry, that enables locomotion, manipulation, navigation, and recognition tasks, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
+
+Although Robot Operating System furnishes services, often perceived as operating system's services, such as hardware abstraction, low-level device control and control over message-passing between processes, ROS can not be perceived as a proper operating system, in the sense of process management and scheduling. However, it has a significant impact on the deployed application's performance, with highly complex effects on timing leading to affecting the application's runtime behaviour. In result, the impact of the underlying operating system scheduling is over exceed by ROS.\cite{intro-ros, casini2019response}  
+
+The emphasys on providing full modularity
 
 ROS provides a distributed architecture that operates as a publish-subscribe service to distribute data among nodes in a system. The first version of ROS, namely ROS1, uses a custom serialization format, a custom transport protocol as well as a custom central discovery mechanism, meaning that the interface layer, called the communication middleware, was implemented by them. 
             
@@ -17,7 +31,7 @@ The main ideia behind having implemented their own middleware is that there was 
 
 This lead to the creation of \textbf{ROS2}, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol as middleware. This means that there is no need to implement a master, making the system fully distributed. The discovery process between nodes is distributed and guaranteed by DDS, giving theses nodes the capacity to discover other nodes. Considering that there is no ROS Master implemented, the approach when dealing with the parameters also changed. Instead of having a global parameter server, in ROS2 each node declares and manages its own parameters. All these aspects related to ROS2 will be later discussed.
 
-\subsubsection{Data Distribution Service: A Data-Centric Approach}
+\subsection{Data Distribution Service}
 
 \textbf{Data Distributed System}, known as DDS, is a middleware Object Management Group (OMG) standard, resulted from the need of better interoperability between different vendors middleware frameworks, directly addressing data communication between nodes that belong to a \textit{publish-subscribe} communication architecture, for real-time and embedded systems, that relies on a data-centric approach. 
             
@@ -32,16 +46,15 @@ Usually, middlewares are implemented by distributed systems, that rely on timing
 
 In computer networking, a wire protocol refers to the way of how data is passed from point to point, where multiple applications, that could have different DDS implementations implemented, have to interoperate with each other. DDS wire specification protocol, called \textbf{DDSI-RTPS} (\textit{The Real-time Publish-Subscribe Wire (RTPS) Protocol DDS Interoperability (DDSI) Wire Protocol Specification}), offers flexibility and reliability for real-time systems. Since DDS is built over UDP transport protocol, which does not feature reliable delivery of data, so reliability is ensured by the specification of \textbf{Quality of Service} (QoS) parameters. Quality of Service parameters offers flexibility over communication, because of the versatility of each QoS parameter. Versatility allows the developer to specify whatever QoS satisfies its system communication needs. A typical case is when the developer wants to ensure reliability over the communication, by ensuring the correctness of packet delivery, which UDP by default does not provide. By changing the QoS parameters, it is possible to change the communication's behaviour into something similar to the TCP protocol.  
 
-
 When it comes to easing the communication establishment, DDS features a \textbf{Dynamic Discovery} within nodes, by providing automatic discovery between endpoints and useful information about them. Network configuration is also guaranteed by this feature, where DDS participants are accessible across the network, as the application uses the same DDS API for communications. \textbf{Security} features are also considered, where DDS sets a Plugin interface, that combine different plugins that interact with DDS API. These security matters will be later discussed.
 
-\paragraph{An End-to-End Middleware}
+\subsubsection{An End-to-End Middleware}
 
 DDS disposes a software API supported by a rich documentation about its exact behaviour. By furnishing this specification, it enables third parties applications, such as ROS, to implement this middleware, while auditing and understanding matters are covered by its documentation.
 
 The drawback of using DDS as a middleware is that, by being considered an \textbf{End-to-End} middleware, the applications that implement it, must follow its design approach. Although, DDS is still considered flexible when it comes to how distinct systems can make use of it as its middleware, it moulds them around their publish-subscribe communication architecture. As far as DDS is concerned, this is should not be viewed as a problem to the developers.
 
-\paragraph{Data-Centric Approach}
+\subsubsection{Data-Centric Approach}
 
 Initially, systems used to prioritized the message as the establishment of the interaction, meaning that the system was mainly concerned if the message was correctly passed between nodes. This way of structuring is called Message-Centric approach, where the key is the message itself, and not its content.
             
@@ -49,7 +62,7 @@ DDS architecture approach is based on a concept named \textbf{Data-Centric}, tha
     
 The essence of data centricity is that DDS must know the data schemas, treating the data values as known objects and controls how the data is retrieved to the applications. Thus, DDS is responsible for providing the definition of 'truth' regarding the message management.  Whereas, in the traditional message-centric approach, each application must store the message state and treated them as its own, meaning that the 'truth' of the message state is subjective. Even though this offers some flexibility to the application developers, state managing often leads to inconsistency. Rather than forcing each application to deal with this complexity of defining the data space, DDS directly implements and provides controlled, managed, secure data sharing.
 
-\paragraph{DDS Architecture}
+\subsubsection{DDS Architecture}
 
 The Data-Centric approach does not define the full DDS architecture, but only how messaging is treated as a technique. Other technologies, such as Databases supports data-centricity, but usually these are not scalable when it comes to accessing data by multiple applications, updates are slow and highly centralized, meaning that reliability of data could be potentially compromised. Since DDS uses the concept of a transport-independent virtualized \textbf{Data Bus}, scalability is not a issue, since network resources are efficiently used, and inside local networks DDS uses multicast, so that the load on the network is independent of the number of applications. There is no centralization whatsoever, maintaining the awareness on the information flow. 
                 
@@ -74,11 +87,11 @@ DDS communications are also governed with explicit Quality of Service, that allo
 DDS provides flexibility and scalibilty to every sort of systems, from small devices, located at the "Edge" where DDS can be used for high-speed machine to machine communications, up to large systems, where DDS provides scalable access and distribution of information over the whole cloud.
 
 
-\paragraph{Understanding DDS in ROS2}
+\subsection{Robot Operating System 2 - DDS Integration}
 
 As stated in the previous section, ROS2 was developed with the goal of easing the former ROS architecture, by implementing an abstract middleware interface, through which serialization, transport and discovery is being provided. This means that it continues to be relatively straightforward for a developer to add and integrate a new component into an existing system.
 
-\subparagraph{ROS2 Middleware Architecture}
+\subsubsection{ROS2 Middleware Architecture}
 
 ROS2 offers an interface on top of DDS, called \textbf{ROS client library} (RCL), which hides much of the complexity of DDS specification API, offering a more friendly approach for the ROS users. However, it still provides access to the underlying DDS implementation for users that might want to integrate different DDS implementations for their use cases.
 
@@ -99,7 +112,7 @@ This layer was already customized and implemented in ROS1, defined by the Client
 Note that, these implementations offered by DDS are low-level of abstraction, specified by its API, with predefined functions defined by vendors. DDS only defines basic procedures in a more higher level of abstraction.
 
 
-\subparagraph{Information flow through the Middleware}
+\subsubsection{Information flow through the Middleware}
 
 As stated, ROS client library hides the complexity of the DDS specification API from the developer. Although the ROS structures are yet to be introduced, RCL must work under these ROS structures, to abstract the developer from the DDS structures. 
                     
@@ -112,14 +125,14 @@ The data structure mapping between ROS and DDS must account the preservation of 
 For instance, lets consider a simple example of a publisher node, that publishes a message that is later subscribed by a subscriber node. So, the publisher creates the message, and by publishing it, the message is passed on to the RCL layer. Then the \texttt{.msg} is converted into its corresponding DDS \texttt{.idl} file. The process of transporting the converted message is treated by DDS, ensuring that the message reach its destination, which is the DDS structure that maps to the ROS subscriber node. Finally, the reversed process is considered, where the message is converted back to a \texttt{.msg} file, and RCL handles the message delivery to the subscriber node. 
 
 
-\subparagraph{DDS as a Dependency}
+\subsubsection{DDS as a Dependency}
 
 The modularity approach that ROS makes use of, where multiple modules should be applied when needed, promoting the idea of code reuse, while reducing the number of dependencies attached, was considered a priority goal upon ROS development, since it offer great portability.
                 
 By relying on an outside middleware, these goals highly depend on the middleware implementation that is being used. As far as dependencies are concerned, DDS implementations have light sized dependencies, often related to language implementation libraries, easing the complexity behind installing and running dependencies for ROS developers.
 
 
-\subsubsection{ROS2 Data Model}
+\subsection{Robot Operating System 2 Data Model}
 
 As previous stated, ROS provides a way of data distribution between nodes base on published and subscribed data. Before considering about how the data is passed and treated by publishing and subscribing, nodes must be studiedly covered.
             
@@ -208,13 +221,13 @@ Given the priority set at each moment, the \texttt{multiplexer} has to forward t
         \includegraphics[width=0.5\linewidth]{images/ts_main_topicinfo.png}
 \end{figure}
 
-\paragraph{Other ROS concepts}
+\subsubsection{Other ROS concepts}
 
 The \texttt{TurtleSim} application given as example above, so the reader could get familiar with the basics concepts about ROS, does not address all the existing ways of data-exchanging between nodes.
                 
 Even though topics are the most conventional way of communication, because of its multicast scheme, subscribers can not be perceived by the publishers, so logging and matching becomes rather difficult. Node synchronization within the network is also not featured by topics.
 
-\subparagraph{Services}
+\paragraph{Services}
 
 \textbf{Services} allows a client, that can also be seen as a topic subscriber, to request data from a server, that likewise a topic publisher, furnish data through a service. Services works under a synchronous policy, since the data is only provided when the client node makes a request. Each service is always linked to just one server node, and does not maintain active connections.
                 
@@ -239,7 +252,7 @@ Suppose, considering the \texttt{TurtleSim} example, that a client wants to make
     string name
 \end{verbatim}
 
-\subparagraph{Actions}
+\paragraph{Actions}
 
 Another way of exchanging data is by setting goals through \textbf{Actions}. Actions, likewise services, also uses a client-server model, but they were design for other purposes rather than only processing a request and sending back a response. Actions are intended to process long-running tasks, where the client sends a goal request to the server node, that confirms the receiving of this goal. Before returning a response back to the client, the server can send feedback back to the client. Unlike services, actions can be cancelled, so the return response could not be acknowledge. 
 
@@ -264,11 +277,11 @@ This given example is commonly used in robotic systems for navigation, where the
 
 Note that, in both interfaces introduced, the \texttt{---} divides the each structure that are used in each communication. In services, the request structure must be separated from the response structure. In actions, there is also the feedback structure which is the last structure defined.  
                
-\subparagraph{Parameters}
+\paragraph{Parameters}
                
 Another relevant concept behind ROS is the existence of nodes \textbf{Parameters}, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a shared \textbf{Parameter Server}, managed by each ROS Master node responsible for the its corresponding network. As stated before, in ROS2 each node declares and manages its own parameters. Usually parameters are saved using files related to the nodes, but parameters can also be updated and checked using \texttt{get} and \texttt{set}, respectively. Additionally, using a parameter function callback, the node's parameters can easily be edited.
                
-\subparagraph{Interfaces}
+\paragraph{Interfaces}
                
 Although it was already mentioned, since it was needed for explaining each method of communication for nodes in ROS, \textbf{Interfaces} should be duly studied.
 As explained before, each type of communication has its different corresponding interface, and they must be specified in different folders with unique namespaces.
@@ -292,11 +305,11 @@ In your node's code, the following import must be specified:
     turtlesim/msg/Boxes
 \end{verbatim}
                
-\subparagraph{Lifecycled Node}
+\paragraph{Lifecycled Node}
                
 ROS2 introduces a new definition of node, called \textbf{lifecycled node}, as addition to the traditional one. A lifecycled node is defined by its current state. Its state can either be unconfigured, inactive, active or finalized. This can be useful, since it provides a structural way of setting up the node and separating all its state functionalities. The transition through states are done by running a callback function. Nodes that need initial configuration before exchanging data within the network can be perceived as lifecycled nodes, like sensors, where its detection must be ensured before the data reading/publishing process. 
                
-\subparagraph{Node Composition}
+\paragraph{Node Composition}
                
 A concept that both ROS and ROS2 provides is the idea of composing nodes into a single \textbf{process} for improved \textbf{performance}. Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single porcess, structurally abstracting some network parts. 
 
@@ -313,18 +326,14 @@ This is will be later explained in the \texttt{security} section.
 % Node composition can be also useful for security matters, since it can ease the creation of \textbf{security enclaves}. An enclave is a set of nodes that follow the same set of policy rules. This is will be later explained in the \texttt{security} section. 
                
 
-\subsubsection{The need for Security}
+\subsection{The need for Security}
         
 A major factor behind its popularity and widespread adoption is its flexibility and interoperability. In ROS, this flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS applications tend to face increased security risks. 
             
 Also, ROS works over a publish-subscribe pattern, which is very useful, since it brings various forms of decoupling and transparency. However, because of this transparency, publishers within ROS are unable to control the consumption of their data and subscribers, most of the times, cannot identify the integrity of their received data. % The low barrier to entry and open nature of the ROS ecosystem % 
 This means a malicious actor could potentially inject code or vulnerabilities into a library, which could then be reused by another unsuspecting developer.
 
-These concerns about security take on particular importance, since robots are becoming more frequently used and can directly affect the physical world. \textbf{Cyber-physical} systems, commonly related to the arising of the automatizing concept of robots, feature unique vulnerabilities that exploit both cyber and physical nature of these devices, mainly by sensing and actuating. Sensing becomes relevant when it comes to the potential leak of information about the surroundings of its robot. Whereas, actuating is related to the functionality of the robot, where physical safety is the main concern. % One of the most interesting results of the honeypot experiment is that it can be very difficult to discern between a cyber-physical  security  exploit  and  hardware  and/or  software  bugs. %
-
-Many researches were made regarding this issue, one in particular that explored the IPv4 address space of the Internet for instances of ROS, named \textit{Scanning the Internet for ROS: A View of Security in Robotics Research}, with the goal of identifying ROS vulnerable hosts, mostly master nodes since they provide information about their related topics and node's parameters, mainly by port scanning, so that developers could be aware of the possibility of exposure of their robots. It's mentioned that, besides their work on this subject, a lot of tools have been developed to correct the vulnerabilities that ROS formerly had. Secure Robot Operating System (SROS) was initially developed as an experimental tool (later evolved to SROS2 as a supporting tool for ROS2), which supports TLS for all socket transport, node restrictions and chains of trust, guaranteeing publishers authorization when it comes to publish to a specific topic. Another worth-mentioned tool is Rosbridge, which provides a WebSocket interface to ROS and corresponding server to allow interaction between applications and ROS nodes, by using TLS as support and also access control over topics and API calls. Other tools were also mentioned, that mainly report security concerns. The performed scans furnished information about hosts that could either be a sensor, an actuator or even a simulator. Topics were also identified since they provide evidence of what is likely to be available to an attacker. This study is rather relevant because of how easily can attackers gather information about potential robots, and control them further on, through the public Internet, making it unavoidable to develop mechanisms concerning security.
-            
-Besides these referred solutions, it was proposed a different kind of approach when it comes to protecting the ROS network, which primarily focused on applying security measures on the application layer, treating ROS architecture as a black-box. In the paper where this solution is addressed, its proposed an architecture where features such as authentication, authorization, integrity and confidentiality is ensured, by mainly running an Authentication Server, that acts a trust-center, storing certificates and files related to trusted domain participants, while controlling and providing session keys related to the communication process. This seems promising as it prevents unauthorized nodes from accessing to data, achieved by topic-specific encryption keys assigned only to authorized application modules. Even though the message data can not be perceived, unauthorized nodes can still collect information about the flow of the data, since ROS architecture is responsible for the publish-subscribe interaction, meaning that security issues still persist which cannot be handled on the application level alone.  
+These concerns about security take on particular importance, since robots are becoming more frequently used and can directly affect the physical world. \textbf{Cyber-physical} systems, commonly related to the arising of the automatizing concept of robots, feature unique vulnerabilities that exploit both cyber and physical nature of these devices, mainly by sensing and actuating. Sensing becomes relevant when it comes to the potential leak of information about the surroundings of its robot. Whereas, actuating is related to the functionality of the robot, where physical safety is the main concern.\cite{8794451, mcclean2013preliminary} % One of the most interesting results of the honeypot experiment is that it can be very difficult to discern between a cyber-physical  security  exploit  and  hardware  and/or  software  bugs. %
 
 ROS faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing robots to be built using several modules, that can be distributed. However, this modularity results in the exposure of TCP ports, that usually leads to attacks that compromise the data itself.
 There is also a concern about how ROS manages the communication between nodes. In ROS, the node-to-node communications are settled in plain text. Despite the fact that this way of handling communications bring certain benefits, especially better performance and data recovery, it is evident that data content is vulnerable to unauthorized usage.
@@ -359,7 +368,7 @@ The SROS2 has been designed to work with any secure middleware. However, not all
 
 Since this security process involves a lot of new technology, the user must be aware of improper configuration, that can still lead to security problems. However, SROS2 CLI include a tool, named \texttt{ros2 security}, that aims to help those who don’t want to set it all up by themselves.
 
-\paragraph{TurtleSim with SROS2}
+\subsubsection{TurtleSim with SROS2}
             
 Now that the concept behind SROS2 is introduced, the \texttt{TurtleSim} application given as an example in the previous section, can now  be treated using security features related to the nodes involved.
 
@@ -462,7 +471,7 @@ The creation of these keys only ensures that the communication between the \text
 By using tools like \texttt{tcpdump}, the data packets can be displayed and this encryption can be easily verified. If no SROS2 security is regarded (no export made), the data is passed in plain-text, as expected. After sourcing the security features, using the exports specified above, the packet displayed is encrypted, and its larger since additional information is considered to increase safety. % An encrypted packet example is illustrated in the following figure.  
 
 
-\paragraph{SROS2 - Automatic key generation}
+\subsubsection{SROS2 - Automatic key generation}
             
 Before considering applying access control to the \texttt{TurtleSim} example, let this SROS2 feature be introduced. SROS2 supplies tools to automate the process of generating enclaves and their respective permissions files. 
 
@@ -478,7 +487,7 @@ Now, the created policy file can be used as a reference to automate the process 
     ros2 security generate_artifacts -k turtlesim_keystore -p policy.xml
 \end{verbatim}
 
-\paragraph{Access Control}
+\subsubsection{Access Control}
             
 In order to provide access control, the permission files, of the enclave that is being considered, need to be modified. This is ensured by adding security permissions to these files, with the mandatory signature of the CA. 
                 
@@ -507,4 +516,19 @@ This \texttt{policy.xml} passed as an input for easing the alteration of the enc
                 % How is it implemented
                 % Policy file example
 
+
 \section{Related work}\label{s:relWork}
+
+This section aims to present previous works that attended security matters related to the deployment of robotic systems using Robot Operating System as its application enhancer. When developing real-time systems, safety matters are often referred as critical, because of the overall integration with the real world. Security however, it is measured by evaluating different security issues by properly analysing the system model. However, due to the high nonlinearity and complexity of real-time systems, implementing such a thorough analysis method in near real-time remains a significant difficulty.\cite{diao2009design}
+
+The deployment of real-time systems results in the importance of concerning about safety in a performance point of view. Many studies were made regarding the performance in both ROS and ROS2 (also regarding DDS Quality of Service policies \cite{maruyama2016exploring}), by analysing using performance measurement approaches, providing a guided and supported review on how performance can directly affect time critical situations, where safety is envolved.\cite{maruyama2016exploring, casini2019response} 
+
+System security concerning network exposure, often explored by unauthorized acess and data leaking, can be treacherous and it is considered a complex subject, due to the abundance of different network security technologies that do not cover every security aspect, since absolute security does not exist, as new vulnerabilites arise from the tecnology evolution.\cite{kaeo2004designing} The creation and deployment of security countermeasures are essential upon configurating the network towards achieving security. Within this vast topic, several different avenues of endeavor come to mind, each deserving of a substantial study. Network security means exploring the network beforehand by computer intrusion detection, traffic analysis, network monitoring, alongside many other practical networking security aspects.\cite{marin2005network}
+
+The literature concerning the network security enhancment that Robot Operating System 2 furnishes, by offering the SROS2 toolset, is quite limited. Most of the existing work is on the exploration of the former version of ROS in terms of port exposure, contextualized in the approach considered to protect the system network.  
+
+Many researches were made regarding this issue that ROS faces, one in particular that explored the IPv4 address space of the Internet for instances of ROS, named \textit{Scanning the Internet for ROS: A View of Security in Robotics Research}\cite{8794451}, with the goal of identifying ROS vulnerable hosts, mostly master nodes since they provide information about their related topics and node's parameters, mainly by port scanning, so that developers could be aware of the possibility of exposure of their robots. The performed scans furnished information about hosts that could either be a sensor, an actuator or even a simulator. Topics were also identified since they provide evidence of what is likely to be available to an attacker. This study is rather relevant because of how easily can attackers gather information about potential robots, and control them further on, through the public Internet, making it unavoidable to develop mechanisms concerning security.
+
+A different approach was previously presented\cite{application-security-ros} when it comes to protecting the ROS network, which primarily focused on applying security measures on the application layer, treating ROS architecture as a black-box, by mainly running an Authentication Server, storing certificates and files related to trusted domain participants, while controlling and providing session keys related to the communication process. Even though the message data can not be perceived, unauthorized nodes can still collect information about the flow of the data, since ROS architecture is responsible for the publish-subscribe interaction, meaning that security issues still persist which cannot be handled on the application level alone.  
+
+Secure Robot Operating System (SROS)\cite{white2016sros} was initially developed as an experimental tool (later evolved to SROS2 as a supporting tool for ROS2), which supports TLS for all socket transport, node restrictions and chains of trust, guaranteeing publishers authorization when it comes to publish to a specific topic. Another worth-mentioned tool is Rosbridge\cite{crick2017rosbridge}, which provides a WebSocket interface to ROS and corresponding server to allow interaction between applications and ROS nodes, by using TLS as support and also access control over topics and API calls. 
