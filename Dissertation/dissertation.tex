@@ -130,22 +130,33 @@ I further declare that I have fully acknowledged the Code of Ethical Conduct of 
 % Add abstracts (en,pt) -----------------------------------------------------------
 \chapter*{Abstract}
 	
-	One of the most popular open-source software platforms for building robotic systems is the Robot Operating System (ROS) \cite{1}. A major factor behind its popularity and widespread adoption is its flexibility and interoperability. One drawback of this flexibility, however, lies in the increased security risks that ROS applications face. The low barrier to entry and open nature of the ROS ecosystem means a malicious actor could potentially inject code or vulnerabilities into a library, which could then be reused by another unsuspecting developer.
+	Automation developments are becoming essential to industrial restructuring, as it brings more efficient and accurate processes with less associated cost. Consequently, robots are rapidly being deployed in a wide range of scenarios, especially where security is demanded. In such cases, it is critical to employ appropriate procedures to verify both the system's quality and its security.
 
-	The first version of ROS includes its own communication middleware, which does not scale well, and is unsuitable for safety-critical and real-time systems. This lead to the creation of ROS2, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) \cite{3} communication protocol. This means that it continues to be relatively straightforward for a developer to add and integrate a new component into an existing system.
+	Following the current growth of cyber-physical system, as well as their usage into various technology domains, the development of software applications is demanding due to the complexity behind the integration of needed services, beyond those provided by the operating system. Hereupon, middleware software to abstract systems hardware are constantly evolving, while offering services that support application development and delivery.
 
-	ROS2 is deployed without security mechanisms by default, but DDS can provide security guarantees such as authentication and access control with a variant called DDS-Security. Using DDS-Security it is possible to configure ROS2 to run with security guarantees using the SROS2 toolset \cite{ros-dds-integration}. However, improper configuration can still lead security problems.
+	One of the most popular open-source software platforms for building robotic systems is the Robot Operating System (ROS)\cite{1} middleware, where highly configurable robots are usually built by composing third-party modules. A major factor behind its popularity and widespread adoption is its flexibility and interoperability. One drawback of this flexibility, however, lies in the increased security risks that ROS applications face. Alongisde security risks, the arising of performance and scalability issues related to the ROS middleware specification, forced the creation of a new version of ROS.
+
+	Robot Operating System 2 (ROS2), which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS)\cite{3} communication protocol, where security guarantees are ensured by DDS-Security specification. Using DDS-Security, it is possible to configure ROS2 to run with security guarantees using the SROS2 toolset \cite{ros-dds-integration}. However, improper configuration can still lead security problems.
 	
-	Alloy \cite{alloy-DJ} is a formal specification language and analysis tool that has been successfully applied in the verification of safety and security properties in several domains. This thesis intends to explore the usage of Alloy in the analysis of the security configuration of ROS2 applications.
+	This thesis proposes a technique, based on the software verification perspective, to automatically verify system-wide properties related to the security configuration of ROS2-based applications. The intended purpose is to model the ROS architecture, as well as the network communication behaviour, in Alloy\cite{alloy-DJ}, a formal specification language and analysis tool supported by a model-finder over which, system-wide properties are subsequently model-checked.
 
-\paragraph{Keywords} Software Verification, Model Checking, Alloy, DDS, ROS, ROS2, Security, SROS2
+\paragraph{Keywords} Robotics, ROS, ROS2, DDS, SROS2, Security, Software Verification, Alloy
 	\cleardoublepage
 
 \chapter*{Resumo}
-	
-	
 
-\paragraph{Palavras-chave} Software Verification, Model Checking, Alloy, DDS, ROS, ROS2, Security, SROS2
+	A constante implementação da ideia de automização de processos tem motivado a reestruturação nos mais diversos setores industriais, com o obejtivo de aumentar a eficiência e precisão nos processos integrados, consequentemente, reduzindo os custos associados. Consequentemente, impulsionam a integração robótica nos mais amplos domínios tecnológicos, especialmente em domínios onde a segurança é exigida. Nestes cassos, é fundamental adotar técnicas apropriadas de forma a verificar tanto a qualidade do sistema, como a segurança do mesmo.
+
+	Como resultado do atual crescimento de sistemas sistemas ciber-físicos, nomeadamente sistemas robóticos, bem como sua utilização em vários domínios tecnológicos, o desenvolvimento de aplicações é exigente devido à complexidade da integração dos serviços necessários, tipicamente não fornecidos pelo sistema operativo. De forma a acompanhar o aumento na complexidade destes sistemas, middlewares que permitem abstrair hardware têm sido adoptados, oferecendo serviços que oferecem suporte ao desenvolvimento de aplicações robóticas.
+
+	Uma das plataformas considerada como \textit{standard} no que toca ao desenvolvimento sistemas robóticos é o middleware Robot Operating System (ROS)\cite{1}, onde robôs altamente configuráveis são construídos atráves da composição modular de \textit{software} externo, oferencedo características como flexibilidade e interoperabilidade aos sistemas integrados. No entanto, a flexibilidade resulta num aumento de vulnerabilidades de segurança, pondo em causa a integridade das aplicações. Além da falta de segurança apresentada, existem também problemas de desempenho e escalabilidade relacionados com a especificação do middleware. Assim, era necessário uma mudança na estruturação do ROS, resultando na criação do Robot Operating System 2 (ROS2).
+
+	A nova versão do ROS, o Robot Operating System 2 (ROS2) implementa um protocolo de comunicação de nome Data Distribution Service (DDS)\cite{3}, onde para além de garantir serviços de comunicação, fornece diversas especificações, sendo uma delas a especificação DDS-Security, que através de uma metodologia de \textit{plugins}, oferece diferentes métodos de adoção de segurança. Através do uso desta especificação, juntamente com o uso do SROS2 \textit{toolset} \cite{ros-dds-integration}, é possível configurar o ROS2 de forma a adotar estas medidas de segurança.
+
+	Esta tese propõe uma técnica para a verificação automática de \textit{system-wide properties} em aplicações ROS. Esta técnica apresentada baseia-se na formalização estrutural de arquiteturas ROS em Alloy\cite{alloy-DJ}, com o obejtivo de modelar o comportamento associado à comunicação dentro do sistema, tendo em consideração configurações associadas às propriedades de segurança. 
+	
+	
+\paragraph{Palavras-chave} Robótica, ROS, ROS2, DDS, SROS2, Segurança, Verificação de Software, Alloy
 
 
 	\cleardoublepage
@@ -178,19 +189,9 @@ I further declare that I have fully acknowledged the Code of Ethical Conduct of 
 
 \input{intro.tex}
 
-\chapter{Robot Operating System}\label{c:intro-ros}
+\input{ros/sota.tex}
 
-	This dissertation focus on the exploration of potential non-studied properties related to the security of the Robotic World.
-	
-	Therefore, before taking consideration about security matters, \textbf{R}obot \textbf{O}perating \textbf{S}ystem, known simply as \textbf{ROS}, must be introduced. 
-
-	\input{ros/sota.tex}
-
-
-\chapter{Alloy Specification Framework}\label{c:intro-alloy}
-
-	\input{alloy/sota.tex}
-
+\input{alloy/sota.tex}
 
 \input{curr_work.tex}
 

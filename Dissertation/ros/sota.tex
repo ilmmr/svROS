@@ -1,14 +1,20 @@
-\chapter{State of the art}\label{c:sota}
+\chapter{Robot Operating System}\label{c:ros}
 
 As aforementioned, this thesis aims to explore the security configuration within Robot Operating System 2 (ROS2) and its security toolset Secure Robot Operating System 2 (SROS2), enabling the specification and model checking using Alloy. 
 
+This chapter presents a detailed introduction to the concepts around Robot Operating System (ROS), as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand. Thereafter, it will be presented a section dedicated to related work regarding the study of security in ROS based systems.
+
+\section{Background}\label{s:ros-back}
+
+Robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
+
+In ROS, software flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS-based applications tend to face increased security risks, compromising the whole robotics network. As ROS became a standard for many robotic systems, and due to the scale and scope of the robotics grows as they start to be integrated into the real world, security matters must be addressed as priority while developing systems involving robots.\cite{diluoffo2018robot, kim2018security}
+
+The upgraded version of ROS, Robot Operating System 2 (ROS), presents itself as a framework for developing robotic systems, supported by a standard, the Data Distribution Service (DDS), where multiple middleware implementations are built over this standard, providing ROS applications multiple DDS-based specfications, as well as valued Quality of Service (QoS) settings. 
+
+The DDS-Security specification\cite{ros-dds-integration}, embedded by every DDS implementation supported by ROS, supplies multiple plugins regarding the security domain. As result, ROS2 yields a wider command tool compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (ROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
+
 This section introduces necessary background information over the major concepts on which this thesis rests. 
-
-This chapter presents a detailed introduction to the concepts around Robot Operating System (ROS) are introduced, as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand. Thereafter, it will be presented a section dedicated to related work regarding the study of security in ROS based systems.
-
-\section{Background}\label{s:back}
-
-As the scale and scope of the robotics grows, robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
 
 % Then, Alloy is introduced, supported by a predefined, and previously configured, ROS example, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain.
 
@@ -517,11 +523,11 @@ This \texttt{policy.xml} passed as an input for easing the alteration of the enc
                 % Policy file example
 
 
-\section{Related work}\label{s:relWork}
+\section{Related work}\label{s:ros-relWork}
 
 This section aims to present previous works that attended security matters related to the deployment of robotic systems using Robot Operating System as its application enhancer. When developing real-time systems, safety matters are often referred as critical, because of the overall integration with the real world. Security however, it is measured by evaluating different security issues by properly analysing the system model. However, due to the high nonlinearity and complexity of real-time systems, implementing such a thorough analysis method in near real-time remains a significant difficulty.\cite{diao2009design}
 
-The deployment of real-time systems results in the importance of concerning about safety in a performance point of view. Many studies were made regarding the performance in both ROS and ROS2 (also regarding DDS Quality of Service policies \cite{maruyama2016exploring}), by analysing using performance measurement approaches, providing a guided and supported review on how performance can directly affect time critical situations, where safety is envolved.\cite{maruyama2016exploring, casini2019response} 
+The deployment of real-time systems results in the importance of concerning about safety in a performance point of view, resulting of the demanding time-critical scenarios. Many studies were made regarding the performance in both ROS and ROS2 (also regarding DDS Quality of Service policies \cite{maruyama2016exploring}), by analysing using performance measurement approaches, providing a guided and supported review on how performance can directly affect time critical situations, where safety is envolved.\cite{maruyama2016exploring, casini2019response} 
 
 System security concerning network exposure, often explored by unauthorized acess and data leaking, can be treacherous and it is considered a complex subject, due to the abundance of different network security technologies that do not cover every security aspect, since absolute security does not exist, as new vulnerabilites arise from the tecnology evolution.\cite{kaeo2004designing} The creation and deployment of security countermeasures are essential upon configurating the network towards achieving security. Within this vast topic, several different avenues of endeavor come to mind, each deserving of a substantial study. Network security means exploring the network beforehand by computer intrusion detection, traffic analysis, network monitoring, alongside many other practical networking security aspects.\cite{marin2005network}
 
