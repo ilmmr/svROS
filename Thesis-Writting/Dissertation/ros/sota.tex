@@ -2,21 +2,21 @@
 
 As aforementioned, this thesis aims to explore the security configuration within Robot Operating System 2 (ROS2) and its security toolset Secure Robot Operating System 2 (SROS2), enabling the specification and model checking using Alloy. 
 
-In this chapter, it is intended to explore technologies that are relevant to give background context (2.1) as well as previous developed work that has the same or similar goals as this thesis (2.2).
+This section introduces necessary background information over the major concepts on which this thesis rests. 
+
+This chapter presents a detailed introduction to the concepts around Robot Operating System (ROS) are introduced, as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand. Thereafter, it will be presented a section dedicated to related work regarding the study of security in ROS based systems.
 
 \section{Background}\label{s:back}
 
-This section introduces necessary background information over the major concepts on which this thesis rests. 
+As the scale and scope of the robotics grows, robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
 
-First, concepts around Robot Operating System (ROS) are introduced, as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand. 
-
-Then, Alloy is introduced, supported by a predefined, and previously configured, ROS example, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain.
+% Then, Alloy is introduced, supported by a predefined, and previously configured, ROS example, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain.
 
 \subsection{Robot Operating System (ROS)}
 
-The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications.\cite{diluoffo2018robot} So, ROS is an open-source framework, mainly designed for the robotic industry, that enables locomotion, manipulation, navigation, and recognition tasks, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
+The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications\cite{diluoffo2018robot}, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
 
-Although Robot Operating System furnishes services, often perceived as operating system's services, such as hardware abstraction, low-level device control and control over message-passing between processes, ROS can not be perceived as a proper operating system, in the sense of process management and scheduling. However, it has a significant impact on the deployed application's performance, with highly complex effects on timing leading to affecting the application's runtime behaviour. In result, the impact of the underlying operating system scheduling is over exceed by ROS.\cite{intro-ros, casini2019response}  
+Although Robot Operating System furnishes services, often perceived as operating system's services, such as hardware abstraction, low-level device control and control over message-passing between processes, ROS can not be perceived as a proper operating system, in the sense of process management and scheduling. However, it has a significant impact on the deployed application's performance, with highly complex effects on timing leading to affecting the application's runtime behaviour. In result, the impact of the underlying operating system scheduling is over exceed by ROS.\cite{intro-ros, casini2019response} Fundamentally, ROS is a middleware, displayed as a distributed layer between the top application layer, the operating systems layer and its communication capabilities. 
 
 The emphasys on providing full modularity
 
