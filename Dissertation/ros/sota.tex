@@ -8,11 +8,11 @@ This chapter presents a detailed introduction to the concepts around Robot Opera
 
 Robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
 
-In ROS, software flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS-based applications tend to face increased security risks, compromising the whole robotic network. As ROS became a standard for many robotic systems, and due to the scale and scope of the robotics grows as they start to be integrated into the real world, security matters must be addressed as priority while developing systems involving robots.\cite{diluoffo2018robot, kim2018security}
+In ROS, software flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS-based applications tend to face increased security risks, compromising the whole robotic network. As ROS became a standard for many robotic systems, and due to the scale and scope of the robotics grows as they start to be integrated into the real world, security matters must be addressed as priority while developing systems involving robots. \cite{diluoffo2018robot, kim2018security}
 
 The upgraded version of ROS, Robot Operating System 2 (ROS), presents itself as a framework for developing robotic systems, supported by a standard, the Data Distribution Service (DDS), where multiple middleware implementations are built over this standard, providing ROS applications multiple DDS-based specfications, as well as valued Quality of Service (QoS) settings. 
 
-The DDS-Security specification\cite{ros-dds-integration}, embedded by every DDS implementation supported by ROS, supplies multiple plugins regarding the security domain. As result, ROS2 yields a wider command tool compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (ROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
+The DDS-Security specification \cite{ros-dds-integration}, embedded by every DDS implementation supported by ROS, supplies multiple plugins regarding the security domain. As result, ROS2 yields a wider command tool compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (ROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
 
 This section introduces necessary background information over the major concepts on which this thesis rests. 
 
@@ -20,22 +20,31 @@ This section introduces necessary background information over the major concepts
 
 \subsection{Robot Operating System (ROS)}
 
-The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications\cite{diluoffo2018robot}, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
+The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications \cite{diluoffo2018robot}, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
 
-Although Robot Operating System furnishes services, often perceived as operating system's services, such as hardware abstraction, low-level device control and control over message-passing between processes, ROS can not be perceived as a proper operating system, in the sense of process management and scheduling. However, it has a significant impact on the deployed application's performance, with highly complex effects on timing leading to affecting the application's runtime behaviour. In result, the impact of the underlying operating system scheduling is over exceed by ROS.\cite{intro-ros, casini2019response} Fundamentally, ROS is a middleware, displayed as a distributed layer between the top application layer, the operating systems layer and its communication capabilities. 
+Although Robot Operating System furnishes services, often perceived as operating system's services, such as hardware abstraction, low-level device control and control over message-passing between processes, ROS can not be perceived as a proper operating system, in the sense of process management and scheduling. However, it has a significant impact on the deployed application's performance, with highly complex effects on timing leading to affecting the application's runtime behaviour. In result, the impact of the underlying operating system scheduling is over exceed by ROS. \cite{intro-ros, casini2019response} 
 
-The emphasys on providing full modularity
+Fundamentally, ROS is a middleware, as it provides a custom serialization format, a custom transport protocol as well as a custom central discovery mechanism, presenting itself as a distributed layer between the top application layer, the operating systems layer and its communication capabilities. 
 
-ROS provides a distributed architecture that operates as a publish-subscribe service to distribute data among nodes in a system. The first version of ROS, namely ROS1, uses a custom serialization format, a custom transport protocol as well as a custom central discovery mechanism, meaning that the interface layer, called the communication middleware, was implemented by them. 
-            
-The main ideia behind having implemented their own middleware is that there was a need to have a \textbf{Master node}, that controlled every aspect of the communication establishment, acting as DNS server to the nodes that want to exchange information. Before running any node, a ROS Master node must be initialized, in order to retrieve information to the node that is running. Also, the location of the ROS Master must be addressable by the network nodes. The parameters, which in ROS provides useful runtime information about nodes, was also handled by the ROS Master. This \textbf{centralization} fits the purposes of a research tool, because of the vast capabilities that is controlled by the master, but does not scale well, making it unsuitable for safety-critical and real-time systems. It is considered a performance bottleneck because everything has to go through the master. If the master goes down then the whole system goes down, representing a single-point of failure.  
+ROS was designed to provide as much as modularity and composability to the application layer \cite{casini2019response} as possible, allowing ROS applications to be built over several software modules, as independent computing processes called \textit{nodes}, that compose together to fulfill the deployment characteristics of the corresponding robot. \cite{maruyama2016exploring} The communication approach that ROS implements to perform data exchange between nodes is based on a publish-subscribe model.
 
 \begin{figure}[H]
         \centering
          \includegraphics[width=0.5\linewidth]{images/former-ros1-architecture.png}
 \end{figure}
 
+The former communication architecture supported by ROS focused on a centralization perspective, as it had a implementation of a \textit{Master node}, that controlled every aspect of the communication establishment, meaning that every information exchange between nodes had to go through this master. A ROS Master node must be initialized before any node, as these nodes must also be able to address the ROS Master's location. The ROS Master was also in charge of the parameters, which offer important runtime information about the network nodes.
+
+Due to the sheer wide capabilities controlled by the master, this centralization approach fits the purposes of a research tool. This communication architecture, however, does not scale well since it is heavily reliant on the master node's availability, making it unsuitable for safety-critical and real-time applications. If the master fails, the entire system fails, representing a single point of failure and a huge performance bottleneck.
+
 This lead to the creation of \textbf{ROS2}, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol as middleware. This means that there is no need to implement a master, making the system fully distributed. The discovery process between nodes is distributed and guaranteed by DDS, giving theses nodes the capacity to discover other nodes. Considering that there is no ROS Master implemented, the approach when dealing with the parameters also changed. Instead of having a global parameter server, in ROS2 each node declares and manages its own parameters. All these aspects related to ROS2 will be later discussed.
+
+
+\subsection{Data Distribution Service}
+
+\subsection{Robot Operating System 2 (ROS)}
+
+\subsection{A Secured Approach: Secure ROS2 (SROS2)}
 
 \subsection{Data Distribution Service}
 
