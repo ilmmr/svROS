@@ -43,10 +43,10 @@ Robot Operating System 2 comes as a complete refactoring of ROS, with the aim of
 
 %This lead to the creation of \textbf{ROS2}, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol as middleware. This means that there is no need to implement a master, making the system fully distributed. The discovery process between nodes is distributed and guaranteed by DDS, giving theses nodes the capacity to discover other nodes. Considering that there is no ROS Master implemented, the approach when dealing with the parameters also changed. Instead of having a global parameter server, in ROS2 each node declares and manages its own parameters. All these aspects related to ROS2 will be later discussed.
 
-
-\subsection{Data Distribution Service}
-
 \subsection{Robot Operating System 2 (ROS)}
+
+
+The Robot Operating System 2 (ROS2) was developed with the goal of easing the former ROS architecture. Although ROS2 continues to provide a simple, uniform message passing interface to allow components to communicate with each other, instead of implementing their own middleware specification, Data Distribution Service (DDS) communication protocol is implemented as an abstract middleware interface, through which serialization, transport and discovery is being provided. This implies that adding and integrating a new component into an existing system remains reasonably simple for a developer. 
 
 \subsection{A Secured Approach: Secure ROS2 (SROS2)}
 
