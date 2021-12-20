@@ -10,7 +10,7 @@ Robotic systems have emerged into several scenarios, where its usage ranges betw
 
 In ROS, software flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS-based applications tend to face increased security risks, compromising the whole robotic network. As ROS became a standard for many robotic systems, and due to the scale and scope of the robotics grows as they start to be integrated into the real world, security matters must be addressed as priority while developing systems involving robots. \cite{diluoffo2018robot, kim2018security}
 
-The upgraded version of ROS, Robot Operating System 2 (ROS), presents itself as a framework for developing robotic systems, supported by a standard, the Data Distribution Service (DDS), where multiple middleware implementations are built over this standard, providing ROS applications multiple DDS-based specfications, as well as valued Quality of Service (QoS) settings. 
+The upgraded version of ROS, Robot Operating System 2 (ROS), presents itself as a framework for developing robotic systems, supported by a standard, the Data Distribution Service (DDS), where multiple middleware implementations are built over this standard, providing ROS applications multiple DDS-based specfications, as well as valued Quality of Service (QoS) settings over the transport configuration. 
 
 The DDS-Security specification \cite{ros-dds-integration}, embedded by every DDS implementation supported by ROS, supplies multiple plugins regarding the security domain. As result, ROS2 yields a wider command tool compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (ROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
 
@@ -18,7 +18,7 @@ This section introduces necessary background information over the major concepts
 
 % Then, Alloy is introduced, supported by a predefined, and previously configured, ROS example, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain.
 
-\subsection{Robot Operating System (ROS)}
+\subsection{Robot Operating System}
 
 The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications \cite{diluoffo2018robot}, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
 
@@ -26,11 +26,15 @@ Although Robot Operating System furnishes services, often perceived as operating
 
 Fundamentally, ROS is a middleware, as it provides a custom serialization format, a custom transport protocol as well as a custom central discovery mechanism, presenting itself as a distributed layer between the top application layer, the operating systems layer and its communication capabilities. 
 
-ROS was designed to provide as much as modularity and composability to the application layer \cite{casini2019response} as possible, allowing ROS applications to be built over several software modules, as independent computing processes called \textit{nodes}, that compose together to fulfill the deployment characteristics of the corresponding robot. \cite{maruyama2016exploring} The communication approach that ROS implements to perform data exchange between nodes is based on a publish-subscribe model, based on TCPROS \cite{tcpros} and UDPROS \cite{udpros}, that makes use of TCP and UDP sockets, respectively. \cite{maruyama2016exploring}
+ROS was designed to provide as much as modularity and composability to the application layer \cite{casini2019response} as possible, allowing ROS applications to be built over several software modules, as independent computing processes called \textit{nodes}, that compose together to fulfill the deployment characteristics of the corresponding robot. \cite{maruyama2016exploring} 
+
+The communication approach that ROS implements to perform data exchange between nodes is based on a publish-subscribe model, based on TCPROS \cite{tcpros} and UDPROS \cite{udpros}, that makes use of TCP and UDP sockets, respectively. \cite{maruyama2016exploring} The information exchange is done by introducing the \textit{message} definition, which characterizes every data structure concerning the information exchange between ROS participants.
 
 \begin{figure}[H]
         \centering
-         \includegraphics[width=0.5\linewidth]{images/former-ros1-architecture.png}
+        \includegraphics[width=0.5\linewidth]{images/former-ros1-architecture.png}
+        \caption{Robot Operating System architecture.}
+        \label{fig:ros1-architecture}
 \end{figure}
 
 The former communication architecture supported by ROS focused on a centralization perspective, as it had a implementation of a \textit{Master node}, that controlled every aspect of the communication establishment, meaning that every information exchange between nodes had to go through this master. A ROS Master node must be initialized before any node, as these nodes must also be able to address the ROS Master's location. The ROS Master was also in charge of the parameters, which offer important runtime information about the network nodes.
@@ -43,115 +47,72 @@ Robot Operating System 2 comes as a complete refactoring of ROS, with the aim of
 
 %This lead to the creation of \textbf{ROS2}, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol as middleware. This means that there is no need to implement a master, making the system fully distributed. The discovery process between nodes is distributed and guaranteed by DDS, giving theses nodes the capacity to discover other nodes. Considering that there is no ROS Master implemented, the approach when dealing with the parameters also changed. Instead of having a global parameter server, in ROS2 each node declares and manages its own parameters. All these aspects related to ROS2 will be later discussed.
 
-\subsection{Robot Operating System 2 (ROS)}
+\subsection{Robot Operating System 2}
 
+The Robot Operating System 2 (ROS2) was developed with the goal of easing the former ROS architecture. Although ROS2 continues to provide a simple, uniform message passing interface to allow components to communicate with each other, instead of implementing their own middleware specification, Data Distribution Service (DDS) communication protocol is implemented as an abstract middleware interface, through which serialization, transport and discovery is being provided. This implies that adding and integrating a new component into an existing system remains reasonably simple for a ROS developer.
 
-The Robot Operating System 2 (ROS2) was developed with the goal of easing the former ROS architecture. Although ROS2 continues to provide a simple, uniform message passing interface to allow components to communicate with each other, instead of implementing their own middleware specification, Data Distribution Service (DDS) communication protocol is implemented as an abstract middleware interface, through which serialization, transport and discovery is being provided. This implies that adding and integrating a new component into an existing system remains reasonably simple for a developer. 
+\subsubsection{Data Distribution Service}
 
-\subsection{A Secured Approach: Secure ROS2 (SROS2)}
-
-\subsection{Data Distribution Service}
-
-\textbf{Data Distributed System}, known as DDS, is a middleware Object Management Group (OMG) standard, resulted from the need of better interoperability between different vendors middleware frameworks, directly addressing data communication between nodes that belong to a \textit{publish-subscribe} communication architecture, for real-time and embedded systems, that relies on a data-centric approach. 
+The Data Distributed System \cite{3}, simply known as DDS, is a Object Management Group (OMG) middleware standard, resulted from the need of better interoperability between different vendors middleware frameworks, directly addressing data communication between nodes that belong to a \textit{publish-subscribe} communication architecture, for real-time and embedded systems, that relies on a data-centric approach. DDS disposes a software API supported by a rich documentation about its exact behaviour. By furnishing this specification, it enables third parties applications, such as ROS, to implement this middleware, while auditing and understanding matters are covered by its documentation.
             
-A middleware, such as DDS, is the software layer that comes between the \textbf{Platform layer}, where configuration about operating systems and network transport is covered, and the \textbf{Application layer}. By that, developers can mainly focus on their applications purposes, instead of concerning about information passing between layers.
+A middleware, such as DDS, is a software layer that sits between the Platform layer, which handles both the operating system as the network transport configuration, and the Application layer, that is usually implemented by sytems that highly rely on timing-measures and efficiency, when it comes to data-delivering between nodes. DDS aims to ease the complexity behind creating each sytem's own middleware, by handling relevant aspects like network configuration, communication establishment, data sharing and low-level details. As a result, system developers can mainly focus on their applications purposes, rather than concerning about information moving across levels. 
 
-\begin{figure}[H]
-        \centering
-         \includegraphics[width=0.4\linewidth]{images/middleware.png}
-\end{figure}
+% Data centricity
+The architecture approach is based on a concept named \textit{Data-Centric}, that instead of focusing on the reliable transmission of the message, the distributed infrastructure takes more responsibility, where the message-data itself is the focal point. Here, the infrastructure formally defines the data and imposes rules over it, with the continuous awareness of the contents in the data space, where known structures exchange these contents. Rather than forcing each application to deal with this complexity of defining the data space, DDS directly implements and provides controlled, managed, secure data sharing. However, the Data-Centric approach does not define the full DDS architecture, but only how messaging is treated.
 
-Usually, middlewares are implemented by distributed systems, that rely on timing-measures and efficiency when it comes to data-delivering between nodes. DDS aims to ease the complexity of building their own middleware. Complex network configuration, communication establishment, data sharing and low-level details are handled by DDS.
-
-In computer networking, a wire protocol refers to the way of how data is passed from point to point, where multiple applications, that could have different DDS implementations implemented, have to interoperate with each other. DDS wire specification protocol, called \textbf{DDSI-RTPS} (\textit{The Real-time Publish-Subscribe Wire (RTPS) Protocol DDS Interoperability (DDSI) Wire Protocol Specification}), offers flexibility and reliability for real-time systems. Since DDS is built over UDP transport protocol, which does not feature reliable delivery of data, so reliability is ensured by the specification of \textbf{Quality of Service} (QoS) parameters. Quality of Service parameters offers flexibility over communication, because of the versatility of each QoS parameter. Versatility allows the developer to specify whatever QoS satisfies its system communication needs. A typical case is when the developer wants to ensure reliability over the communication, by ensuring the correctness of packet delivery, which UDP by default does not provide. By changing the QoS parameters, it is possible to change the communication's behaviour into something similar to the TCP protocol.  
-
-When it comes to easing the communication establishment, DDS features a \textbf{Dynamic Discovery} within nodes, by providing automatic discovery between endpoints and useful information about them. Network configuration is also guaranteed by this feature, where DDS participants are accessible across the network, as the application uses the same DDS API for communications. \textbf{Security} features are also considered, where DDS sets a Plugin interface, that combine different plugins that interact with DDS API. These security matters will be later discussed.
-
-\subsubsection{An End-to-End Middleware}
-
-DDS disposes a software API supported by a rich documentation about its exact behaviour. By furnishing this specification, it enables third parties applications, such as ROS, to implement this middleware, while auditing and understanding matters are covered by its documentation.
-
-The drawback of using DDS as a middleware is that, by being considered an \textbf{End-to-End} middleware, the applications that implement it, must follow its design approach. Although, DDS is still considered flexible when it comes to how distinct systems can make use of it as its middleware, it moulds them around their publish-subscribe communication architecture. As far as DDS is concerned, this is should not be viewed as a problem to the developers.
-
-\subsubsection{Data-Centric Approach}
-
-Initially, systems used to prioritized the message as the establishment of the interaction, meaning that the system was mainly concerned if the message was correctly passed between nodes. This way of structuring is called Message-Centric approach, where the key is the message itself, and not its content.
-            
-DDS architecture approach is based on a concept named \textbf{Data-Centric}, that instead of focusing on the reliable transmission of the message, the distributed infrastructure takes more responsibility, where the message-data itself is the focal point. Here, the infrastructure formally defines the data and imposes rules over it (\textbf{modular}), with the continuous awareness of the contents in the data space, where known structures exchange these contents. Therefore, the data is independent of any particular functionally of any application that uses it, because the data is described by its state, making it easily \textbf{scalable}.
-    
-The essence of data centricity is that DDS must know the data schemas, treating the data values as known objects and controls how the data is retrieved to the applications. Thus, DDS is responsible for providing the definition of 'truth' regarding the message management.  Whereas, in the traditional message-centric approach, each application must store the message state and treated them as its own, meaning that the 'truth' of the message state is subjective. Even though this offers some flexibility to the application developers, state managing often leads to inconsistency. Rather than forcing each application to deal with this complexity of defining the data space, DDS directly implements and provides controlled, managed, secure data sharing.
-
-\subsubsection{DDS Architecture}
-
-The Data-Centric approach does not define the full DDS architecture, but only how messaging is treated as a technique. Other technologies, such as Databases supports data-centricity, but usually these are not scalable when it comes to accessing data by multiple applications, updates are slow and highly centralized, meaning that reliability of data could be potentially compromised. Since DDS uses the concept of a transport-independent virtualized \textbf{Data Bus}, scalability is not a issue, since network resources are efficiently used, and inside local networks DDS uses multicast, so that the load on the network is independent of the number of applications. There is no centralization whatsoever, maintaining the awareness on the information flow. 
-                
-Reliability is ensured by implementing a buffer mechanism, where both publisher and subscriber has a corresponding buffer where the samples of data are processed. The subscriber receives these data samples on the receive buffer, and acknowledges them back to the publisher. The sending of data is multicast, because there might be multiple subscribers to a specific topic, whereas acknowledgments and the re-sending process, that happens if a sample drops, are unicast. 
-                
-DDS is really about distributing stateful data, acessing it and querying it in motion, in a analogous way to how its done in a database or another data-centric technology, by improving these architectures and making them available for a much wider class of applications and problems.  
-                
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.5\linewidth]{images/dds-architecture.png}
-\end{figure}
-
-As previously mentioned, DDS uses network resources very efficiently, meaning that hardware footprint can be reduced, or even with the same hardware, DDS offers significantly greater performance and functionality. Since DDS supports a distributed peer-to-peer topology, with no single points of failure, these capabilities are provided in a more deterministic and reliable way.
-
-DDS communications are also governed with explicit Quality of Service, that allows the system to manage and monitor which applications are able to communicate in which ways with the Data Bus and with each other. 
+DDS leverages the premise of a transport-independent virtualized Data Bus, to address the distribution of network resources, in which stateful data is distributed through the network, where multiple applications can acess this data in motion, representing an architecture with no single point of failure, respectively enabling a realiable way of ensuring data integratity. Consequently, by adopting this approach, the load on the network is independent of the number of applications, making it easily scalable. DDS communications are also governed with explicit \textit{Quality of Service} settings, that allows the system to manage and monitor which applications are able to communicate in which ways with the Data Bus and with each other. 
 
 \begin{figure}[H]
     \centering
-     \includegraphics[width=0.5\linewidth]{images/dds-scalable-architecture.png}
+    \includegraphics[width=0.6\linewidth]{images/dds-architecture.png}
+    \caption{Data Distributed System architecture.}
+    \label{fig:dds-architecture}
 \end{figure}
 
-DDS provides flexibility and scalibilty to every sort of systems, from small devices, located at the "Edge" where DDS can be used for high-speed machine to machine communications, up to large systems, where DDS provides scalable access and distribution of information over the whole cloud.
+When it comes to easing the communication establishment, DDS features a set of discovery services, allowing the automatic discovery between participants. As to adress the data transportation, DDS offers a wire specfication protocol called Real-Time Publish-Subscribe Wire Protocol (RTPS) \cite{rtps}, allowing multiple applications, that could differ on their used DDS implementations, to interoperate with each other as network domain participants, by abstracting and optimizing transport. 
 
+Furthermore, RTPS was designed to make use of \textit{Quality of Service} profiles, where multiple transport policies can be specificed, that by default DDS does not support. For instance, as multiple DDS vendors are built over the UDP \cite{udp} transport protocol, which does not feature reliable delivery of data, transport reliability, often required by real-time environments, can be ensured by specifying the realiability corresponding QoS policy into the RTPS communication layer. Besides, QoS profiles also enable security deployment into the transport configuration. This approach offers flexibility over communication configuration and development versatility, allowing the developer to specify whatever QoS satisfies its system communication needs
 
-\subsection{Robot Operating System 2 - DDS Integration}
+A domain participant enables an application to participate in the global data space, either as a \textit{data writer} or as a \textit{data reader}, according to their role on how data, concerning their respective communications, is passed from point to point. Moreover, concerning the RTPS protocol, the communication architecture is based on a \textit{publish-subscribe} model. Each data writer publish data to a corresponding \textit{topic}, acting as a data \textit{publisher}. A \textit{topic} represents the data space objects through which data is handled. A data reader, complementing the role of the data writer in the RTPS data transportation, declares the intent to subscribe to the topic, in which data is published by the data writer, acting as a \textit{data subscriber}. 
 
-As stated in the previous section, ROS2 was developed with the goal of easing the former ROS architecture, by implementing an abstract middleware interface, through which serialization, transport and discovery is being provided. This means that it continues to be relatively straightforward for a developer to add and integrate a new component into an existing system.
-
-\subsubsection{ROS2 Middleware Architecture}
-
-ROS2 offers an interface on top of DDS, called \textbf{ROS client library} (RCL), which hides much of the complexity of DDS specification API, offering a more friendly approach for the ROS users. However, it still provides access to the underlying DDS implementation for users that might want to integrate different DDS implementations for their use cases.
-
-ROS2 is built over the DDS framework, since it must work with that existing DDS design. So ROS2 applications are actually considered DDS applications, which leads to this provided flexibility and compatibility with other DDS applications.
-                
-Native DDS applications can freely interoperate with ROS2 DDS applications, but some restrictions, that module the communication flow and establishment (such as the selected QoS settings), have to be respected.
-                
 \begin{figure}[H]
     \centering
-     \includegraphics[width=0.5\linewidth]{images/ROS2-architecture.png}
+    \includegraphics[width=0.5\linewidth]{images/dcps-model.png}
+    \caption{Data Centric RTPS model. Extracted from \cite{maruyama2016exploring}.}
+    \label{fig:dcps-model}
 \end{figure}
 
-ROS2 aims to support multiple DDS implementations, even though each of these implementations API specification differ from each other. In order to abstract from the specifics of these APIs, an abstract interface is being introduced, which can be implemented for different DDS implementations, depicted above as \textbf{Abstract DDS Layer}. So, the main idea is to support \textbf{portability} among DDS vendors, enabling ROS developers to interpolate DDS implementations depending on their requirements at time.
+Additionally, each domain entity manages the data according to the Quality of Service profiles speficified over the RTPS protocol, that is used over the transportation process as a policy. Applications within the network are then generated as DDS domain participants, with regard of the transport QoS policies. 
 
-This layer could be removed, if there was no need to use more than one DDS implementation. But this is not the wanted scenario, since it is way more practical to switch the DDS implementation depending on the application needs. 
-This layer was already customized and implemented in ROS1, defined by the Client Library which allows the communication between the Application Layer, where the Master is implemented, and the communication protocols. The main reason behind implementing this middleware layer is so that ROS2 developers can focus on their application, instead of also focusing on all these aspects of communication configuration. 
+% Introduzir as implementações e DDS specifications
 
-Note that, these implementations offered by DDS are low-level of abstraction, specified by its API, with predefined functions defined by vendors. DDS only defines basic procedures in a more higher level of abstraction.
+\subsubsection{DDS integration in ROS2}
+
+As previously stated, the Robot Operating System 2 was developed to address the lack of support for real-time systems that the former ROS provided, mainly due to its architecture design that relied on their own middleware specification. To address this, ROS2 middleware approach is built upon the DDS framework \cite{maruyama2016exploring}, leveraging DDS for its messaging architecture, where communication and transport configuration are handled. As a result of the DDS integration, ROS2 applications are actually considered DDS applications, meaning that is possible to interoperate both native DDS applications and ROS applications, providing flexible compatibility.
+
+By relying on an outside middleware, the modularity approach that ROS makes use of, where multiple modules should be applied when needed, while reducing the number of dependencies attached, highly depends on the middleware implementation that is being used. As far as dependencies are concerned, DDS implementations have light sized dependencies, often related to language implementation libraries, easing the complexity behind installing and running dependencies for ROS developers. \cite{ros-on-dds}
+
+ROS2 middleware implements an interface on top of DDS, called \textit{ROS client library} (RCL), which hides much of the complexity of DDS specification API, offering a more friendly approach for the ROS users. However, it still provides access to the underlying DDS implementation for users that might want to integrate different DDS implementations for their use cases.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/ROS2-architecture.png}
+    \caption{ROS2 framework architecture.}
+    \label{fig:dcps-model}
+\end{figure}
+
+Towards supplying a wide range of configurations back to application layer, to vastly cover the robotic applications needs, ROS2 aims to support multiple DDS implementations, in which these implementation's API specification might differ from each other. In order to abstract from the specifics of these implementation's APIs, an abstract interface is being introduced, depicted above as Abstract DDS Layer, allowing portability among DDS vendores, which consequently enables ROS developers to interpolate DDS implementations, based on their application's needs during runtime. It should be noted that the DDS implementations are low-level of abstraction, strictly defined by its corresponding vendor's API. DDS only defines fundamental procedures at a higher degree of abstraction.  
+
+% This layer could be removed, if there was no need to use more than one DDS implementation. But this is not the wanted scenario, since it is way more practical to switch the DDS implementation depending on the application needs. 
+
+The former version of ROS already provided this abstract layer, customized and implemented by ROS client library, that allowed the communication between the Application Layer, in hwich the Master node was implemented, and the communication protocols. However, the capabilities offered by this middleware are significantly lower than ROS2 middleware, due to the DDS integration, as well as the fail to support the needs of multiple systems.
+
+As stated, ROS client library hides the complexity of the DDS specification API from the developer. As RCL works under ROS structures, to keep the passing of information through the middleware layer, a structure mapping between ROS and DDS must occur. The data structure mapping between ROS and DDS must account the preservation of the former ROS messages' structure. The RCL works under the ROS messages' \texttt{.msg} files, and explained, these messages must be converted into messages' \texttt{.idl} files, to be used by the DDS transport.
+
+The data transformation accounts the DDS implementation that is being considered at runtime, implemented at the \textit{Abstract DDS Layer}. The converted data is handled by the DDS wire protocol, RTPS, where the DDS publish-subscribe architecture and their respective structures comes to practice. Then, the reverse process must be ensured as well, to fully complete the information flow, where the data must be converted back to ROS structures before being returned to the ROS client library. \cite{ros-on-dds}
 
 
-\subsubsection{Information flow through the Middleware}
-
-As stated, ROS client library hides the complexity of the DDS specification API from the developer. Although the ROS structures are yet to be introduced, RCL must work under these ROS structures, to abstract the developer from the DDS structures. 
-                    
-In order to keep the passing of information through the middleware layer, a structure mapping between ROS and DDS must occur. The data transformation accounts the DDS implementation that is being considered at runtime, implemented at the \texttt{Abstract DDS Layer}. Then, the converted data is handled by the DDS wire protocol, RTPS, where the DDS publish-subscribe architecture and their respective structures comes to practice. Then, the reverse process must be ensured as well, to fully complete the information flow, where the data must be converted back to ROS structures before being returned to the ROS client library.
-                    
-The way that ROS handles communication is by introducing the \textbf{message} definition, which characterizes every data structure concerning the information exchange between ROS participants. Former ROS developers relied on this message approach, since ROS code was driven by the structure of these messages. So, keeping the messages' idea was necessary in ROS2 kept the message structure because of the value  Since that provides a simple format.  
-
-The data structure mapping between ROS and DDS must account the preservation of the messages' structure. The RCL works under the ROS messages' \texttt{.msg} files, and explained, these messages must be converted into messages' \texttt{.idl} files, to be used by the DDS transport, The conversion functions, that create DDS in-memory instances from ROS files, are being generated for each DDS implementation. Depending on the DDS implementation that is being used, the \texttt{.idl} can be directly used, since the conversion were already provided by the conversion functions.
-    
-For instance, lets consider a simple example of a publisher node, that publishes a message that is later subscribed by a subscriber node. So, the publisher creates the message, and by publishing it, the message is passed on to the RCL layer. Then the \texttt{.msg} is converted into its corresponding DDS \texttt{.idl} file. The process of transporting the converted message is treated by DDS, ensuring that the message reach its destination, which is the DDS structure that maps to the ROS subscriber node. Finally, the reversed process is considered, where the message is converted back to a \texttt{.msg} file, and RCL handles the message delivery to the subscriber node. 
-
-
-\subsubsection{DDS as a Dependency}
-
-The modularity approach that ROS makes use of, where multiple modules should be applied when needed, promoting the idea of code reuse, while reducing the number of dependencies attached, was considered a priority goal upon ROS development, since it offer great portability.
-                
-By relying on an outside middleware, these goals highly depend on the middleware implementation that is being used. As far as dependencies are concerned, DDS implementations have light sized dependencies, often related to language implementation libraries, easing the complexity behind installing and running dependencies for ROS developers.
-
-
-\subsection{Robot Operating System 2 Data Model}
+\subsubsection{ROS2 Graph Architecture}
 
 As previous stated, ROS provides a way of data distribution between nodes base on published and subscribed data. Before considering about how the data is passed and treated by publishing and subscribing, nodes must be studiedly covered.
             
