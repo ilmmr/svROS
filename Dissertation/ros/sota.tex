@@ -2,9 +2,7 @@
 
 As aforementioned, this thesis aims to explore the security configuration within Robot Operating System 2 (ROS2) and its security toolset Secure Robot Operating System 2 (SROS2), enabling the specification and model checking using Alloy. 
 
-This chapter presents a detailed introduction to the concepts around Robot Operating System (ROS), as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand. Thereafter, it will be presented a section dedicated to related work regarding the study of security in ROS based systems.
-
-\section{Background}\label{s:ros-back}
+% \section{Background}\label{s:ros-back}
 
 Robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
 
@@ -12,13 +10,14 @@ In ROS, software flexibility was valued above all else, meaning that values like
 
 The upgraded version of ROS, Robot Operating System 2 (ROS), presents itself as a framework for developing robotic systems, supported by a standard, the Data Distribution Service (DDS), where multiple middleware implementations are built over this standard, providing ROS applications multiple DDS-based specfications, as well as valued Quality of Service (QoS) settings over the transport configuration. 
 
-The DDS-Security specification \cite{ros-dds-integration}, embedded by every DDS implementation supported by ROS, supplies multiple plugins regarding the security domain. As result, ROS2 yields a wider command tool compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (ROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
+The DDS-Security specification \cite{ros-dds-integration}, embedded by every DDS implementation supported by ROS, supplies multiple plugins regarding the security domain. As result, ROS2 yields a wider command toolset compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (ROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
 
-This section introduces necessary background information over the major concepts on which this thesis rests. 
+This chapter introduces necessary background information over the major concepts on which this thesis rests. First, it is presented a detailed introduction to the concepts around Robot Operating System (ROS), as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand. Thereafter, it will be presented a section dedicated to related work regarding the study of security in ROS based systems.
 
+% This section introduces necessary background information over the major concepts on which this thesis rests. 
 % Then, Alloy is introduced, supported by a predefined, and previously configured, ROS example, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain.
 
-\subsection{Robot Operating System}
+\section{Robot Operating System}
 
 The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications \cite{diluoffo2018robot}, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
 
@@ -47,11 +46,11 @@ Robot Operating System 2 comes as a complete refactoring of ROS, with the aim of
 
 %This lead to the creation of \textbf{ROS2}, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol as middleware. This means that there is no need to implement a master, making the system fully distributed. The discovery process between nodes is distributed and guaranteed by DDS, giving theses nodes the capacity to discover other nodes. Considering that there is no ROS Master implemented, the approach when dealing with the parameters also changed. Instead of having a global parameter server, in ROS2 each node declares and manages its own parameters. All these aspects related to ROS2 will be later discussed.
 
-\subsection{Robot Operating System 2}
+\section{Robot Operating System 2}
 
 The Robot Operating System 2 (ROS2) was developed with the goal of easing the former ROS architecture. Although ROS2 continues to provide a simple, uniform message passing interface to allow components to communicate with each other, instead of implementing their own middleware specification, Data Distribution Service (DDS) communication protocol is implemented as an abstract middleware interface, through which serialization, transport and discovery is being provided. This implies that adding and integrating a new component into an existing system remains reasonably simple for a ROS developer.
 
-\subsubsection{Data Distribution Service}
+\subsection{Data Distribution Service}
 
 The Data Distributed System \cite{3}, simply known as DDS, is a Object Management Group (OMG) middleware standard, resulted from the need of better interoperability between different vendors middleware frameworks, directly addressing data communication between nodes that belong to a \textit{publish-subscribe} communication architecture, for real-time and embedded systems, that relies on a data-centric approach. DDS disposes a software API supported by a rich documentation about its exact behaviour. By furnishing this specification, it enables third parties applications, such as ROS, to implement this middleware, while auditing and understanding matters are covered by its documentation.
             
@@ -71,7 +70,7 @@ DDS leverages the premise of a transport-independent virtualized Data Bus, to ad
 
 When it comes to easing the communication establishment, DDS features a set of discovery services, allowing the automatic discovery between participants. As to adress the data transportation, DDS offers a wire specfication protocol called Real-Time Publish-Subscribe Wire Protocol (RTPS) \cite{rtps}, allowing multiple applications, that could differ on their used DDS implementations, to interoperate with each other as network domain participants, by abstracting and optimizing transport. 
 
-Furthermore, RTPS was designed to make use of \textit{Quality of Service} profiles, where multiple transport policies can be specificed, that by default DDS does not support. For instance, as multiple DDS vendors are built over the UDP \cite{udp} transport protocol, which does not feature reliable delivery of data, transport reliability, often required by real-time environments, can be ensured by specifying the realiability corresponding QoS policy into the RTPS communication layer. Besides, QoS profiles also enable security deployment into the transport configuration. This approach offers flexibility over communication configuration and development versatility, allowing the developer to specify whatever QoS satisfies its system communication needs
+Furthermore, RTPS was designed to make use of \textit{Quality of Service} profiles, where multiple transport policies can be specificed that, by default, DDS does not support. For instance, as multiple DDS vendors are built over the UDP \cite{udp} transport protocol, which does not feature reliable delivery of data, transport reliability, often required by real-time environments, can be ensured by specifying the realiability corresponding QoS policy into the RTPS communication layer. Besides, QoS profiles also enable security deployment into the transport configuration. This approach offers flexibility over communication configuration and development versatility, allowing the developer to specify whatever QoS satisfies its system communication needs
 
 A domain participant enables an application to participate in the global data space, either as a \textit{data writer} or as a \textit{data reader}, according to their role on how data, concerning their respective communications, is passed from point to point. Moreover, concerning the RTPS protocol, the communication architecture is based on a \textit{publish-subscribe} model. Each data writer publish data to a corresponding \textit{topic}, acting as a data \textit{publisher}. A \textit{topic} represents the data space objects through which data is handled. A data reader, complementing the role of the data writer in the RTPS data transportation, declares the intent to subscribe to the topic, in which data is published by the data writer, acting as a \textit{data subscriber}. 
 
@@ -86,7 +85,7 @@ Additionally, each domain entity manages the data according to the Quality of Se
 
 % Introduzir as implementações e DDS specifications
 
-\subsubsection{DDS integration in ROS2}
+\subsection{DDS integration in ROS2}
 
 As previously stated, the Robot Operating System 2 was developed to address the lack of support for real-time systems that the former ROS provided, mainly due to its architecture design that relied on their own middleware specification. To address this, ROS2 middleware approach is built upon the DDS framework \cite{maruyama2016exploring}, leveraging DDS for its messaging architecture, where communication and transport configuration are handled. As a result of the DDS integration, ROS2 applications are actually considered DDS applications, meaning that is possible to interoperate both native DDS applications and ROS applications, providing flexible compatibility.
 
@@ -98,215 +97,182 @@ ROS2 middleware implements an interface on top of DDS, called \textit{ROS client
     \centering
     \includegraphics[width=0.5\linewidth]{images/ROS2-architecture.png}
     \caption{ROS2 framework architecture.}
-    \label{fig:dcps-model}
+    \label{fig:ros2-architecture}
 \end{figure}
 
 Towards supplying a wide range of configurations back to application layer, to vastly cover the robotic applications needs, ROS2 aims to support multiple DDS implementations, in which these implementation's API specification might differ from each other. In order to abstract from the specifics of these implementation's APIs, an abstract interface is being introduced, depicted above as Abstract DDS Layer, allowing portability among DDS vendores, which consequently enables ROS developers to interpolate DDS implementations, based on their application's needs during runtime. It should be noted that the DDS implementations are low-level of abstraction, strictly defined by its corresponding vendor's API. DDS only defines fundamental procedures at a higher degree of abstraction.  
 
 % This layer could be removed, if there was no need to use more than one DDS implementation. But this is not the wanted scenario, since it is way more practical to switch the DDS implementation depending on the application needs. 
 
-The former version of ROS already provided this abstract layer, customized and implemented by ROS client library, that allowed the communication between the Application Layer, in hwich the Master node was implemented, and the communication protocols. However, the capabilities offered by this middleware are significantly lower than ROS2 middleware, due to the DDS integration, as well as the fail to support the needs of multiple systems.
+The former version of ROS, depicted on left hand-side of the picture \ref{fig:ros2-architecture}, already provided this abstract layer, that was customized and implemented by ROS client library, which allowed the communication between the Application Layer, in hwich the Master node was implemented, and the communication protocols. However, the capabilities offered by this middleware are significantly lower than ROS2 middleware, due to the DDS integration, as well as the fail to support the needs of multiple systems.
 
 As stated, ROS client library hides the complexity of the DDS specification API from the developer. As RCL works under ROS structures, to keep the passing of information through the middleware layer, a structure mapping between ROS and DDS must occur. The data structure mapping between ROS and DDS must account the preservation of the former ROS messages' structure. The RCL works under the ROS messages' \texttt{.msg} files, and explained, these messages must be converted into messages' \texttt{.idl} files, to be used by the DDS transport.
 
 The data transformation accounts the DDS implementation that is being considered at runtime, implemented at the \textit{Abstract DDS Layer}. The converted data is handled by the DDS wire protocol, RTPS, where the DDS publish-subscribe architecture and their respective structures comes to practice. Then, the reverse process must be ensured as well, to fully complete the information flow, where the data must be converted back to ROS structures before being returned to the ROS client library. \cite{ros-on-dds}
 
 
-\subsubsection{ROS2 Graph Architecture}
+\subsection{ROS2 Graph Architecture}
 
-As previous stated, ROS provides a way of data distribution between nodes base on published and subscribed data. Before considering about how the data is passed and treated by publishing and subscribing, nodes must be studiedly covered.
+From a logical perspective \cite{casini2019response}, ROS applications are composed of many software modules that operate as separate computing processes, known as nodes, allowing its participation into the ROS global data space, similiar to a DDS participant. The data distribution between nodes is based on a publish-subscribe model, in which each node is perceived either as a publisher or as a subscriber within the network. First, nodes must be thoroughly covered before evaluating how data is passed and treated by publishing and subscribing.
             
-\textbf{Nodes} can be perceived as processes that will likely perform computation over the network. The network is comprised of many nodes, running simultaneously and exchanging data between them, with each node having its corresponding module purpose. Generally speaking, nodes are programs, built over a package, where their software code treats data that has been exchanged to each of them.
+\textit{Nodes} can be perceived as processes that will likely perform computation over the network. The network is comprised of many nodes, running simultaneously and exchanging data between them, where each node addresses its corresponding module purpose. In a nutshell, nodes are network executables, built over a package, where their software code treats data that has been exchanged to each of them. % In ROS2, there is a modular convention about how to program nodes, where each class inherits from the Node object, easing the life of the programmer.
+       
+For instance, lets considered a well-known example called \texttt{TurtleSim}, which is a simulator typically used for learning ROS, mainly composed by 2 nodes, that perform together towards moving a turtle. Additional nodes were implemented, in order to add complexity to the current network, as to later support security matters as a proper example. 
 
-In ROS2, there is a modular convention about how to program nodes, where each class inherits from the Node object, easing the life of the programmer.        
-For instance, lets considered a well-known example called \texttt{TurtleSim}, which is a simulator typically used for learning ROS, mainly composed by 2 nodes, that perform together towards moving a turtle. Additional nodes were implemented so security matters could be supported. After launching each node using the predefined ROS2 run command, \texttt{ros2 run <package\_name> <node\_name>}, the running nodes can be easily checked using the command \texttt{ros2 node list}. Note that, each node has its corresponding package, and nodes can be connected within a single package or between multiple packages.
+The ROS2 command toolset allows node launching using the \texttt{run} keyword, in which both the node's namespace and its corresponding package must be passed as arguments. It is worth mentioning that, nodes can be connected within a single package or between multiple packages, as they are built over their corresponding packages.
 
-\begin{figure}[H]
-        \centering
-         \includegraphics[width=0.4\linewidth]{images/ts_nodelist.png}
-\end{figure}
-    
-The communication between nodes is done by message-passing, where the nodes involved exchange information through \textbf{messages}. A message is defined by its type, also known as its \textbf{interface}, which can be primitive (integer, string, boolean), or can be defined by a complex data structure, where multiple data types are assigned to their corresponding variables.
+\begin{lstlisting}[title={The \texttt{TurtleSim} node list.}]
+/multiplexer/multiplexer
+/random/random
+/turtle_teleop_key/turtle_teleop_key
+/turtlesim_node/turtlesim_node
+\end{lstlisting}
 
-The message that triggers the turtle movement, in the \texttt{Turtlesim} example, is composed by multiple data movement variables regarding the linear and circular movement of the turtle. The interface is called \texttt{Twist} and it is a ROS predefined geometry message.
+The communication between nodes is done by message-passing, where the nodes involved in a particular communication exchange information using the \textit{message} definition. A message is defined by its data type, also known as its \textit{interface}, which can either be primitive (integer, string, boolean), or defined by a complex data structure, where multiple data types are assigned to their corresponding variables. Considering the \texttt{Turtlesim} example, the main message that is used to trigger the turtle movement, is composed by multiple data movement variables regarding the linear and circular movement of the turtle. The interface is called \texttt{Twist} and it is a ROS predefined geometry message.
 
-\begin{figure}[H]
-        \centering
-         \includegraphics[width=0.7\linewidth]{images/ts_interface_twist.png}
-\end{figure}
-            
-Messages are passed through via the pattern of publishing and subscribing over a \textbf{topic}. A node publishes the message to any number of topics, that are then subscribed by nodes that want to get access to that message. Topics provide a multicast routing scheme, where publish data can be casted into multiple subscribers.
+\begin{lstlisting}[title={\texttt{Twist} interface that is used to trigger the turtle movement.}]
+Vector3   linear
+Vector3   angular
+\end{lstlisting}
 
-\begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\linewidth]{images/ros2-topics.png}
-\end{figure}
-            
-The topic is created upon specifying in the node either a publisher or a subscriber instance, providing the topic name as an argument. After building and executing the node, their associated topics are created. The available topics can be listed by running the predefined ROS command \texttt{ros2 topic list}.
-            
-\begin{figure}[H]
-        \centering
-         \includegraphics[width=0.3\linewidth]{images/ts_topiclist.png}
-\end{figure}
-            
-If the nodes that want to exchange data through a topic are implemented in the same package, the respective subscriber and publisher nodes must have the same topic name instantiated. The configuration is pretty simple, whereas if the nodes are specified in different packages, a technique of \textbf{remapping} must be used.
-
-The topic list related to the \texttt{Turtlesim} is depicted above. The 3 listed topics are vital for the communication process, and they all correspond to the \texttt{multiplexer} node. This happens because remapping between topic names is used to establish communication between packages, as explained above.
-
-Both launching and remapping process are done by running a ROS \textbf{launch file}, that simultaneously launches each node, providing a simpler way of monitoring the system nodes. 
+Messages are passed through via the pattern of publishing and subscribing over a \textit{topic}. A node publishes the message to any number of topics, that are then subscribed by nodes that want to get access to that message. Topics provide a multicast routing scheme, where publish data can be casted into multiple subscribers. 
+A specific \textit{topic} is created upon specifying its namespace over either a publisher or a subscriber instance, associated to a node executable. After building and executing the node, their associated topics are created. % The available topics can be listed by running the predefined ROS command \texttt{ros2 topic list}.
 
 \begin{figure}[H]
         \centering
-         \includegraphics[width=0.3\linewidth]{images/ts_launch_file.png}
+        \includegraphics[width=0.4\linewidth]{images/ros2-topics.png}
+        \caption{ROS2 communication behaviour over \textit{topics}.}
+        \label{fig:ros2-topics}
 \end{figure}
 
-As it can be seen, every node is instantiated in this file, and have each topic remapping defined in \texttt{remappings} section. Also, distinctive namespaces allow the system to start the nodes, without any name nor topic name conflicts. However this technique has some flaws attached, since it does not furnish a way of launching nodes in a separated terminal, needed for user interaction purposes, like input reading.
+Addressing data exchange through a topic over nodes implemented in the same package, the configuration is straightforward, in which their respective subscriber and publisher instances must have the same topic's namespace instantiated. Whereas, if the nodes are specified in different packages, a technique of \textit{remapping} must be used.
 
-Running the following ROS command \texttt{ros2 launch <file\_name>}, will automatically compile and run the launch file.
+\begin{lstlisting}[title={The \texttt{TurtleSim} topic list.}]
+/multiplexer/high_topic
+/multiplexer/low_topic
+/multiplexer/main_topic
+\end{lstlisting}
+
+The topic list related to the \texttt{TurtleSim} example is depicted above. The 3 listed topics are vital for the communication process, and they all correspond to the \texttt{multiplexer} node. This happens because remapping between topic names is used to establish communication between packages, as explained above. 
+
+Both launching and remapping process are done by running a ROS \textit{launch file}, that simultaneously launches each node, providing a simpler way of monitoring the system nodes. Every node is instantiated in this file, and have each topic remapping defined in \texttt{remappings} section. Also, distinctive namespaces allow the system to start the nodes, without any name nor topic name conflicts. However this technique has some flaws attached, since it does not furnish a way of launching nodes in a separated terminal, needed for user interaction purposes, like input reading.
+
+%\begin{figure}[H]
+%        \centering
+%        \includegraphics[width=0.3\linewidth]{images/ts_launch_file.png}
+%\end{figure}
+% Running the following ROS command \texttt{ros2 launch <file\_name>}, will automatically compile and run the launch file.
+
+By running the respective ROS \texttt{launch} command, will automatically compile and run the launch file related to the \texttt{TurtleSim} example. Every network node is now running simultaneously in the background. The only foreground running node is the turtlesim one, because it has an associated interface showing the turtle movement.
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{.6\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/ts_launch_ros.png}
+        \caption{Nodes launched after running the launch file.}
+        \label{fig:ts-launch-sub}
+    \end{minipage}%
+    \begin{minipage}{.4\textwidth}
+        \centering
+        \includegraphics[width=0.5\linewidth]{images/ts_turtle.png}
+        \caption{Turtlesim node interface.}
+        \label{fig:ts-turtle}
+    \end{minipage}
+
+    \caption{Launching the \texttt{TurtleSim} network using a predefined launch file.}
+    \label{fig:ts-launch}
+\end{figure}
+
+For understanding reasons, the reader may want to see how the network architecture is organized. ROS2 provides a GUI tool called \textit{rqt}, that assists programmers in manipulating the network elements, in a more user-friendly manner. The graph visualizer, provided by this tool, allows the programmer to observe the network graph and how the elements are connected. While the nodes are running in the background, the reader may want to run the following command \texttt{rqt\_graph}, in a separated terminal.
 
 \begin{figure}[H]
         \centering
-         \includegraphics[width=0.7\linewidth]{images/ts_launch_ros.png}
+        \includegraphics[width=\linewidth]{images/ts_rqt_graph.png}
+        \caption{\texttt{TurtleSim} network graph presented by \texttt{rqt\_graph}.}
+        \label{fig:ts-rqt-graph}
 \end{figure}
 
-Every network node is now running simultaneously in the background. The only foreground running node is the turtlesim one, because it has an associated interface showing the turtle movement.
-
-\begin{figure}[H]
-        \centering
-        \includegraphics[width=0.3\linewidth]{images/ts_turtle.png}
-\end{figure}
-
-For understanding reasons, the reader may want to see how does the network architecture is organized. ROS2 provides a GUI tool called \textbf{rqt}, that helps the programmer in manipulating the network elements, in a more user-friendly way. This tool has a graph visualizer plugin that allows the programmer to view the network graph and how the elements are connected.
-
-While the nodes are running in the background, the reader may want to run the following command \texttt{rqt\_graph}, in a separated terminal. The network graph related to the \texttt{TurtleSim} is represented bellow.
-
-\begin{figure}[H]
-        \centering
-         \includegraphics[width=\linewidth]{images/ts_rqt_graph.png}
-\end{figure}
+To contextualize the reader, it should be presented a quick explanation on how the presented \texttt{TurtleSim} network works:
 
 The \texttt{multiplexer} node, being the main node in this particular network, subscribes to two different topics from two different nodes.
-
---- The \texttt{turtle\_teleop\_key} node corresponds to a keyboard controller, that sends movement commands through the \texttt{high\_topic} to the \texttt{multiplexer}.\\
---- The \texttt{random} node sends random movement commands through the \texttt{low\_topic} to the multiplexer.
+\begin{itemize}
+    \item[---] The \texttt{turtle\_teleop\_key} node corresponds to a keyboard controller, that sends movement commands through the \texttt{high\_topic} to the \texttt{multiplexer}.
+    \item[---] The \texttt{random} node sends random movement commands through the \texttt{low\_topic} to the multiplexer.
+\end{itemize}
 
 Since the \texttt{multiplexer} has two different active subscriptions, managing two different turtle movement values, it must keep them synchronized with each other. This is achieved by setting different priorities to each subscription, where the keyboard node has priority over the random controller, meaning that when the keyboard publishes movement data through its corresponding topic, the \texttt{multiplexer} must process that received data. \textbf{Timers} are also used, since they provide a useful way of managing these topics, by time-assigning, alternately changing the priority after the timer runs out, through its corresponding callback function.
 
 The \texttt{multiplexer} also has a publisher instance defined, since it has an active connection through the \texttt{main\_topic} connection to the \texttt{turtlesim\_node} node, that is responsible for controlling and projecting the turtle movement. The \texttt{main\_topic} will be in charge of the values passed to the turtlesim node, instructing the turtle to move.
 
-Given the priority set at each moment, the \texttt{multiplexer} has to forward the movement command, either from the keyboard or the random controller, through the \texttt{main\_topic}, enabling the turtle movement. Every aspect related to the publisher-subscriber pattern, in this ROS2 system, is treated over remapping of topic names. The data passed through the \texttt{main\_topic} can be checked using the command \texttt{ros2 topic echo main\_topic}. As expected, the data has both linear and angular vectors defined because of interface used.
+Given the priority set at each moment, the \texttt{multiplexer} has to forward the movement command, either from the keyboard or the random controller, through the \texttt{main\_topic}, enabling the turtle movement. Every aspect related to the publisher-subscriber pattern, in this ROS2 system, is treated over topic's namespace remapping. % The data passed through the \texttt{main\_topic} can be checked using the command \texttt{ros2 topic echo main\_topic}. As expected, the data has both linear and angular vectors defined because of interface used.
 
-\begin{figure}[H]
-        \centering
-        \includegraphics[width=0.5\linewidth]{images/ts_main_topicinfo.png}
-\end{figure}
+% \begin{figure}[H]
+%         \centering
+%        \includegraphics[width=0.5\linewidth]{images/ts_main_topicinfo.png}
+% \end{figure}
 
-\subsubsection{Other ROS concepts}
+\subsubsection{Additional ROS network elements}
 
-The \texttt{TurtleSim} application given as example above, so the reader could get familiar with the basics concepts about ROS, does not address all the existing ways of data-exchanging between nodes.
-                
-Even though topics are the most conventional way of communication, because of its multicast scheme, subscribers can not be perceived by the publishers, so logging and matching becomes rather difficult. Node synchronization within the network is also not featured by topics.
+The \texttt{TurtleSim} application given as example above, % so the reader could get familiar with the basics concepts about ROS, 
+does not address all the existing ways of data-exchanging between nodes. Even though \textit{topics} are the most conventional way of communication, due to its multicast scheme, subscribers can not be identified by the publishers, so logging and synchronization becomes rather difficult.
 
 \paragraph{Services}
 
-\textbf{Services} allows a client, that can also be seen as a topic subscriber, to request data from a server, that likewise a topic publisher, furnish data through a service. Services works under a synchronous policy, since the data is only provided when the client node makes a request. Each service is always linked to just one server node, and does not maintain active connections.
-                
-In ROS1, services used to work under a synchronous policy, where the service client would stall waiting for the response of the service server. While, in ROS2, services are \textbf{asynchronous}, since it is possible to specify a callback function that is triggered when the service server responds back to the client.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\linewidth]{images/ros2-services.png}
-\end{figure}
-                
-                
-The interface used on services messages differ from the topics interface. That is because a service is composed by a request and response, so their data structures may differ. 
-
-Suppose, considering the \texttt{TurtleSim} example, that a client wants to make a request to move the turtle by providing coordinates (valued in integers) and a \textit{theta} angle. A conventional way of the node server sending a response back to the client is by passing a boolean value, ensuring that the request has been processed, and a string value regarding the name of the turtle. By that, it must be considered two different data structures. Therefore, this considered service interface should be similar to the following:
-
-\begin{verbatim}
-    float32 x
-    float32 y
-    float32 theta
-    ---
-    bool check
-    string name
-\end{verbatim}
+\textit{Services} allows a client, that can also be seen as a topic subscriber, to request data from a server, that likewise a topic publisher, furnish data through a service. The data is only provided when the client node makes a request. Each service is always linked to just one server node, and does not maintain active connections. To address the service stalling that the former ROS issued due to the service's synchronization nature, ROS2 services are asynchronous, since it is possible to specify a callback function that is triggered when the service server responds back to the client.
+                          
+% The interface used on services messages differ from the topics interface. That is because a service is composed by a request and response, so their data structures may differ. 
+% Suppose, considering the \texttt{TurtleSim} example, that a client wants to make a request to move the turtle by providing coordinates (valued in integers) and a \textit{theta} angle. A conventional way of the node server sending a response back to the client is by passing a boolean value, ensuring that the request has been processed, and a string value regarding the name of the turtle. By that, it must be considered two different data structures. Therefore, this considered service interface should be similar to the following:
+% \begin{verbatim}
+%     float32 x
+%     float32 y
+%     float32 theta
+%     ---
+%     bool check
+%     string name
+% \end{verbatim}
 
 \paragraph{Actions}
 
-Another way of exchanging data is by setting goals through \textbf{Actions}. Actions, likewise services, also uses a client-server model, but they were design for other purposes rather than only processing a request and sending back a response. Actions are intended to process long-running tasks, where the client sends a goal request to the server node, that confirms the receiving of this goal. Before returning a response back to the client, the server can send feedback back to the client. Unlike services, actions can be cancelled, so the return response could not be acknowledge. 
+Other notable way of exchanging data is by setting goals through \textit{Actions}. Actions, likewise services, also uses a client-server model, but they were design for other purposes rather than only processing a request and sending back a response. Actions are intended to process long-running tasks, where the client sends a goal request to the server node, that confirms the receiving of this goal. Before returning a response back to the client, the server can send feedback back to the client. Unlike services, actions can be cancelled, so the return response could not be acknowledge. A worth mentioned example, commonly used in robotic systems for navigation, is the intent of moving a robot to a position, previously requested by a client. While its traveling, it can send information about the transition state. When the robot reaches the predefined position, the server acknowledges the client by sending a result message.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\linewidth]{images/ros2-actions.png}
-\end{figure}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.7\linewidth]{images/ros2-actions.png}
+% \end{figure}
+% 
+% The interface structure used in actions is also different from the others, since it provides an additional data structure to the services interface, corresponding to the feedback feature that actions provide.
+%                 
+% Considering the same example of the \texttt{TurtleSim}, a client may want to request a goal providing a \textit{theta} angle, to trigger the turtle rotation. To keep the client updated, one way of the server feedbacks the client is by sending the angle rotation that is left to be executed. After the execution, the server may want to acknowledge the client by confirming the angle passed as a request, confirming that the rotation has been executed properly. By that, it must be considered three different data structures. Therefore, this considered service interface should be similar to the following:
+% 
+% \begin{verbatim}
+% float32 theta
+% ---
+% float32 delta
+% ---
+% float32 remaining
+% \end{verbatim}
 
-The interface structure used in actions is also different from the others, since it provides an additional data structure to the services interface, corresponding to the feedback feature that actions provide.
-                
-Considering the same example of the \texttt{TurtleSim}, a client may want to request a goal providing a \textit{theta} angle, to trigger the turtle rotation. To keep the client updated, one way of the server feedbacks the client is by sending the angle rotation that is left to be executed. After the execution, the server may want to acknowledge the client by confirming the angle passed as a request, confirming that the rotation has been executed properly. By that, it must be considered three different data structures. Therefore, this considered service interface should be similar to the following:
-
-\begin{verbatim}
-float32 theta
----
-float32 delta
----
-float32 remaining
-\end{verbatim}
-
-This given example is commonly used in robotic systems for navigation, where the robot travels to a position, previously requested by a client. While its traveling, it can send information about the transition state. When the robot reaches the predefined position, the server acknowledges the client by sending a result message. 
-
-Note that, in both interfaces introduced, the \texttt{---} divides the each structure that are used in each communication. In services, the request structure must be separated from the response structure. In actions, there is also the feedback structure which is the last structure defined.  
+% Note that, in both interfaces introduced, the \texttt{---} divides the each structure that are used in each communication. In services, the request structure must be separated from the response structure. In actions, there is also the feedback structure which is the last structure defined.  
                
 \paragraph{Parameters}
                
-Another relevant concept behind ROS is the existence of nodes \textbf{Parameters}, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a shared \textbf{Parameter Server}, managed by each ROS Master node responsible for the its corresponding network. As stated before, in ROS2 each node declares and manages its own parameters. Usually parameters are saved using files related to the nodes, but parameters can also be updated and checked using \texttt{get} and \texttt{set}, respectively. Additionally, using a parameter function callback, the node's parameters can easily be edited.
+Another relevant concept behind ROS is the existence of nodes \textit{parameters}, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a global \textit{parameter server}, managed by its corresponding ROS Master. However, in ROS2 each node declares and manages its own parameters, by using the predefined commands \texttt{get} and \texttt{set}. Additionally, using a parameter function callback, the node's parameters can easily be edited.
                
 \paragraph{Interfaces}
                
-Although it was already mentioned, since it was needed for explaining each method of communication for nodes in ROS, \textbf{Interfaces} should be duly studied.
-As explained before, each type of communication has its different corresponding interface, and they must be specified in different folders with unique namespaces.
-The folder namespaces used are the following:
-\begin{itemize}
-    \item[---]Topics messages: \texttt{msg/}
-    \item[---]Services messages: \texttt{srv/}
-    \item[---]Actions messages: \texttt{action/}
-\end{itemize}
-               
-Recall the \texttt{TurtleSim} example and its corresponding package \texttt{turtlesim}. Suppose a case where, it could be possible to add boxes into the turtle GUI, blocking the turtle movement though those boxes. To add boxes, the topic message considered should have two different values regarding the $x$ and $y$ axis value related to the turtle map. This interface could be named as \texttt{Boxes}, with the \texttt{.msg} extension (\texttt{Boxes.msg}).
-               
-\begin{verbatim}
-    float32 x
-    float32 y
-\end{verbatim}
-
-In your node's code, the following import must be specified:
-
-\begin{verbatim}
-    turtlesim/msg/Boxes
-\end{verbatim}
+Each type of communication has its different corresponding interface, and they must be specified in different folders with unique namespaces. The folder namespace used for topic messages is \texttt{msg/} , wheras for service messages is \texttt{srv/} and for action messages is \texttt{action/}. Recall the \texttt{TurtleSim} example and its corresponding package \texttt{turtlesim}. Suppose a case where, it could be possible to add boxes into the turtle GUI, blocking the turtle movement though those boxes. To add boxes, the topic message considered should have two different values regarding the $x$ and $y$ axis value related to the turtle map. This interface could be named as \texttt{Boxes}, where its full source path is \texttt{turtlesim/msg/Boxes.msg}.
                
 \paragraph{Lifecycled Node}
                
-ROS2 introduces a new definition of node, called \textbf{lifecycled node}, as addition to the traditional one. A lifecycled node is defined by its current state. Its state can either be unconfigured, inactive, active or finalized. This can be useful, since it provides a structural way of setting up the node and separating all its state functionalities. The transition through states are done by running a callback function. Nodes that need initial configuration before exchanging data within the network can be perceived as lifecycled nodes, like sensors, where its detection must be ensured before the data reading/publishing process. 
+ROS2 introduces a new node definition as an addition to the traditional, called \textit{lifecycled node}. A lifecycled node is defined by its current state, which can either be unconfigured, inactive, active or finalized, providing a structural way of setting up the node and separating all its state functionalities. Nodes that need initial configuration before exchanging data within the network can be perceived as lifecycled nodes, like sensors, where its detection must be ensured before the data reading/publishing process. 
                
 \paragraph{Node Composition}
                
-A concept that both ROS and ROS2 provides is the idea of composing nodes into a single \textbf{process} for improved \textbf{performance}. Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single porcess, structurally abstracting some network parts. 
-
-There is a slight difference about how ROS and ROS2 approaches the node composition. In the former version of ROS, node composition was done over the combination of \texttt{nodelets}. In ROS2, instead of calling it a \texttt{nodelet}, it is called a \texttt{Component}. 
-
-Formerly, \texttt{nodelets} were designed to ease the cost of overusing TCP for message-passing between nodes, that if the message consisted huge sized data could negatively affect the performance on the network communications. By grouping performance critical nodes, nodelets provided a local way of message-passing between the considered nodes.
-
-Supported by the former idea of \texttt{nodelets}, \texttt{components} are compiled into shared libraries. A component itself does not furnish node composition, since a component is a node with special features. Although,  each component can be loaded into a \textbf{component container} process at runtime in the network. By loading components into these containers, the node composition is ensured. 
- 
-Note that, nodes do not provide this feature since they are compiled into executables that need to be previously compiled. Components can be also be configured to be loaded at compile-time, where a single executable runs multiple components. Components can be also configured in a ROS launch file, using containers as well.
- 
-Node composition could also be applied for security matters. Suppose a scenario where multiple nodes respect the same security policies. By combining them into a single process, the mapping into this set of rules would be direct, easing the usage of security enclaves. % Although, this idea seemed promising, it caused non-negligible overhead due to composition of nodes, so ROS2 introduced a new mapping approach. 
-This is will be later explained in the \texttt{security} section.
-% Node composition can be also useful for security matters, since it can ease the creation of \textbf{security enclaves}. An enclave is a set of nodes that follow the same set of policy rules. This is will be later explained in the \texttt{security} section. 
+Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single process, structurally abstracting some network parts, while improving the network's performance. However, there is a slight difference about how ROS and ROS2 approaches the node composition. In the former version of ROS, node composition was done over the combination of \textit{nodelets}, intentionally designed to ease the cost of overusing TCP for message-passing between nodes. Supported by the former idea of \textit{nodelets}, ROS2 introduces the \textit{components} as software code compiled into shared libraries, that can be loaded into a \textit{component container} process at runtime in the network, ensuring node composition. Node composition could also be applied for security matters. Suppose a scenario where multiple nodes respect the same security policies. By combining them into a single process, the mapping into this set of rules would be direct, easing the usage of security enclaves.
                
 
-\subsection{The need for Security}
+\section{Security introduction in ROS2}
         
 A major factor behind its popularity and widespread adoption is its flexibility and interoperability. In ROS, this flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS applications tend to face increased security risks. 
             
