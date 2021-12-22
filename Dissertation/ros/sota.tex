@@ -10,14 +10,14 @@ In ROS, software flexibility was valued above all else, meaning that values like
 
 The upgraded version of ROS, Robot Operating System 2 (ROS), presents itself as a framework for developing robotic systems, supported by a standard, the Data Distribution Service (DDS), where multiple middleware implementations are built over this standard, providing ROS applications multiple DDS-based specfications, as well as valued Quality of Service (QoS) settings over the transport configuration. 
 
-The DDS-Security specification \cite{ros-dds-integration}, embedded by every DDS implementation supported by ROS, supplies multiple plugins regarding the security domain. As result, ROS2 yields a wider command toolset compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (ROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
+The DDS-Security specification \cite{dds-s}, embedded by every DDS implementation supported by ROS, supplies multiple plugins regarding the security domain. As result, ROS2 yields a wider command toolset compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (SROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
 
 This chapter introduces necessary background information over the major concepts on which this thesis rests. First, it is presented a detailed introduction to the concepts around Robot Operating System (ROS), as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand. Thereafter, it will be presented a section dedicated to related work regarding the study of security in ROS based systems.
 
 % This section introduces necessary background information over the major concepts on which this thesis rests. 
 % Then, Alloy is introduced, supported by a predefined, and previously configured, ROS example, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain.
 
-\section{Robot Operating System}
+\section{Former Architecture}
 
 The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications \cite{diluoffo2018robot}, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
 
@@ -27,7 +27,7 @@ Fundamentally, ROS is a middleware, as it provides a custom serialization format
 
 ROS was designed to provide as much as modularity and composability to the application layer \cite{casini2019response} as possible, allowing ROS applications to be built over several software modules, as independent computing processes called \textit{nodes}, that compose together to fulfill the deployment characteristics of the corresponding robot. \cite{maruyama2016exploring} 
 
-The communication approach that ROS implements to perform data exchange between nodes is based on a publish-subscribe model, based on TCPROS \cite{tcpros} and UDPROS \cite{udpros}, that makes use of TCP and UDP sockets, respectively. \cite{maruyama2016exploring} The information exchange is done by introducing the \textit{message} definition, which characterizes every data structure concerning the information exchange between ROS participants.
+The communication approach that ROS implements to perform data exchange between nodes is based on a publish-subscribe model, based on TCPROS \cite{tcpros} and UDPROS \cite{udpros}, that makes use of TCP and UDP sockets, respectively. \cite{maruyama2016exploring} The information exchange is done by introducing the \textit{message} definition, which characterizes every data structure concerning the information exchange between ROS participants. The publish-subscribe pattern brings various forms of decoupling and transparency. However, network security may be jeopardized, as a result of the transparency within publishers and subscribers, as the exchanged data can not be properly supervised. \cite{kim2018security}
 
 \begin{figure}[H]
         \centering
@@ -46,7 +46,7 @@ Robot Operating System 2 comes as a complete refactoring of ROS, with the aim of
 
 %This lead to the creation of \textbf{ROS2}, which continues to provide a simple, uniform message passing interface to allow components to communicate with each other, now implemented using the Data Distribution Service (DDS) communication protocol as middleware. This means that there is no need to implement a master, making the system fully distributed. The discovery process between nodes is distributed and guaranteed by DDS, giving theses nodes the capacity to discover other nodes. Considering that there is no ROS Master implemented, the approach when dealing with the parameters also changed. Instead of having a global parameter server, in ROS2 each node declares and manages its own parameters. All these aspects related to ROS2 will be later discussed.
 
-\section{Robot Operating System 2}
+\section{Evolution towards Robot Operating System 2}
 
 The Robot Operating System 2 (ROS2) was developed with the goal of easing the former ROS architecture. Although ROS2 continues to provide a simple, uniform message passing interface to allow components to communicate with each other, instead of implementing their own middleware specification, Data Distribution Service (DDS) communication protocol is implemented as an abstract middleware interface, through which serialization, transport and discovery is being provided. This implies that adding and integrating a new component into an existing system remains reasonably simple for a ROS developer.
 
@@ -85,33 +85,34 @@ Additionally, each domain entity manages the data according to the Quality of Se
 
 % Introduzir as implementações e DDS specifications
 
-\subsection{DDS integration in ROS2}
+\subsection{ROS-DDS Architecture}
 
 As previously stated, the Robot Operating System 2 was developed to address the lack of support for real-time systems that the former ROS provided, mainly due to its architecture design that relied on their own middleware specification. To address this, ROS2 middleware approach is built upon the DDS framework \cite{maruyama2016exploring}, leveraging DDS for its messaging architecture, where communication and transport configuration are handled. As a result of the DDS integration, ROS2 applications are actually considered DDS applications, meaning that is possible to interoperate both native DDS applications and ROS applications, providing flexible compatibility.
 
-By relying on an outside middleware, the modularity approach that ROS makes use of, where multiple modules should be applied when needed, while reducing the number of dependencies attached, highly depends on the middleware implementation that is being used. As far as dependencies are concerned, DDS implementations have light sized dependencies, often related to language implementation libraries, easing the complexity behind installing and running dependencies for ROS developers. \cite{ros-on-dds}
+%By relying on an outside middleware, the modularity approach that ROS makes use of, where multiple modules should be applied when needed, while reducing the number of dependencies attached, highly depends on the middleware implementation that is being used. 
+As far as dependencies are concerned, DDS implementations have light sized dependencies, often related to language implementation libraries, easing the complexity behind installing and running dependencies for ROS developers. \cite{ros-on-dds}
 
 ROS2 middleware implements an interface on top of DDS, called \textit{ROS client library} (RCL), which hides much of the complexity of DDS specification API, offering a more friendly approach for the ROS users. However, it still provides access to the underlying DDS implementation for users that might want to integrate different DDS implementations for their use cases.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{images/ROS2-architecture.png}
+    \includegraphics[width=\linewidth]{images/ros2-architecture.png}
     \caption{ROS2 framework architecture.}
     \label{fig:ros2-architecture}
 \end{figure}
 
-Towards supplying a wide range of configurations back to application layer, to vastly cover the robotic applications needs, ROS2 aims to support multiple DDS implementations, in which these implementation's API specification might differ from each other. In order to abstract from the specifics of these implementation's APIs, an abstract interface is being introduced, depicted above as Abstract DDS Layer, allowing portability among DDS vendores, which consequently enables ROS developers to interpolate DDS implementations, based on their application's needs during runtime. It should be noted that the DDS implementations are low-level of abstraction, strictly defined by its corresponding vendor's API. DDS only defines fundamental procedures at a higher degree of abstraction.  
+Towards supplying a wide range of configurations back to application layer, to vastly cover the robotic applications needs, ROS2 aims to support multiple DDS implementations, in which these implementation's API specification might differ from each other (currently, FastRTPS by eProsima, Connext by RTI, and Vortex OpenSplice by Adlink). 
+
+In order to abstract from the specifics of these implementation's APIs, an DDS-agnostic interface is being introduced, the rmw (ROS MiddleWare) interface, allowing portability among DDS vendores, which consequently enables ROS developers to interpolate DDS implementations, based on their application's needs during runtime. It should be noted that the DDS implementations are low-level of abstraction, strictly defined by its corresponding vendor's API. DDS only defines fundamental procedures at a higher degree of abstraction.  
 
 % This layer could be removed, if there was no need to use more than one DDS implementation. But this is not the wanted scenario, since it is way more practical to switch the DDS implementation depending on the application needs. 
+% The former version of ROS, depicted on left hand-side of the picture \ref{fig:ros2-architecture}, already provided this abstract layer, that was customized and implemented by ROS client library, which allowed the communication between the Application Layer, in hwich the Master node was implemented, and the communication protocols. However, the capabilities offered by this middleware are significantly lower than ROS2 middleware, due to the DDS integration, as well as the fail to support the needs of multiple systems.
 
-The former version of ROS, depicted on left hand-side of the picture \ref{fig:ros2-architecture}, already provided this abstract layer, that was customized and implemented by ROS client library, which allowed the communication between the Application Layer, in hwich the Master node was implemented, and the communication protocols. However, the capabilities offered by this middleware are significantly lower than ROS2 middleware, due to the DDS integration, as well as the fail to support the needs of multiple systems.
-
-As stated, ROS client library hides the complexity of the DDS specification API from the developer. As RCL works under ROS structures, to keep the passing of information through the middleware layer, a structure mapping between ROS and DDS must occur. The data structure mapping between ROS and DDS must account the preservation of the former ROS messages' structure. The RCL works under the ROS messages' \texttt{.msg} files, and explained, these messages must be converted into messages' \texttt{.idl} files, to be used by the DDS transport.
-
-The data transformation accounts the DDS implementation that is being considered at runtime, implemented at the \textit{Abstract DDS Layer}. The converted data is handled by the DDS wire protocol, RTPS, where the DDS publish-subscribe architecture and their respective structures comes to practice. Then, the reverse process must be ensured as well, to fully complete the information flow, where the data must be converted back to ROS structures before being returned to the ROS client library. \cite{ros-on-dds}
+% As stated, ROS client library hides the complexity of the DDS specification API from the developer. 
+As RCL works under ROS structures, to keep the passing of information through the middleware layer, a structure mapping between ROS and DDS must occur in the rmw interface, accounting the DDS implementation that is being considered at runtime. \cite{casini2019response} The data structure mapping between ROS and DDS must account the preservation of the former ROS messages' structure. The RCL works under the ROS messages' \texttt{.msg} files so, these messages must be converted into messages' \texttt{.idl} files, to be handled by the DDS's RTPS wire protocol. \cite{ros-on-dds} Then, the reverse process must be ensured as well, to fully complete the information flow, where the data must be converted back to ROS structures before being returned to the ROS client library.
 
 
-\subsection{ROS2 Graph Architecture}
+\subsection{Network Concepts}
 
 From a logical perspective \cite{casini2019response}, ROS applications are composed of many software modules that operate as separate computing processes, known as nodes, allowing its participation into the ROS global data space, similiar to a DDS participant. The data distribution between nodes is based on a publish-subscribe model, in which each node is perceived either as a publisher or as a subscriber within the network. First, nodes must be thoroughly covered before evaluating how data is passed and treated by publishing and subscribing.
             
@@ -128,15 +129,18 @@ The ROS2 command toolset allows node launching using the \texttt{run} keyword, i
 /turtlesim_node/turtlesim_node
 \end{lstlisting}
 
-The communication between nodes is done by message-passing, where the nodes involved in a particular communication exchange information using the \textit{message} definition. A message is defined by its data type, also known as its \textit{interface}, which can either be primitive (integer, string, boolean), or defined by a complex data structure, where multiple data types are assigned to their corresponding variables. Considering the \texttt{Turtlesim} example, the main message that is used to trigger the turtle movement, is composed by multiple data movement variables regarding the linear and circular movement of the turtle. The interface is called \texttt{Twist} and it is a ROS predefined geometry message.
+The communication between nodes is done by message-passing, where the nodes involved in a particular communication exchange information using the \textit{message} definition. A message is defined by its data type, also known as its \textit{interface}, which can either be primitive (integer, string, boolean), or defined by a complex data structure, where multiple data types are assigned to their corresponding variables. 
 
-\begin{lstlisting}[title={\texttt{Twist} interface that is used to trigger the turtle movement.}]
+Each type of communication has its different corresponding interface, and they must be specified in different folders with unique namespaces. The folder namespace used for topic messages is \texttt{msg/}, whereas for service messages is \texttt{srv/} and for action messages is \texttt{action/}. Considering the \texttt{Turtlesim} example, the main message that is used to trigger the turtle movement, is composed by multiple data movement variables regarding the linear and circular movement of the turtle. The interface is called \texttt{Twist} and it is a ROS predefined geometry message.
+
+\begin{lstlisting}[title={\texttt{Twist.msg} interface file that is used to trigger the turtle movement.}]
 Vector3   linear
 Vector3   angular
 \end{lstlisting}
 
-Messages are passed through via the pattern of publishing and subscribing over a \textit{topic}. A node publishes the message to any number of topics, that are then subscribed by nodes that want to get access to that message. Topics provide a multicast routing scheme, where publish data can be casted into multiple subscribers. 
-A specific \textit{topic} is created upon specifying its namespace over either a publisher or a subscriber instance, associated to a node executable. After building and executing the node, their associated topics are created. % The available topics can be listed by running the predefined ROS command \texttt{ros2 topic list}.
+Messages are passed through via the pattern of publishing and subscribing over a \textit{topic}. A node publishes the message to any number of topics, that are then subscribed by nodes that want to get access to that message. Topics provide a multicast routing scheme, where publish data is casted into the multiple nodes that are subscribed to the topic. 
+
+A specific \textit{topic} is created upon specifying its namespace over either a publisher or a subscriber callback instance, associated to a node executable. Message processing is done via the node's callback functions, which are activated upon message receipt, as it can also be utilized for publishing purposes. \cite{casini2019response} % After building and executing the node, their associated topics are created. % The available topics can be listed by running the predefined ROS command \texttt{ros2 topic list}.
 
 \begin{figure}[H]
         \centering
@@ -193,17 +197,19 @@ For understanding reasons, the reader may want to see how the network architectu
         \label{fig:ts-rqt-graph}
 \end{figure}
 
-To contextualize the reader, it should be presented a quick explanation on how the presented \texttt{TurtleSim} network works:
+% To contextualize the reader, it should be presented a quick explanation on how the presented \texttt{TurtleSim} network works.
 
-The \texttt{multiplexer} node, being the main node in this particular network, subscribes to two different topics from two different nodes.
-\begin{itemize}
-    \item[---] The \texttt{turtle\_teleop\_key} node corresponds to a keyboard controller, that sends movement commands through the \texttt{high\_topic} to the \texttt{multiplexer}.
-    \item[---] The \texttt{random} node sends random movement commands through the \texttt{low\_topic} to the multiplexer.
-\end{itemize}
+% The \texttt{multiplexer} node, being the main node in this particular network, subscribes to two different topics from two different nodes.
+%\begin{itemize}
+%    \item[---] The \texttt{turtle\_teleop\_key} node corresponds to a keyboard controller, that sends movement commands through the \texttt{high\_topic} to the \texttt{multiplexer}.
+%    \item[---] The \texttt{random} node sends random movement commands through the \texttt{low\_topic} to the multiplexer.
+%\end{itemize}
 
-Since the \texttt{multiplexer} has two different active subscriptions, managing two different turtle movement values, it must keep them synchronized with each other. This is achieved by setting different priorities to each subscription, where the keyboard node has priority over the random controller, meaning that when the keyboard publishes movement data through its corresponding topic, the \texttt{multiplexer} must process that received data. \textbf{Timers} are also used, since they provide a useful way of managing these topics, by time-assigning, alternately changing the priority after the timer runs out, through its corresponding callback function.
+The \texttt{multiplexer} has two different active subscriptions, managing two different turtle movement values, it must keep them synchronized with each other. This is achieved by setting different priorities to each subscription, where the keyboard node has priority over the random controller, meaning that when the keyboard publishes movement data through its corresponding topic, the \texttt{multiplexer} must process that received data. 
 
-The \texttt{multiplexer} also has a publisher instance defined, since it has an active connection through the \texttt{main\_topic} connection to the \texttt{turtlesim\_node} node, that is responsible for controlling and projecting the turtle movement. The \texttt{main\_topic} will be in charge of the values passed to the turtlesim node, instructing the turtle to move.
+\textit{Timers} are also used, since they provide a useful way of managing these topics, by time-assigning, alternately changing the priority after the timer runs out, through its corresponding callback function.
+
+% The \texttt{multiplexer} also has a publisher instance defined, since it has an active connection through the \texttt{main\_topic} connection to the \texttt{turtlesim\_node} node, that is responsible for controlling and projecting the turtle movement. The \texttt{main\_topic} will be in charge of the values passed to the turtlesim node, instructing the turtle to move.
 
 Given the priority set at each moment, the \texttt{multiplexer} has to forward the movement command, either from the keyboard or the random controller, through the \texttt{main\_topic}, enabling the turtle movement. Every aspect related to the publisher-subscriber pattern, in this ROS2 system, is treated over topic's namespace remapping. % The data passed through the \texttt{main\_topic} can be checked using the command \texttt{ros2 topic echo main\_topic}. As expected, the data has both linear and angular vectors defined because of interface used.
 
@@ -259,92 +265,78 @@ Other notable way of exchanging data is by setting goals through \textit{Actions
                
 Another relevant concept behind ROS is the existence of nodes \textit{parameters}, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a global \textit{parameter server}, managed by its corresponding ROS Master. However, in ROS2 each node declares and manages its own parameters, by using the predefined commands \texttt{get} and \texttt{set}. Additionally, using a parameter function callback, the node's parameters can easily be edited.
                
-\paragraph{Interfaces}
+% \paragraph{Interfaces}              
+%Each type of communication has its different corresponding interface, and they must be specified in different folders with unique namespaces. The folder namespace used for topic messages is \texttt{msg/} , wheras for service messages is \texttt{srv/} and for action messages is \texttt{action/}. Recall the \texttt{TurtleSim} example and its corresponding package \texttt{turtlesim}. Suppose a case where, it could be possible to add boxes into the turtle GUI, blocking the turtle movement though those boxes. To add boxes, the topic message considered should have two different values regarding the $x$ and $y$ axis value related to the turtle map. This interface could be named as \texttt{Boxes}, where its full source path is \texttt{turtlesim/msg/Boxes.msg}.
                
-Each type of communication has its different corresponding interface, and they must be specified in different folders with unique namespaces. The folder namespace used for topic messages is \texttt{msg/} , wheras for service messages is \texttt{srv/} and for action messages is \texttt{action/}. Recall the \texttt{TurtleSim} example and its corresponding package \texttt{turtlesim}. Suppose a case where, it could be possible to add boxes into the turtle GUI, blocking the turtle movement though those boxes. To add boxes, the topic message considered should have two different values regarding the $x$ and $y$ axis value related to the turtle map. This interface could be named as \texttt{Boxes}, where its full source path is \texttt{turtlesim/msg/Boxes.msg}.
+%\paragraph{Lifecycled Node}
                
-\paragraph{Lifecycled Node}
-               
-ROS2 introduces a new node definition as an addition to the traditional, called \textit{lifecycled node}. A lifecycled node is defined by its current state, which can either be unconfigured, inactive, active or finalized, providing a structural way of setting up the node and separating all its state functionalities. Nodes that need initial configuration before exchanging data within the network can be perceived as lifecycled nodes, like sensors, where its detection must be ensured before the data reading/publishing process. 
+%ROS2 introduces a new node definition as an addition to the traditional, called \textit{lifecycled node}. A lifecycled node is defined by its current state, which can either be unconfigured, inactive, active or finalized, providing a structural way of setting up the node and separating all its state functionalities. Nodes that need initial configuration before exchanging data within the network can be perceived as lifecycled nodes, like sensors, where its detection must be ensured before the data reading/publishing process. 
                
 \paragraph{Node Composition}
                
 Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single process, structurally abstracting some network parts, while improving the network's performance. However, there is a slight difference about how ROS and ROS2 approaches the node composition. In the former version of ROS, node composition was done over the combination of \textit{nodelets}, intentionally designed to ease the cost of overusing TCP for message-passing between nodes. Supported by the former idea of \textit{nodelets}, ROS2 introduces the \textit{components} as software code compiled into shared libraries, that can be loaded into a \textit{component container} process at runtime in the network, ensuring node composition. Node composition could also be applied for security matters. Suppose a scenario where multiple nodes respect the same security policies. By combining them into a single process, the mapping into this set of rules would be direct, easing the usage of security enclaves.
                
 
-\section{Security introduction in ROS2}
-        
-A major factor behind its popularity and widespread adoption is its flexibility and interoperability. In ROS, this flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS applications tend to face increased security risks. 
-            
-Also, ROS works over a publish-subscribe pattern, which is very useful, since it brings various forms of decoupling and transparency. However, because of this transparency, publishers within ROS are unable to control the consumption of their data and subscribers, most of the times, cannot identify the integrity of their received data. % The low barrier to entry and open nature of the ROS ecosystem % 
-This means a malicious actor could potentially inject code or vulnerabilities into a library, which could then be reused by another unsuspecting developer.
+\section{Security Integration}
 
-These concerns about security take on particular importance, since robots are becoming more frequently used and can directly affect the physical world. \textbf{Cyber-physical} systems, commonly related to the arising of the automatizing concept of robots, feature unique vulnerabilities that exploit both cyber and physical nature of these devices, mainly by sensing and actuating. Sensing becomes relevant when it comes to the potential leak of information about the surroundings of its robot. Whereas, actuating is related to the functionality of the robot, where physical safety is the main concern.\cite{8794451, mcclean2013preliminary} % One of the most interesting results of the honeypot experiment is that it can be very difficult to discern between a cyber-physical  security  exploit  and  hardware  and/or  software  bugs. %
+The concerns about security take on particular importance, since robots are becoming more frequently used and can directly affect the physical world. \textit{Cyber-physical} systems, commonly related to the arising of the automatizing concept of robots, feature unique vulnerabilities that exploit both cyber and physical nature of these devices, mainly by sensing and actuating. Sensing becomes relevant when it comes to the potential leak of information about the surroundings of its robot. Whereas, actuating is related to the functionality of the robot, where physical safety is the main concern. \cite{mcclean2013preliminary}
 
-ROS faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing robots to be built using several modules, that can be distributed. However, this modularity results in the exposure of TCP ports, that usually leads to attacks that compromise the data itself.
-There is also a concern about how ROS manages the communication between nodes. In ROS, the node-to-node communications are settled in plain text. Despite the fact that this way of handling communications bring certain benefits, especially better performance and data recovery, it is evident that data content is vulnerable to unauthorized usage.
+As aforementioned, ROS middleware faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing robots to be built as distributed modules. As a result techniques such as port scanning is usually used to compromise the data itself. Due to the ROS master role in the communication architecture, and its ability to connect to other nodes, exposing this node using port scanning poses a threat over the whole network. \cite{8794451}
 
-As discussed previously, this is mainly due to the fact that ROS had its own middleware, which didn't provide any security features. The 'centralization' behind ROS architecture, where everything was controlled and connected to the ROS Master node, was also a major fact to the need of a new implementation where the middleware could not also facilitate the establishment of communications, but also could provide security features. ROS2 adoption of middleware interface for data exchange offers a flexible way to build appropriate defenses for a given application.
+There is also worry regarding how ROS controls node communication, as node-to-node communications are settled in plain text. Despite the fact that this method of handling communications has several advantages, namely improved performance and data recovery, it is evident that data content is vulnerable to unauthorized usage.
 
-DDS ensures not also communication features, but also guarantees security properties, where ROS's flexibility is preserved despite this increase on security. The \textbf{DDS-Security} is a specification that serves as an add-on to the DDS specification, defined by a set of plugins combined in a Service Plugin Interface (SPI) architecture. The main plugins provided by DDS-Security are the following ones:
-            
-\begin{itemize}
-    \item[---] \textbf{Authentication}: Verification of each identity of a given Domain Participant, by assigning a private key and a public key to each one, as well as an certificate that relates the participant's public key to its corresponding specific name.
-    \item[---] \textbf{Access control}: Provides control over DDS-related operations with the support of the Authentication plugin. It requires two files per domain participant signed by a Certificated Authority, that specifies how the domain should be secured and their permissions.
-    \item[---] \textbf{Cryptographic}: Operations related to cryptographic purposes, such as encryption are handled by this plugin.
-    \item[---] \textbf{Logging}: Provides logging over events.
-    \item[---] \textbf{Data tagging}: Add tags to data samples.
-\end{itemize}
+The DDS integration over ROS2 besides ensuring a well-structured communication architecture, also guarantees security properties, where ROS's flexibility is preserved despite this increase on security. The \textit{DDS-Security} \cite{dds-s} is a specification that serves as an add-on to the DDS protocol, defined by a set of plugins (Authentication, Access Control, Cryptographic, Logging, Data Tagging), combined in a Service Plugin Interface (SPI) architecture. The provided specification ensures protection against unauthorized access to data, considering the publish-subscribe pattern, as well as data manipulation and replay attacks. \cite{8442103, ros-dds-integration}
+
+Depending on the security requirements needed for a particular application, the usage of these plugins  may be adjusted. The existence of a \textit{Standardized Plugin API} enables this customization, serving as an interface between modules and DDS security protocols, while also incorporating all features of secure communications. 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{images/dds-security.png}
+    \caption{DDS Security API with their respective security plugins.}
+    \label{fig:dds-security}
 \end{figure}
+
+Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over the ROS application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the Secure Robot Operating System 2 (SROS2) toolset, concerning the DDS-Security functionality.
+
+The control over these tools are done by the ROS client library to provide security over the Application layer, while DDS is capable of providing security over the communication architecture. Each domain participant in ROS2 has a set of associated security files and two different security approaches (permissive and strict) are supported features considered by the SROS2 toolset.
+
+Since this security integrity on ROS2 is consider a recent technology implementation \cite{ros-dds-integration}, the developer must be aware of improper configuration, that can still lead to security problems. However, the variety of capabilities in the offered SROS2 toolset attempts to aid with security configuration across environments. 
+
+\subsection{Security Analysis}
+
+To properly introduce the set of tools that SROS2 provides, the \texttt{TurtleSim} application already presented will now account the security features, as to provide authentication and encryption over the network communication, as well as access control policies over the application nodes. 
             
-These plugins can be customized since different applications require different needs when it comes to security. That is why, as depicted above, there must be a \textbf{Standardized Plugin API} that acts as an interface between modules and DDS security protocols, while including all aspects of secure communications. 
-ROS2 is deployed without security mechanisms by default, but DDS can provide security guarantees such as authentication and access control with a variant called DDS-Security. Using DDS-Security it is possible to configure ROS2 to run with security guarantees using the \textbf{SROS2} toolset. Most of these tools supported by SROS2 is contained within the ROS Client Library (RCL), and includes the following features:
+The \texttt{multiplexer} node handles commands related to turtle's movement, acting as a topic selector between two different subscribed topics, each of them was respectively associated with a priority value. Based on the priority valued, the \texttt{multiplexer} node forwards the commands, related to the selected topic, into the \texttt{turtlesim} node, triggering the turtle's movement. 
 
-\begin{itemize}
-    \item[---] Support for security files for each domain participant, where in ROS2 are seen as a process, and each process must be associated with a set of these files.
-    \item[---] Support for both permissive and strict enforcement of security, meaning that can be considered two approaches when it comes to dealing with security files.
-    \item[---] Support for a master “on/off” switch, that enables or disables every security feature.
-\end{itemize}
+However, \texttt{multiplexer} is not exclusive to the \texttt{turtlesim} node, as it is still possible to directly publish commands to the topic that handles the turtle's movement, since security policies are yet to be implemented.
 
-The SROS2 has been designed to work with any secure middleware. However, not all middleware is considered open-source and highly depends on the ROS distribution in use.
+To accurately achieve this exclusivity, in which the turtle's movement is uniquely concerned by the \texttt{multiplexer} node, \textit{access control} policies must be applied. The remaining nodes should be considered untrustworthy, denying any potential undesired turtle's movement. The idea is to encapsulate both \texttt{multiplexer} and \texttt{turtlesim} nodes, as the \texttt{multiplexer} monitors and manages all data intended to manipulate turtle's movement.
 
-Since this security process involves a lot of new technology, the user must be aware of improper configuration, that can still lead to security problems. However, SROS2 CLI include a tool, named \texttt{ros2 security}, that aims to help those who don’t want to set it all up by themselves.
+%\begin{figure}[H]
+%    \centering
+%    \includegraphics[width=0.8\linewidth]{images/ts_secured_multiplexer.png}
+%    \caption{}
+%    \label{fig:ts_secured}
+%\end{figure}
 
-\subsubsection{TurtleSim with SROS2}
+% Note that, as it is now, the only nodes that are supervised by the \texttt{multiplexer} are the \texttt{random controller} node and the \texttt{keyboard} node. However, it can be implemented new nodes with ease, as it is only required to remap topics in the launch file and create as many subscriptions in the \texttt{multiplexer} as many implemented nodes.
+
+In technically terms, a \textit{keystore} must be initiated, as SROS2 yields a command that permits its creation. A keystore is a created directory where files regarding security are stored. By generating a keystore directory, it may then be sourced and utilized by RCL towards applying security to the application.
             
-Now that the concept behind SROS2 is introduced, the \texttt{TurtleSim} application given as an example in the previous section, can now  be treated using security features related to the nodes involved.
+\begin{lstlisting}[title={\textit{Keystore} creation using the proper SROS2 command.}]
+ros2 security create_keystore turtlesim_keystore
+\end{lstlisting}
 
-The \texttt{multiplexer} node handled the commands responsible for the turtle movement. Note that, the turtle is implemented in the \texttt{turtlesim} node, so both \texttt{multiplexer} and \texttt{turtlesim} nodes are directly connected through a specified topic. \texttt{Multiplexer} acts as topic selector between two different subscribed topics, where each of them was respectively associated with a priority. Based on the priority set at each moment, the \texttt{multiplexer} node forwards the command related to the selected topic into the \texttt{turtlesim} node, by topic remapping, which triggers the turtle movement. Even though the \texttt{multiplexer} handles the two specified subscribed topics that receive movement data from both \texttt{random controller} and \texttt{keyboard} nodes, its not exclusive to the \texttt{turtlesim} node, as it is still possible to directly publish commands to the topic that handles the turtle movement, since the security properties have not been implemented yet.
+The \texttt{security} command enables features regarding security matters, concerning the DDS-security artifacts.
 
-In order to guarantee this exclusivity where the \texttt{multiplexer} is the only node that directly publishes data to the topic that enables the turtle movement, is by specifying \textbf{access control} files. The remaining nodes should be considered as untrustworthy, denying any potential undesired turtle movement originated by these nodes that tried to publish data through the topic. The idea is to encapsulate both \texttt{multiplexer} and \texttt{turtlesim} nodes, as the \texttt{multiplexer} monitors and manages all the data intended to manipulate the turtle movement, similar to a reversed proxy server.
+\subsubsection{Keystore's Directory Architecture}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/ts_secured_multiplexer.png}
+    \includegraphics[width=0.7\linewidth]{images/ts_keystore_tree.png}
+    \caption{\texttt{Turtlesim\_keystore}'s directory structure.}
+    \label{fig:ts-keystore}
 \end{figure}
-
-Note that, as it is now, the only nodes that are supervised by the \texttt{multiplexer} are the \texttt{random controller} node and the \texttt{keyboard} node. However, it can be implemented new nodes with ease, as it is only required to remap topics in the launch file and create as many subscriptions in the \texttt{multiplexer} as many implemented nodes.
-
-So, in technically terms, a \textbf{SROS2 keystore} must be initiated. ROS2 provides a command that permits the creation of \textbf{keystores} by using the \texttt{security} keyword. This command enables features regarding security matters, that has access to the SROS2 tools related to the DDS-security artifacts.
-
-The keystore is a created directory where DDS security features are stored. By creating a keystore directory, then it can be later sourced to be used by RCL to provide security to the associated ROS2 network.
-            
-\begin{verbatim}
-    ros2 security create_keystore turtlesim_keystore
-\end{verbatim}
-
-The created keystore directory structure is displayed bellow:
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\linewidth]{images/ts_keystore_tree.png}
-\end{figure}
-
-By creating the keystore, three different sub-directories will be generated.
 
 \begin{itemize}
     \item[--] The \texttt{enclaves} directory contains the security tools related to each enclave created. An \textbf{enclave} is a group of ROS nodes, controlled by the same set of security rules, defined in its corresponding enclave directory. Each enclave includes files needed to enable security, such as CA certificates and their own private key (\texttt{key.pem}). Besides containing each enclave created (for instance, in the figure above, a \texttt{/turtlesim/enclave} enclave is created), this directory also has a governance policy document \texttt{governance.xml}, as well as a signed copy file related to the CA permissions, \texttt{governance.p7s}. 
@@ -352,115 +344,65 @@ By creating the keystore, three different sub-directories will be generated.
     \item[--] The \texttt{private} directory contains material that is considered private. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory. This file stores the CA \textbf{private key}. It is used to modify the network policies, such as access permissions, and to add new participants. Similar to the \texttt{public} directory, the CA key corresponding to its identity and permissions can be stored in their corresponding individual directories.
 \end{itemize}
             
-The reader may want to create as many keystores as needed, but RCL can only use a keystore's artifacts at once. The directory is defined by the SROS2 environment variable \texttt{ROS\_SECURITY\_KEYSTORE}, that needs to be previously sourced. Environment variables sourcing will be explained further on.
+\subsubsection{Understanding Security Enclaves}
 
-Once the keystore has been created, the respective enclaves can be implemented. By using the tag \texttt{create\_key}, with the keystore namespace provided (in this case is \texttt{turtlesim\_keystore}), each enclave can be created.
+Once the keystore has been created, the respective enclaves can be implemented. As mentioned, an enclave is a group of nodes that follow the same security policy. As enclaves are specified upon execution time, their security artifacts are actually used by running processes.
 
-Although the idea of enclave has already been introduced, the full context behind it is yet to be explained. As mentioned, an enclave is a group of ROS nodes that follow the same security policy. Since an enclave is a DDS domain term, typically a node is an abstraction of a DDS \texttt{Participant} (previously mentioned as a Domain Participant). In ROS2, the usage of an enclave is done upon running a node, which causes the creation of a running process. This means that, enclaves are used by processes, providing them security based on their artifacts and specification. 
+Since an enclave is a DDS domain term, typically a node is an abstraction of a DDS \texttt{participant}. However, by considering node composition, as a reliable way for matching multiple nodes simultaneously to the same enclave, this node perception as participants can not be taken into account, due to causing non-negligible overhead. There is also not convenient to compose nodes as individual participants, as far as operating system's security is concerned, where permission distribution and memory becomes rather difficult to handle.
 
-Since the mapping is between processes and enclaves, the reader may wonder, if node composition into a single process is a reliable way for matching multiple nodes simultaneously to the same enclave. Well, this is actually a good approach but nodes can not be perceived as domain participants, while considering node composition, due to the fact that composing participants results in non-negligible overhead. 
-
-There is also not convenient to compose nodes as individual participants, as far as security is concerned. That is because each participant has its own security identity related to its node, and by composing participants, they all share the same OS memory space, consequently access data is shared between them, and permission distribution becomes rather difficult to handle. 
-
-So, each participant must be matched to a node shared context, instead of being directly related to a specific node. 
+To adress this, each participant must be matched to a node shared context, instead of being directly related to a specific node. Thereby, the initial given definition of an enclave is not totally correct, since a participant can either be perceived as single node or as multiple node shared context. 
             
-% Note that, it is possible to combine multiple node contexts into a single process, meaning that multiple enclaves can be structurally contained in a single enclave directory (enclave hierarchy).
-
-Each enclave security artifacts are used by each participant, meaning that each node mapped into the same context is controlled by the same enclave. 
+Each enclave security artifacts are used by its respective DDS participant. Meaning that nodes mapped into the same context are controlled by the same enclave's security policies. 
 %The mapping is between a participant and its corresponding set of security rules. However, the set of security rules can be also used by others participants, meaning that, in ROS terms, multiple nodes can share the same security context. 
-Thereby, the initial given definition of an enclave is not totally correct, since a participant can either be perceived as single node or as multiple node shared context. 
 
-Usually the node \textbf{namespace} are quite relevant upon creating enclaves, since the default way of implementing enclaves creates a namespace hierarchy path depending on the node namespace, so node remapping could affect its corresponding enclave path. With the introduction of node contexts, the enclave path is now disassociated from node namespaces, having its own resource identifier. This approach is also appropriate when composing nodes from different packages (that consequently have different namespaces) scenario is considered, where the path of the shared enclave must be common to each node. 
+% Usually the node \textbf{namespace} are quite relevant upon creating enclaves, since the default way of implementing enclaves creates a namespace hierarchy path depending on the node namespace, so node remapping could affect its corresponding enclave path. With the introduction of node contexts, the enclave path is now disassociated from node namespaces, having its own resource identifier. This approach is also appropriate when composing nodes from different packages (that consequently have different namespaces) scenario is considered, where the path of the shared enclave must be common to each node. 
 % The \textbf{Access Restricted Area} can not be implemented as illustrated above, since each key stored into the keystore previously initiated, is directly related to two different packages. So two different keys must be created, one for the \texttt{multiplexer} and other for the \texttt{turtlesim} node.
 
-\begin{verbatim}
-    ros2 security create_key turtlesim_keystore /security_enclave/
-\end{verbatim}
+\begin{lstlisting}[title={Creation of an \texttt{enclave} into the predefined keystore.}]
+ros2 security create_key turtlesim_keystore /security_enclave/
+\end{lstlisting}
             
-In order to run these nodes concerning the created keys, all the packages related to the network must be re-built using the \textbf{Fast DDS} additional flag.
+% In order to run these nodes concerning the created keys, all the packages related to the network must be re-built using the \textbf{Fast DDS} additional flag.           
+%\begin{verbatim}
+%    colcon build --symlink-install --cmake-args -DSECURITY=ON
+%\end{verbatim}
             
-\begin{verbatim}
-    colcon build --symlink-install --cmake-args -DSECURITY=ON
-\end{verbatim}
-            
-The following exports need to be sourced to force SROS2 security features. The reader may want to put these exports into a shell script, and then add this to the \texttt{PATH} environment variable.
-            
-\begin{verbatim}
-    export ROS_SECURITY_KEYSTORE=/path/to/the/created/keystore
-    export ROS_SECURITY_ENABLE=true
-    export ROS_SECURITY_STRATEGY=Enforce
-\end{verbatim}
+The following exports need to be sourced to force SROS2 security features, as they concern relevant environment variables.
 
-These exports are related to relevant SROS2 environment variables, that the reader must be aware when considering the SROS2 tools.
-
-\begin{itemize}
-    \item \textbf{ROS\_SECURITY\_KEYSTORE}: This variable sources the root of the created keystore. By sourcing this location, ROS2 knows where the security artifacts are stored.
-    \item \textbf{ROS\_SECURITY\_ENABLE}: This variable is the SROS2 enabler.
-    \item \textbf{ROS\_SECURITY\_STRATEGY}: As stated before, SROS2 provides two different approaches when it comes to dealing with security files. This variable handles that property, and it can be set either to \texttt{Enforce} or \texttt{Permissive}.
-\end{itemize}
-
-Now that all ROS2 security prerequisites have been successfully configured, the network can be launched. 
-
-Since SROS2 has no support for launch files, each node needs to be launched separately on its own terminal, with regard of their respective keys. 
-Later, this process is simplified by launching a shell script. 
+The first sourced variable points to the keystore's root, allowing ROS2 to identify where the security artifacts are kept. The second regards serves as the security enabler. The last variable sets which security strategy will be used when dealing with security files.
             
-\begin{verbatim}
-    ros2 run turtle_multiplexer multiplexer --ros-args --enclave /multiplexer/multiplexer
+\begin{lstlisting}[title={SROS2 environment variables.}]
+export ROS_SECURITY_KEYSTORE=/path/to/the/created/keystore
+export ROS_SECURITY_ENABLE=true
+export ROS_SECURITY_STRATEGY=Enforce
+\end{lstlisting}
+
+% Now that all ROS2 security prerequisites have been successfully configured, the network can be launched. 
+
+% Since SROS2 has no support for launch files, each node needs to be launched separately on its own terminal, with regard of their respective keys. 
+% Later, this process is simplified by launching a shell script. 
+            
+% \begin{verbatim}
+%    ros2 run turtle_multiplexer multiplexer --ros-args --enclave /multiplexer/multiplexer
                 
-    ros2 run turtlesim turtlesim_node --ros-args --enclave /turtlesim_node/turtlesim_node 
-\end{verbatim}
+%    ros2 run turtlesim turtlesim_node --ros-args --enclave /turtlesim_node/turtlesim_node 
+% \end{verbatim}
 
-As pointed previously, DDS has several implementations that can be considered when the ROS2 network is being configured. The ROS2 distribution usually dictates what is the default middleware implementation of DDS being used. Most of these ROS2 distributions uses the same default middleware implementation, which has the name of \textbf{Fast DDS} (formerly named \texttt{Fast RTPS}). The features that stand-out the most in this implementation are the promotion of an interface generator (\texttt{Fast DDS-Gen}) and the usage of \texttt{RTPS} communication protocol, which guarantees performance, real-time behaviour, efficiency, scalability and, most importantly, security. As explained earlier, the Fast DDS security flag, \texttt{-DSECURITY=ON}, must be considered upon building the ROS2 packages. Although, the reader may want to set a different DDS implementation. In order to do this, the reader should install the DDS middleware software, following the implementation specification and dependencies, and then rebuild the workspace forcing the DDS implementation to change. ROS2 has a environment variable, \texttt{RMW\_IMPLEMENTATION}, that allows the replacement of the middleware that is being used.
+% As pointed previously, DDS has several implementations that can be considered when the ROS2 network is being configured. The ROS2 distribution usually dictates what is the default middleware implementation of DDS being used. Most of these ROS2 distributions uses the same default middleware implementation, which has the name of \textbf{Fast DDS} (formerly named \texttt{Fast RTPS}). The features that stand-out the most in this implementation are the promotion of an interface generator (\texttt{Fast DDS-Gen}) and the usage of \texttt{RTPS} communication protocol, which guarantees performance, real-time behaviour, efficiency, scalability and, most importantly, security. As explained earlier, the Fast DDS security flag, \texttt{-DSECURITY=ON}, must be considered upon building the ROS2 packages. Although, the reader may want to set a different DDS implementation. In order to do this, the reader should install the DDS middleware software, following the implementation specification and dependencies, and then rebuild the workspace forcing the DDS implementation to change. ROS2 has a environment variable, \texttt{RMW\_IMPLEMENTATION}, that allows the replacement of the middleware that is being used.
 
-The creation of these keys only ensures that the communication between the \texttt{multiplexer} and the \texttt{turtlesim} is authenticated, and the exchanged data is encrypted, so Access Control is yet to be implemented.
-
-By using tools like \texttt{tcpdump}, the data packets can be displayed and this encryption can be easily verified. If no SROS2 security is regarded (no export made), the data is passed in plain-text, as expected. After sourcing the security features, using the exports specified above, the packet displayed is encrypted, and its larger since additional information is considered to increase safety. % An encrypted packet example is illustrated in the following figure.  
-
-
-\subsubsection{SROS2 - Automatic key generation}
-            
-Before considering applying access control to the \texttt{TurtleSim} example, let this SROS2 feature be introduced. SROS2 supplies tools to automate the process of generating enclaves and their respective permissions files. 
-
-First a \texttt{policy.xml} needs to be created, while the ROS2 network is running with SROS2 security enabled, so that the file stores information about the network. 
-                
-\begin{verbatim}
-    ros2 security generate_policy policy.xml
-\end{verbatim}
-
-Now, the created policy file can be used as a reference to automate the process of key generation. To do this, both keystore and policy must be given as arguments to the following SROS2 command.
-
-\begin{verbatim}
-    ros2 security generate_artifacts -k turtlesim_keystore -p policy.xml
-\end{verbatim}
+The keystore creation, alongside with their respective enclaves, only ensures security over the network communication, in which node authentication and data encryption are concerned. By using tools like \texttt{tcpdump}, data encryption can be easily verified. Authentication is ensured upon the enclave's creation. However, to properly apply security over the \texttt{TurtleSim} application, acess control policies must be appropriately covered.
 
 \subsubsection{Access Control}
             
-In order to provide access control, the permission files, of the enclave that is being considered, need to be modified. This is ensured by adding security permissions to these files, with the mandatory signature of the CA. 
+In order to provide access control, the permission files, of the enclave that is being considered, need to be modified. This is ensured by adding security permissions to these files, with the mandatory signature of the Certificate Authority. 
                 
-However, a suitable way of editing the permission file, \texttt{permissions.xml}, that dictates how the enclave manages the permissions within the network, is by creating a policy file and running the following command.
+However, a suitable way of editing the permission file, \texttt{permissions.xml} (file that dictates how the enclave manages the permissions within the network) is by creating a policy file and running the following command.
                 
-\begin{verbatim}
-    ros2 security create_permission turtlesim_keystore /enclave policy.xml
-\end{verbatim}
-    
-Besides changing the permissions file, the CA signature is also generated, meaning that the permissions modification have been successfully implemented in the considered enclave.
+\begin{lstlisting}[title={Setting permissions into an enclave.}]
+ros2 security create_permission turtlesim_keystore /enclave policy_file
+\end{lstlisting}
 
-This \texttt{policy.xml} passed as an input for easing the alteration of the enclave permissions, follows a restrict SROS2 \textbf{policy XML schema}. This schema makes use of a few concepts, that are relevant to understand how the schema design was conceived.
-
-\begin{itemize}
-    \item[--] \textbf{Mandatory Access Control}: Permissions to allow the access to an object are pre-established by a set of authorization rules, and can not be modified by any subject.  
-    \item[--] \textbf{Principle of Least Privilege}: This principle is to guarantee that only the minimum access privileges are used to the intended purpose.
-    \item[--] \textbf{Privilege Separation}: The access privileges that a subject owns are separated, decreasing the possibility of a security vulnerability.
-    \item[--] \textbf{Separation of Concerns}: Distribution of the system security concerns into each corresponding section.  
-\end{itemize}
-                
-                % (short)
-                % Relevant tags
-                % Problems
-                
-                % What is intended in our example
-                % How is it implemented
-                % Policy file example
+\subsubsection{TurtleSim regarding Security}
 
 
 \section{Related work}\label{s:ros-relWork}
