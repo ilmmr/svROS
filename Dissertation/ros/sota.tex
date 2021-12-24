@@ -4,7 +4,7 @@ As aforementioned, this thesis aims to explore the security configuration within
 
 % \section{Background}\label{s:ros-back}
 
-Robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
+Robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action \cite{cousins2011exponential}, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
 
 In ROS, software flexibility was valued above all else, meaning that values like security were not considered as a priority, so ROS-based applications tend to face increased security risks, compromising the whole robotic network. As ROS became a standard for many robotic systems, and due to the scale and scope of the robotics grows as they start to be integrated into the real world, security matters must be addressed as priority while developing systems involving robots. \cite{diluoffo2018robot, kim2018security}
 
@@ -19,7 +19,7 @@ This chapter introduces necessary background information over the major concepts
 
 \section{Former Architecture}
 
-The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications \cite{diluoffo2018robot}, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
+The Robot Operating System was created by a collaborative open-source community, that has undergone rapid development \cite{cousins2011exponential}, to contribute in the advancement of cyber physical systems, mainly robotic systems, serving as developer enhancer for the world of robotic applications \cite{diluoffo2018robot}, complemented by software libraries and tools with the aim of helping build robot applications easily, without the need of building it from scratch.
 
 Although Robot Operating System furnishes services, often perceived as operating system's services, such as hardware abstraction, low-level device control and control over message-passing between processes, ROS can not be perceived as a proper operating system, in the sense of process management and scheduling. However, it has a significant impact on the deployed application's performance, with highly complex effects on timing leading to affecting the application's runtime behaviour. In result, the impact of the underlying operating system scheduling is over exceed by ROS. \cite{intro-ros, casini2019response} 
 
@@ -48,7 +48,7 @@ Robot Operating System 2 comes as a complete refactoring of ROS, with the aim of
 
 \section{Evolution towards Robot Operating System 2}
 
-The Robot Operating System 2 (ROS2) was developed with the goal of easing the former ROS architecture. Although ROS2 continues to provide a simple, uniform message passing interface to allow components to communicate with each other, instead of implementing their own middleware specification, Data Distribution Service (DDS) communication protocol is implemented as an abstract middleware interface, through which serialization, transport and discovery is being provided. This implies that adding and integrating a new component into an existing system remains reasonably simple for a ROS developer.
+The Robot Operating System 2 (ROS2) was developed with the goal of easing the former ROS architecture. Although ROS2 continues to provide a simple, uniform message passing interface to allow components to communicate with each other, instead of implementing their own middleware specification, Data Distribution Service (DDS) communication protocol is implemented as an abstract middleware interface, through which serialization, transport and discovery is being provided. % This implies that adding and integrating a new component into an existing system remains reasonably simple for a ROS developer.
 
 \subsection{Data Distribution Service}
 
@@ -96,7 +96,10 @@ As previously stated, the Robot Operating System 2 was developed to address the 
 %By relying on an outside middleware, the modularity approach that ROS makes use of, where multiple modules should be applied when needed, while reducing the number of dependencies attached, highly depends on the middleware implementation that is being used. 
 As far as dependencies are concerned, DDS implementations have light sized dependencies, often related to language implementation libraries, easing the complexity behind installing and running dependencies for ROS developers. \cite{ros-on-dds}
 
-ROS2 middleware implements an interface on top of DDS, called \textit{ROS client library} (RCL), which hides much of the complexity of DDS specification API, offering a more friendly approach for the ROS users. However, it still provides access to the underlying DDS implementation for users that might want to integrate different DDS implementations for their use cases.
+The middleware's on-top layer regards the ROS client library (\textit{rcl}), already implemented in the former ROS architecture. This layer regards the availability of ROS concepts to the Application layer, as it provides APIs to ease the software implementation by ROS developers. \cite{ros2documentation} As ROS aims to support different programming languages over the same computing context, each language-specficic API must have its corresponding client library (\textit{rclcpp} regarding \textit{C++} and \textit{rclpy} regarding \textit{Python}). The \textit{rcl} accounts these client libraries by abstracting their specification, reducing code duplication.   
+\cite{rcl, casini2019response}
+
+% ROS2 middleware implements an interface layer on top of DDS, called \textit{ROS client library} (RCL), alread which hides much of the complexity of DDS specification API, offering a more friendly approach for the ROS users. However, it still provides access to the underlying DDS implementation for users that might want to integrate different DDS implementations for their use cases.
 
 \begin{figure}[H]
     \centering
@@ -107,13 +110,13 @@ ROS2 middleware implements an interface on top of DDS, called \textit{ROS client
 
 Towards supplying a wide range of configurations back to application layer, to vastly cover the robotic applications needs, ROS2 aims to support multiple DDS implementations, in which these implementation's API specification might differ from each other (currently, FastRTPS by eProsima, Connext by RTI, and Vortex OpenSplice by Adlink). 
 
-In order to abstract from the specifics of these implementation's APIs, an DDS-agnostic interface is being introduced, the rmw (ROS MiddleWare) interface, allowing portability among DDS vendores, which consequently enables ROS developers to interpolate DDS implementations, based on their application's needs during runtime. It should be noted that the DDS implementations are low-level of abstraction, strictly defined by its corresponding vendor's API. DDS only defines fundamental procedures at a higher degree of abstraction.  
+In order to abstract \textit{rcl} from the specification's complexity of these implementation's APIs, an DDS-agnostic interface is being introduced, the rmw (ROS MiddleWare) interface \cite{casini2019response}, allowing portability among DDS vendores, which consequently enables ROS developers to interpolate DDS implementations, based on their application's needs during runtime. It should be noted that the DDS implementations are low-level of abstraction, strictly defined by its corresponding vendor's API. DDS only defines fundamental procedures at a higher degree of abstraction.  
 
 % This layer could be removed, if there was no need to use more than one DDS implementation. But this is not the wanted scenario, since it is way more practical to switch the DDS implementation depending on the application needs. 
 % The former version of ROS, depicted on left hand-side of the picture \ref{fig:ros2-architecture}, already provided this abstract layer, that was customized and implemented by ROS client library, which allowed the communication between the Application Layer, in hwich the Master node was implemented, and the communication protocols. However, the capabilities offered by this middleware are significantly lower than ROS2 middleware, due to the DDS integration, as well as the fail to support the needs of multiple systems.
 
 % As stated, ROS client library hides the complexity of the DDS specification API from the developer. 
-As RCL works under ROS structures, to keep the passing of information through the middleware layer, a structure mapping between ROS and DDS must occur in the rmw interface, accounting the DDS implementation that is being considered at runtime. \cite{casini2019response} The data structure mapping between ROS and DDS must account the preservation of the former ROS messages' structure. The RCL works under the ROS messages' \texttt{.msg} files so, these messages must be converted into messages' \texttt{.idl} files, to be handled by the DDS's RTPS wire protocol. \cite{ros-on-dds} Then, the reverse process must be ensured as well, to fully complete the information flow, where the data must be converted back to ROS structures before being returned to the ROS client library.
+As the \textit{rcl} layer works under ROS structures, to keep the passing of information through the middleware layer, a structure mapping between ROS and DDS must occur in the rmw interface, accounting the DDS implementation that is being considered at runtime. \cite{casini2019response} The data structure mapping between ROS and DDS must account the preservation of the former ROS messages' structure. The \textit{rcl} layer works under the ROS messages' \texttt{.msg} files so, these messages must be converted into messages' \texttt{.idl} files, to be handled by the DDS's RTPS wire protocol. \cite{ros-on-dds} Then, the reverse process must be ensured as well, to fully complete the information flow, where the data must be converted back to ROS structures before being returned to the ROS client library.
 
 
 \subsection{Network Concepts}
@@ -302,7 +305,7 @@ Depending on the security requirements needed for a particular application, the 
 
 Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over the ROS application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the Secure Robot Operating System 2 (SROS2) toolset, concerning the DDS-Security functionality.
 
-The control over these tools are done by the ROS client library to provide security over the Application layer, while DDS is capable of providing security over the communication architecture. Each domain participant in ROS2 has a set of associated security files and two different security approaches (permissive and strict) are supported features considered by the SROS2 toolset.
+The control over these tools are done by the ROS client library, providing security over the Application layer, while DDS is capable of providing security over the communication architecture. Each domain participant in ROS2 has a set of associated security files and two different security approaches (permissive and strict) are supported features considered by the SROS2 toolset.
 
 Since this security integrity on ROS2 is consider a recent technology implementation \cite{ros-dds-integration}, the developer must be aware of improper configuration, that can still lead to security problems. However, the variety of capabilities in the offered SROS2 toolset attempts to aid with security configuration across environments. 
 
@@ -325,7 +328,7 @@ To accurately achieve this exclusivity, in which the turtle's movement is unique
 
 % Note that, as it is now, the only nodes that are supervised by the \texttt{multiplexer} are the \texttt{random controller} node and the \texttt{keyboard} node. However, it can be implemented new nodes with ease, as it is only required to remap topics in the launch file and create as many subscriptions in the \texttt{multiplexer} as many implemented nodes.
 
-In technically terms, a \textit{keystore} must be initiated, as SROS2 yields a command that permits its creation. A keystore is a created directory where files regarding security are stored. By generating a keystore directory, it may then be sourced and utilized by RCL towards applying security to the application.
+In technically terms, a \textit{keystore} must be initiated, as SROS2 yields a command that permits its creation. A keystore is a created directory where files regarding security are stored. By generating a keystore directory, it may then be sourced and utilized by \textit{rcl} features towards applying security to the application.
             
 \begin{lstlisting}[title={\textit{Keystore} creation using the proper SROS2 command.}]
 ros2 security create_keystore turtlesim_keystore
