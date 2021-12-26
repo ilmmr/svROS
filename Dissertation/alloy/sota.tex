@@ -1,13 +1,28 @@
 \chapter{Alloy Specification Framework}\label{c:alloy}
 
-As aforementioned, the main problems that this thesis aims to tackle are security vulnerabilities and data processing over big workloads of streaming data. In this chapter, it is intended to explore technologies that are relevant to overcome the above-mentioned challenges (\ref{s:back}) as well as previous developed work that has the same or similar goals as this thesis (\ref{s:relWork}).
+As aforementioned, this thesis aims to tackle the security vulnerabilities resulted from the miss-configuration over ROS files. In this chapter, it is intended to explore the Alloy framework that is relevant to overcome the above-mentioned challenge, as well as previous developed work that has the same or similar goals as this thesis (\ref{s:alloy-relWork}).
 
-\section{Background}\label{s:alloy-back}
+As result of the increased usage of robotics, and with their integration into the human world, security ensurance for robotics software is highly required. The use of formal methods, especially in systems that require flexibility and reliability, is recommended to avoid security-critical faults. \cite{carvalho2020analysis} Software frameworks designed for this purpose must provide methods to perform structural design over systems with rich structures, abstracting them as a conventional model. Additionally, these frameworks must support features to enable automate analysis, in which property evaluation over these designed models is used as technique. 
 
-Enterprises, particularly startups and small and medium businesses, are gradually shifting to the Cloud to outsource data and processing. \cite{6227695} As advantageous as this may be, the sharing of content with third-party systems, poses challenges about privacy and security. As previously stated (\ref{s:problem}), traditional strategies for achieving confidentiality, such as a user encrypting their data with their own key or even using techniques such as homomorphic encryption, make some computations unfeasible, hence alternative methods must be investigated.
+The \textit{Alloy Framework} \cite{alloy-DJ}, fits within within this context, as it furnishes a declarative specification language used for software modeling, with extended tools supporting analysis over these models. \cite{alloy-6} The language combination of both relational and linear temporal logic (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the latter is exhaustively checked over property verification. \cite{lwspecification, carvalho2020analysis}
 
-% makes either some operations impossible to be performed or still leaves some vulnerabilities opened to be exploited.
-% encrypting with his own key still leaves the user exposed when having to perform computations
+An Alloy model is a collection of constraints that describes (implicitly) a set of structures, for example: all the possible security configurations of a web application, or all the possible topologies of a switching network. Alloy’s tool, the Alloy Analyzer, is a solver that takes the constraints of a model and finds structures that satisfy them. It can be used both to explore the model by generating sample structures, and to check properties of the model by generating counterexamples. Structures are displayed graphically, and their appearance can be customized for the domain at hand.
+At its core, the Alloy language is a simple but expressive logic based on the notion of relations, and was inspired by the Z specification language and Tarski’s relational calculus. Alloy’s syntax is designed to make it easy to build models incrementally, and was influenced by modeling languages (such as the object models of OMT and UML). Novel features of Alloy includes many new rich subtype facilities for factoring out common features and a uniform and powerful syntax for navigation expressions.
 
+Electrum [17] is a declarative specification language. It was forged as an Alloy [12] extension with dynamic features, loosely inspired in the Temporal Logic of Actions (TLA) [15]. The Alloy core provides a lightweight approach to model-based formal specifications. However, it requires the explicit modelling of dynamic behaviours, and it’s presented within a frame- work that only supports verification through bounded model-checking [1] techniques. Thus, by extending the Alloy language through the inclusion of linear temporal logic with past operators (PLTL), the Electrum language merges the high-expressiveness of Alloy with a flexible form of dynamic specification as introduced in TLA [16], being therefore, well-suited to express formal state models with rich structures and complex behaviours. To make the specification systems feasible, the Electrum language is integrated in an Electrum framework. The framework includes an IDE, to create and edit specifications, and an Analyzer capable of performing verification through bounded and unbounded model- checking techniques. The framework also includes a Visualizer that provides a graphical view of the model during each step of the modelling process. These concepts, including the proper use of the framework, will be discussed in further detail through this chapter.
+
+
+\section{Structural Design}
+
+\subsection{System Modeling}
+
+\section{Structural Analysis}
+
+\subsection{System Analysis}
+% Commands, Instances and Scopes
+
+\subsection{Alloy Analyzer}
+
+\subsection{Model Checking}
 
 \section{Related work}\label{s:alloy-relWork}
