@@ -1,18 +1,82 @@
 \chapter{Alloy Specification Framework}\label{c:alloy}
 
-As aforementioned, this thesis aims to tackle the security vulnerabilities resulted from the miss-configuration over ROS files. In this chapter, it is intended to explore the Alloy framework that is relevant to overcome the above-mentioned challenge, as well as previous developed work that has the same or similar goals as this thesis (\ref{s:alloy-relWork}).
+As aforementioned, this thesis aims to tackle the security vulnerabilities resulted from the miss-configuration over ROS files. In this chapter, it is intended to explore the Alloy framework that is relevant to overcome the above-mentioned challenge. % as well as previous developed work that has the same or similar goals as this thesis (\ref{s:alloy-relWork}).
 
 As result of the increased usage of robotics, and with their integration into the human world, security ensurance for robotics software is highly required. The use of formal methods, especially in systems highly reliant on flexibility and reliability, is recommended to avoid security-critical faults. \cite{carvalho2020analysis} Software frameworks designed for this purpose must provide methods to perform structural design over systems with rich structures, abstracting their behaviour as a conventional model. Additionally, these frameworks must support features to enable automate analysis, in which property evaluation over these designed models is used as technique. 
 
-The \textit{Alloy Framework} \cite{alloy-DJ}, fits within within this context, as it furnishes a declarative specification language, based on the relation concept, used for software modeling, with extended tools supporting analysis over these models. \cite{alloy-6} The language combination of both relational and linear temporal logic (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the latter is exhaustively checked over property verification. \cite{lwspecification, carvalho2020analysis}
+The \textit{Alloy Framework} \cite{alloy-DJ}, fits within within this context, as it furnishes a declarative specification language, based on the relation concept, used for software modelling, with extended tools supporting analysis over these models. \cite{alloy-6} The language combination of both relational and linear temporal logic (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the latter is exhaustively checked over property verification. \cite{lwspecification, carvalho2020analysis}
 
-The framework includes an IDE, as well as an \textit{analyzer} that takes the specified model's restrictions into account, and performs bounded and unbounded model checking to find instances that satisfy those implied restrictions. It can be also be useful for checking model properties, where the analyzer will try to return a counterexample instance. Instances are displayed by the framework Visualizer, alongisde its divided steps of the modelling process. Instances appearance can be customized, using the \textit{theme}'s extension. \cite{alloy-6}
+The framework includes an IDE, as well as an \textit{analyzer} that takes the specified model's restrictions into account, and performs bounded and unbounded model checking to find instances that satisfy those implied restrictions. It can be also be useful for checking model properties, where the analyzer will try to return a counterexample instance. Instances are displayed by the framework Visualizer, alongside with the modelling process steps, regarding a trace representation. Instances appearance can be customized, using the \textit{theme}'s extension. \cite{alloy-6}
 
 This chapter will go through these principles in further depth, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain, supported by a previously configured example where ROS communication architecture is structurally modelled.
 
 \section{Structural Design}
 
-\subsection{System Modeling}
+The \textit{Alloy framework} presents itself as a formal modelling language, conceived to properly address model-checking techniques over their specification language, where both structural design and temporal behaviour, naturally specified over properties, can easily be defined. Formerly, Alloy was inherently static \cite{lwspecification}, meaning that it only excel the structural design. However, the lattest Alloy confers the ability to properly deal with expressive temporal properties, while employing the former structural approach. 
+
+As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consenquently allows large specification development. \cite{carvalho2020analysis} 
+
+Before accurately accounting both structural design as modelling technique and structural analysis, it follows the Alloy formal syntax.
+
+\begin{lstlisting}[title={Alloy's syntax.}]
+alloyModule ::= [moduleDecl] import* paragraph*
+moduleDecl ::= module qualName [[name,+]]
+import ::= open qualName [[qualName,+]] [as name]
+paragraph ::= sigDecl | factDecl | predDecl | funDecl
+    | assertDecl | cmdDecl
+sigDecl ::= [var] [abstract] [mult] sig name,+ [sigExt] { fieldDecl,* } [block]
+sigExt ::= extends qualName | in qualName [+ qualName]*
+mult ::= lone | some | one
+fieldDecl ::= [var] decl
+decl ::= [disj] name,+ : [disj] expr
+factDecl ::= fact [name] block
+predDecl ::= pred [qualName .] name [paraDecls] block
+funDecl ::= fun [qualName .] name [paraDecls] : expr { expr }
+paraDecls ::= ( decl,* ) | [ decl,* ]
+assertDecl ::= assert [name] block
+cmdDecl ::= [name :] ( run | check ) ( qualName | block ) [scope]
+scope ::= for number [but typescope,+] | for typescope,+
+typescope ::= [exactly] number qualName
+expr ::= const | qualName | @name | this
+    | unOp expr | expr binOp expr | expr arrowOp expr
+    | expr [ expr,* ]
+    | expr [! | not] compareOp expr
+    | expr ( => | implies ) expr else expr
+    | let letDecl,+ blockOrBar
+    | quant decl,+ blockOrBar
+    | { decl,+ blockOrBar }
+    | expr '
+    | ( expr ) | block
+const ::= [-] number | none | univ | iden
+unOp ::= ! | not | no | mult | set | # | ~ | * | ^ 
+    | always | eventually | after | before | historically | once
+binOp ::= || | or | && | and | <=> | iff | => | implies | 
+    & | + | - | ++ | <: | :> | . | until | releases | since | triggered | ;
+arrowOp ::= [mult | set] -> [mult | set]
+compareOp ::= in | = | < | > | =< | =>
+letDecl ::= name = expr
+block ::= { expr* }
+blockOrBar ::= block | bar expr
+bar ::= |
+quant ::= all | no | sum | mult
+qualName ::= [this/] ( name / )* name
+\end{lstlisting}
+
+The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required for understanding how system modelling is covered. 
+
+\subsection{System Modelling}\label{c:alloy-sm}
+
+Alloy aims to address the complexity behind richly structured systems, that require critical control over their intended behaviour, by presenting a novel approach for abstracting these systems as conventional models. System's structures can be specified over time-evolving states, where its behaviour clearly identifies the states' inbetween transitions. Thus, the conception of system transitioning offers a great formal approach when it comes to reason about the system's design.
+
+The Alloy structural definition relies on a relation way of connecting system's elements, where the latter is abstracted in terms of sets and relations. In Alloy, sets are labelled as \textit{signatures}, that are inhabited by a set of \textit{atoms}, from a finite universe of discourse. Atoms are perceived as the lowest-grain elements, with no particular semantics attached. Relations, however, are specified under their respective signature definition as signature \textit{fields}, addressing relation between atoms.
+
+Signatures can either be perceived as a top-level signature, or as other signature's subset. Signature hierarchy is conceivable through disjoint extensions (\textit{extends}), or by set inclusion (\textit{in}). The \textit{abstract} keyword declares a signature that contains no atoms beyond those within its extensions.
+
+Additionally, both signatures and fields may be attached with multiplicities. In the signature case, it will constraint the number of atoms that it may contain. Whereas in fields, it will define the relation multiplicity between atoms. Moreover, it is possible to tag both, signatures and fields, as variables (keyword var). Meaning that, their evaluation may evolve through time. Otherwise, both are considered as static by default, having the same evaluation throughout every state within each given time trace. Besides the implicit model constraints that are defined by the signature hierarchy and its imposed multiplicities, there are additional axioms (keyword fact), that can be explicitly expressed in Electrum’s language. Here, every value is a relation, and every axiom that can be written is a constraint to such relations.
+
+\subsubsection{Common Structure}
+
+\subsubsection{Behaviour Representation}
 
 \section{Structural Analysis}
 
