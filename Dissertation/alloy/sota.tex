@@ -12,7 +12,7 @@ This chapter will go through these principles in further depth, to give the read
 
 \section{Structural Design}
 
-The \textit{Alloy framework} presents itself as a formal modelling language, conceived to properly address model-checking techniques over their specification language, where both structural design and temporal behaviour, naturally specified over properties, can easily be defined. Formerly, Alloy was inherently static \cite{lwspecification}, meaning that it only excel the structural design. However, the lattest Alloy confers the ability to properly deal with expressive temporal properties, while employing the former structural approach. 
+The \textit{Alloy framework} presents itself as a formal modelling language, conceived to properly address model-checking techniques over their specification language, where both structural design and temporal behaviour, naturally specified over properties, can easily be defined. Formerly, Alloy was inherently static \cite{lwspecification}, meaning that it only excel the structural design. However, the lattest Alloy confers the ability to properly deal with expressive temporal properties, as well as trace evaluation over time, while employing the former structural approach. 
 
 As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consenquently allows large specification development. \cite{carvalho2020analysis} 
 
@@ -68,17 +68,43 @@ The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required 
 
 Alloy aims to address the complexity behind richly structured systems, that require critical control over their intended behaviour, by presenting a novel approach for abstracting these systems as conventional models. System's structures can be specified over time-evolving states, where its behaviour clearly identifies the states' inbetween transitions. Thus, the conception of system transitioning offers a great formal approach when it comes to reason about the system's design.
 
-The Alloy structural definition relies on a relation way of connecting system's elements, where the latter is abstracted in terms of sets and relations. In Alloy, sets are labelled as \textit{signatures}, that are inhabited by a set of \textit{atoms}, from a finite universe of discourse. Atoms are perceived as the lowest-grain elements, with no particular semantics attached. Relations, however, are specified under their respective signature definition as signature \textit{fields}, addressing relation between atoms.
+The Alloy structural definition relies on a relation way of connecting system's elements, where the latter is abstracted in terms of relations. In Alloy, unary relations, commonly known as sets, are labelled as \textit{signatures}, that are inhabited by a set of \textit{atoms}, from a finite universe of discourse. Atoms are perceived as the lowest-grain elements, with no particular semantics attached. A signature, identified by the keyword \textit{sig}, might include multiple \textit{field} declarations enclosed between braces, addressing relation between the signature's atoms and a set or other relation. Fields are inhabited by tuples of atoms from the universe, that must meet the same arity.
 
-Signatures can either be perceived as a top-level signature, or as other signature's subset. Signature hierarchy is conceivable through disjoint extensions (\textit{extends}), or by set inclusion (\textit{in}). The \textit{abstract} keyword declares a signature that contains no atoms beyond those within its extensions.
+Signatures can either be perceived as a top-level signature, or as other signature's subset. Signature hierarchy is conceivable through disjoint extensions (\textit{extends}), or by set inclusion (\textit{in}). The \textit{abstract} keyword declares a signature that contains no atoms beyond those within its extensions. 
 
-Additionally, both signatures and fields may be attached with multiplicities. In the signature case, it will constraint the number of atoms that it may contain. Whereas in fields, it will define the relation multiplicity between atoms. Moreover, it is possible to tag both, signatures and fields, as variables (keyword var). Meaning that, their evaluation may evolve through time. Otherwise, both are considered as static by default, having the same evaluation throughout every state within each given time trace. Besides the implicit model constraints that are defined by the signature hierarchy and its imposed multiplicities, there are additional axioms (keyword fact), that can be explicitly expressed in Electrum’s language. Here, every value is a relation, and every axiom that can be written is a constraint to such relations.
+To address default configuration over the universe's multiplicity, both signatures and fields can be specified under a multiplicity constraint. The former constrains the number of signature atoms, where it is commonly used to express singleton sets, over the constraint keyword \textit{one sig}. Fields, however, makes great use of multiplicities, offering behaviour expressness over relations between atoms. Additionally to these model constraints, implicitly specified over the course of the modelling process, system assumptions can be defined over axioms, expressed as \textit{facts}, where multiple constraints can be incorporated.
+
+Moreover, the newest Alloy version enables evaluation changing throughout the trace evolution, consequently allowing the consideration of both signatures and fields as time mutable declarations, through the usage of the keyword \textit{var}.
+
+Throughout the sections that follow, it will be presented an illustrive example over which graph theory rests, this being the study of \textit{Eulerian Circuits}. This example will be used to duly contextualize both modelling and verification process in Alloy. \textit{Eulerian Circuits} must meet several behaviour constraints over the classic graph definition, that must be addressed over axioms. However, the structural modelling must be provided beforehand.
 
 \subsubsection{Common Structure}
+
+The \textit{Eulerian} path denotes a trail within a finite graph, with each graph edge being visited precisely once. Thus, this already implies that the graph must be connected, where each node must be reachable, and undirected, where edges are non-oriented. 
+
+\begin{lstlisting}[title={Graph definition.}, otherkeywords = {abstract, sig, module, set, fact, iden, no, in}]
+module graph
+
+abstract sig Node {
+    adj : set Node
+}
+
+fact considerations {
+    adj = ~adj
+    no iden & adj
+    Node->Node in *(adj + ~adj)
+}
+\end{lstlisting}
 
 \subsubsection{Behaviour Representation}
 
 \section{Structural Analysis}
+
+Structural modelling only confers an conventional way of formally expressing the intend behaviour over a software component. As intended to perform verificaiton over the specified behaviour, it is advisable to implement analysis techniques, while supporting a illustrive way of exploring the behaviour through simulations.
+
+ The Alloy Analyzer has several mechanisms to allow the user to explore and validate a design, including an interactive exploration mode akin so simulation
+
+In order to endorse our intuition towards verification, or to reveal subtle flaws from scenarios that have not been exploit, analysis may encourage us to explore, depicting our current system configuration and behaviour through concrete examples. This section will give a brief overview of the Electrum analysis system, describing the com- mands that are provided by the language, as well as, how they are integrated in the analysis process within the Electrum Analyzer. Lastly, to better understand the differences between the available Model-Checking techniques, as well as how they complement themselves in the analysis process, a further description on Bounded and Unbounded Model-Checking is given
 
 \subsection{System Analysis}
 % Commands, Instances and Scopes

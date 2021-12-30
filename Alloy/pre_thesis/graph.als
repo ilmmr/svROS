@@ -1,0 +1,13 @@
+module graph
+
+/* Each node as a set of outgoing edges, representing a directed graph without multiple edged. */
+abstract sig Node {
+	adj : set Node
+}
+
+/*The graph is undirected, ie, edges are symmetric.*/
+fact considerations {
+	adj = ~adj /* The graph is undirected. */
+	no iden & adj /* The graph contains no loops.  */
+	Node->Node in *(adj + ~adj)  /* The graph is connected. */
+}
