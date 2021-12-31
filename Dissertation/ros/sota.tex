@@ -1,4 +1,4 @@
-\chapter{Software Development in ROS}\label{c:ros}
+\chapter{Software Development in ROS2}\label{c:ros}
 
 Robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action \cite{cousins2011exponential}, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
 
@@ -86,7 +86,7 @@ Briefly speaking, DDS leverages the premise of a transport-independent virtualiz
 
 % Introduzir as implementações e DDS specifications
 
-\subsection{ROS-DDS Architecture}
+\subsection{ROS2-DDS Architecture}
 
 As previously stated, the Robot Operating System 2 was developed to address the lack of support for real-time systems that the former ROS provided, mainly due to its architecture design that relied on their own middleware specification. To address this, ROS2 middleware approach is built upon the DDS framework \cite{maruyama2016exploring}, leveraging DDS for its messaging architecture, where communication and transport configuration are handled. % As a result of the DDS integration, ROS2 applications are actually considered DDS applications, meaning that is possible to interoperate both native DDS applications and ROS applications, providing flexible compatibility.
 
@@ -267,7 +267,7 @@ System security concerning network exposure, often explored by unauthorized acce
 
 The concerns about security take on particular importance, since robots are becoming more frequently used and can directly affect the physical world. \textit{Cyber-physical} systems, commonly related to the arising of the automation concept of robots, feature unique vulnerabilities that exploit both cyber and physical nature of these devices. \cite{mcclean2013preliminary}Generally, when considering the deployment of a robotic system, the following information security pillars, over which attacking counter measures should be measured, are hopefully concerned: Confidentiality, Integrity and Availability. \cite{white2018procedurally}
 
-\subsection{Security Integration in ROS}
+\subsection{Security Integration in ROS2}
 
 As aforementioned, ROS middleware faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing robots to be built as network distributed modules. As a result, techniques such as port scanning is usually used to compromise the data itself. Due to the ROS master role in the communication architecture, and its ability to connect to other nodes, exposing this node using port scanning poses a threat over the whole network. \cite{8794451} 
 
@@ -288,7 +288,7 @@ The provided specification ensures protection against unauthorized access to dat
 
 Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over the ROS application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset, concerning the DDS-Security functionality. 
 
-The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture. The SROS2 configuration is done over applying a set of security files to each ROS2 participant, considering the assignment approach (strict or permissive) that is being used.
+The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture. \cite{kim2018security} The SROS2 configuration is done over applying a set of security files to each ROS2 participant, considering the assignment approach (strict or permissive) that is being used.
 
 Since this security integrity on ROS2 is consider a recent technology implementation \cite{ros-dds-integration}, the developer must be aware of improper configuration, that can still lead to security problems. However, the variety of capabilities in SROS2 toolset attempts to aid with security configuration across environments. 
 
@@ -400,7 +400,8 @@ However, if the user forces the inverted remap, it is possible to control the tu
 
 \section{Related work}\label{s:relWork}
 
-This section intends to present previous developed work regarding the main concepts on what this thesis rests. The subsection \ref{s:relWork-sec} aims to provide a comprehensive overview over works that attended to prevent security issues related to the deployment of robotic systems using Robot Operating System, as its application enhancer. It is then followed by the subsection \ref{s:relWork-sa} regarding some of the current static analysis approaches on ROS applications. The latter subsection \ref{s:relWork-pv} concerns about previous work that addressed property verification and model checking techniques over ROS applications.
+This section intends to present previous developed work regarding the main concepts on what this thesis rests. The subsection \ref{s:relWork-sec} aims to provide a comprehensive overview over works that attended to prevent security issues related to the deployment of robotic systems using Robot Operating System, as its application enhancer. It is then followed by the subsection % \ref{s:relWork-sa} regarding some of the current static analysis approaches on ROS applications. The latter subsection 
+\ref{s:relWork-pv} that concerns about previous work addressing property verification and model checking techniques over ROS applications.
 
 \subsection{Security Overview}\label{s:relWork-sec}
 
@@ -416,6 +417,16 @@ Many researches were made regarding this issue that ROS faces, one in particular
 
 Following the need of supplying security assurance over ROS applications, several approaches were presented. A study that is rather relevant because of the similarity between their proposal and the one that SROS2 has to offer is the one presented on the \textit{Application-level security for ROS-based applications} \cite{application-security-ros}. The approach primarily focused on applying security measures on the application layer, by mainly running an Authentication Server, storing certificates and files related to trusted domain participants, while controlling and providing session keys related to the communication process. Even though encryption and authentication measures are concerned, the protected network is still perceived from the "outside", meaning that security attacks, such as denial of service, still persist which cannot be handled on the application level alone. Secure Robot Operating System (SROS) \cite{white2016sros} was initially developed as an experimental tool (later evolved to SROS2 as a supporting tool for ROS2), which supports TLS for all socket transport, node restrictions and chains of trust, guaranteeing publishers authorization when it comes to publish to a specific topic. Another worth-mentioned tool is Rosbridge \cite{crick2017rosbridge}, which provides a WebSocket interface to ROS and corresponding server to allow interaction between applications and ROS nodes, by using TLS as support and also access control over topics and API calls. 
 
-\subsection{Static Analysis}\label{s:relWork-sa}
+The present works addressing ROS security methods tend to concern solutions to prevent vulnerabilites and issues that might compromise robotic applications deployed, while considering performance as priority. In terms of applying formal methods to verify properties regarding the domain of ROS2 and ROS2 security as models, there are minimal existent works. Despite this, the following section consists of several articles proposed to validate robotic systems, using formal methods as core.
 
-\subsection{Property Verification}\label{s:relWork-pv}
+% \subsection{Static Analysis}\label{s:relWork-sa}
+
+\subsection{Analysis and Verification}\label{s:relWork-pv}
+
+Static analysis over ROS represents a major contribution to this domain, in which researchers aim to tackle issues arised from miss configurations or code inconsistencies. The noteworthy  \textit{HAROS} framework \cite{santos2016framework} holds great value thanks to its contribution on improving ROS's software quality. \textit{HAROS} makes use of several analysis techniques to exert quality evaluation of ROS software, followed by ways of feedbacking inconsistencies using predefined code metrics. As this framework seeks to be flexible when it comes to adding functionality, further static analysis works improvements have been proposed as plugins. In both \cite{santos2019static} and \cite{santos2018property}, it is presented additional functionality to the framework, through applying architectural considerations over metamodel designing, where the latter supports the former by supplying property-based specifications. These techniques confers great help back to developers, since static analysis offers advantageable usage over raw review of software code. 
+
+The literature concerning property verification over model checking tools is quite extensive. Regarding ROS applications, some approaches were presented that mainly focused on modelling the ROS node-communication, while real-time properties were also considered as support to the target language. In \cite{halder2017formal}, \textit{UPPAAL} model checker is used to model ROS applications, supported by a concrete robot example, that is followed by techniques to verify properties regarding its behaviour. In \cite{9341085} is presented a notable proposal, where \textit{Electrum} \cite{lwspecification}, the former version of the current Alloy Analyzer, is used as an additional plug-in to the already mentioned \textit{HAROS} framework. Through ROS launch configurations, the plugin automatically generated models using Electrum and performs verification over these models, to then feedback issues related to their ROS system behaviour.
+
+As ROS2 domain regards the use of DDS communication protocol, a few works on DDS modelling analysis deserve to be mentioned, as they might give important background for property verification over communications protocols. In \cite{alaerjan2017modeling}, it is proposed a technique to model the DCPS architectural design that DDS makes use of, alongside with new approaches to the current DDS behaviour. Supported by several modelling techniques for publish-subscribe systems, in \cite{liu2018formal}, DDS in ROS2 is formalized as a timed automata, consequently followed by model verification over property-checking. These works conceive value concepts and procedures useful for this thesis contextualization.
+
+A few studies on robotics should be recognized in which techniques such as model-checking were performed. Despite the fact that they do not address the domain of ROS, they nonetheless give helpful background for the robotics research over formal approaches. A case study \cite{near2011lightweight} presents a novel approach over systems that require static analysis based on software assumptions and proper analysis within its environment usage, where user-interaction comes in hand. Concerning this novel idea, a medical system is concerned as a case study, where multiple safety-based considerations are expected, as well as, an end-to-end critical property that must be satisfied over the entire analysis course. Another notable work regarding former analysis using Alloy specification language is presented in \cite{mansoor2018modeling}, where a safety-critical scenario is proposed under the domain of surgical robots. The formal techniques used allows overview over a surgical robot arm, taking into consideration possible violations of important safety properties. Although these studies presents favorable outcomes, their focus lies on a particular area of study. As a result, they lack on providing solutions to a vast majority of situations.

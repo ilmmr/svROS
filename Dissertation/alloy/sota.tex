@@ -12,57 +12,55 @@ This chapter will go through these principles in further depth, to give the read
 
 \section{Structural Design}
 
-The \textit{Alloy framework} presents itself as a formal modelling language, conceived to properly address model-checking techniques over their specification language, where both structural design and temporal behaviour, naturally specified over properties, can easily be defined. Formerly, Alloy was inherently static \cite{lwspecification}, meaning that it only excel the structural design. However, the lattest Alloy confers the ability to properly deal with expressive temporal properties, as well as trace evaluation over time, while employing the former structural approach. 
+The \textit{Alloy framework} presents itself as a formal modelling language, conceived to properly address model-checking techniques over their specification language, where both structural design and temporal behaviour, naturally specified over properties, can easily be defined. Formerly, Alloy was inherently static \cite{lwspecification}, meaning that it only excel the structural design, where its language was based on first-order logic. The analysis process relied on a bounded model checking technique with no support for temporal behaviour. Notwithstanding, the latest realease of Alloy confers the ability to properly deal with expressive temporal properties, as well as trace evaluation over time, while employing the former structural approach. 
 
-As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consenquently allows large specification development. \cite{carvalho2020analysis} 
+As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consequently allows large specification development. \cite{carvalho2020analysis} The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required for understanding how system modelling is covered. 
 
-Before accurately accounting both structural design as modelling technique and structural analysis, it follows the Alloy formal syntax.
-
-\begin{lstlisting}[title={Alloy's syntax.}]
-alloyModule ::= [moduleDecl] import* paragraph*
-moduleDecl ::= module qualName [[name,+]]
-import ::= open qualName [[qualName,+]] [as name]
-paragraph ::= sigDecl | factDecl | predDecl | funDecl
-    | assertDecl | cmdDecl
-sigDecl ::= [var] [abstract] [mult] sig name,+ [sigExt] { fieldDecl,* } [block]
-sigExt ::= extends qualName | in qualName [+ qualName]*
-mult ::= lone | some | one
-fieldDecl ::= [var] decl
-decl ::= [disj] name,+ : [disj] expr
-factDecl ::= fact [name] block
-predDecl ::= pred [qualName .] name [paraDecls] block
-funDecl ::= fun [qualName .] name [paraDecls] : expr { expr }
-paraDecls ::= ( decl,* ) | [ decl,* ]
-assertDecl ::= assert [name] block
-cmdDecl ::= [name :] ( run | check ) ( qualName | block ) [scope]
-scope ::= for number [but typescope,+] | for typescope,+
-typescope ::= [exactly] number qualName
-expr ::= const | qualName | @name | this
-    | unOp expr | expr binOp expr | expr arrowOp expr
-    | expr [ expr,* ]
-    | expr [! | not] compareOp expr
-    | expr ( => | implies ) expr else expr
-    | let letDecl,+ blockOrBar
-    | quant decl,+ blockOrBar
-    | { decl,+ blockOrBar }
-    | expr '
-    | ( expr ) | block
-const ::= [-] number | none | univ | iden
-unOp ::= ! | not | no | mult | set | # | ~ | * | ^ 
-    | always | eventually | after | before | historically | once
-binOp ::= || | or | && | and | <=> | iff | => | implies | 
-    & | + | - | ++ | <: | :> | . | until | releases | since | triggered | ;
-arrowOp ::= [mult | set] -> [mult | set]
-compareOp ::= in | = | < | > | =< | =>
-letDecl ::= name = expr
-block ::= { expr* }
-blockOrBar ::= block | bar expr
-bar ::= |
-quant ::= all | no | sum | mult
-qualName ::= [this/] ( name / )* name
-\end{lstlisting}
-
-The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required for understanding how system modelling is covered. 
+% Before accurately accounting both structural design as modelling technique and structural analysis, it follows the Alloy formal syntax.
+%  
+% \begin{lstlisting}[title={Alloy's syntax.}]
+% alloyModule ::= [moduleDecl] import* paragraph*
+% moduleDecl ::= module qualName [[name,+]]
+% import ::= open qualName [[qualName,+]] [as name]
+% paragraph ::= sigDecl | factDecl | predDecl | funDecl
+%     | assertDecl | cmdDecl
+% sigDecl ::= [var] [abstract] [mult] sig name,+ [sigExt] { fieldDecl,* } [block]
+% sigExt ::= extends qualName | in qualName [+ qualName]*
+% mult ::= lone | some | one
+% fieldDecl ::= [var] decl
+% decl ::= [disj] name,+ : [disj] expr
+% factDecl ::= fact [name] block
+% predDecl ::= pred [qualName .] name [paraDecls] block
+% funDecl ::= fun [qualName .] name [paraDecls] : expr { expr }
+% paraDecls ::= ( decl,* ) | [ decl,* ]
+% assertDecl ::= assert [name] block
+% cmdDecl ::= [name :] ( run | check ) ( qualName | block ) [scope]
+% scope ::= for number [but typescope,+] | for typescope,+
+% typescope ::= [exactly] number qualName
+% expr ::= const | qualName | @name | this
+%     | unOp expr | expr binOp expr | expr arrowOp expr
+%     | expr [ expr,* ]
+%     | expr [! | not] compareOp expr
+%     | expr ( => | implies ) expr else expr
+%     | let letDecl,+ blockOrBar
+%     | quant decl,+ blockOrBar
+%     | { decl,+ blockOrBar }
+%     | expr '
+%     | ( expr ) | block
+% const ::= [-] number | none | univ | iden
+% unOp ::= ! | not | no | mult | set | # | ~ | * | ^ 
+%     | always | eventually | after | before | historically | once
+% binOp ::= || | or | && | and | <=> | iff | => | implies | 
+%     & | + | - | ++ | <: | :> | . | until | releases | since | triggered | ;
+% arrowOp ::= [mult | set] -> [mult | set]
+% compareOp ::= in | = | < | > | =< | =>
+% letDecl ::= name = expr
+% block ::= { expr* }
+% blockOrBar ::= block | bar expr
+% bar ::= |
+% quant ::= all | no | sum | mult
+% qualName ::= [this/] ( name / )* name
+% \end{lstlisting}
 
 \subsection{System Modelling}\label{c:alloy-sm}
 
@@ -100,17 +98,24 @@ fact considerations {
 
 \section{Structural Analysis}
 
-Structural modelling only confers an conventional way of formally expressing the intend behaviour over a software component. As intended to perform verificaiton over the specified behaviour, it is advisable to implement analysis techniques, while supporting a illustrive way of exploring the behaviour through simulations.
+Structural modelling only confers an conventional way of formally expressing the intended behaviour over a software component. To perform verification over the specified behaviour, it is advisable to implement analysis techniques, while supporting a illustrative way of exploring the behaviour through simulations. Alloy does not establish a clear process separation over the model design and property verification, meaning that model checking also accounts the model itself as property specification.
 
- The Alloy Analyzer has several mechanisms to allow the user to explore and validate a design, including an interactive exploration mode akin so simulation
+This section aims to explain how Alloy conducts system analysis, with further explanations over the corresponding analysis commands, along with an overview on the Alloy Analyzer interactive exploration over a system's design. Since system analysis rely on the reasonable implementation of Model-Checking techniques, the follwing section within this subject intends to cover both Bounded and Complete Model-Checking procedures, as the proper contextualization on this matter is highly important on understanding how Alloy's verification process works.
 
-In order to endorse our intuition towards verification, or to reveal subtle flaws from scenarios that have not been exploit, analysis may encourage us to explore, depicting our current system configuration and behaviour through concrete examples. This section will give a brief overview of the Electrum analysis system, describing the com- mands that are provided by the language, as well as, how they are integrated in the analysis process within the Electrum Analyzer. Lastly, to better understand the differences between the available Model-Checking techniques, as well as how they complement themselves in the analysis process, a further description on Bounded and Unbounded Model-Checking is given
+\subsection{Model Checking}
+
+% Model-checking is increasingly popular in the early phases of the software development process. To establish the cor- rectness of a software design one must usually verify both structural and behavioral (or temporal) properties. Unfor- tunately, most specification languages, and accompanying model-checkers, excel only in analyzing either one or the other kind. This limits their ability to verify dynamic systems with rich configurations: systems whose state space is character- ized by rich structural properties, but whose evolution is also expected to satisfy certain temporal properties. To address this problem, we first propose Electrum, an extension of the Alloy specification language with temporal logic operators, where both rich configurations and expressive temporal properties can easily be defined. Two alternative model-checking techniques are then proposed, one bounded and the other unbounded, to verify systems expressed in this language, namely to verify that every desirable temporal property holds for every possible configuration.
+
+Model Checking presents itself as a novel technique towards verifying temporal properties over the system finite-state, that is duly represented as a conclusive model. This technique is becoming highly used due to its importance as an early phase approach upon developing systems \cite{lwspecification}, as it confers the most valued ffunctionality over the analysing tools, which concrete models, regarding the software architecture, is exhaustively checked over behavioral properties. 
+
+
 
 \subsection{System Analysis}
 % Commands, Instances and Scopes
 
 \subsection{Alloy Analyzer}
 
-\subsection{Model Checking}
 
-\section{Related work}\label{s:alloy-relWork}
+Model checking is the automatic process towards the verification if a given specification meets the system finite-state defined by a concrete model. In Electrum, unlike other analysis tools, there is a non-clear distinction between the model and the properties specification. By introduction of concrete abstraction processes and logic translations, the relational model specifications may be converted to model-checking prob- lems. There are two main categories of model-checkers that are included in the Electrum framework. Bounded model-checkers, which only consider computational traces with a limit number of distinct states, and unbounded ones, that discard this constraint. As previously referred, on the enunciation of the small scope hypothesis, bounded model- checkers are ideal to be used in the early states of analysis. They are able to produce quick feedback’s, and the majority of bugs are identified through small counter-examples. However, although bounded model-checking techniques can achieve much higher coverage levels than standard testing, they are still not complete, covering only an infimus part of every possible case. Thus, after the model under analysis has been validated, unbounded model-checkers can complement the analysis process by offering high-levels of reliability, towards verification.
+
+To enable the use of both techniques, the Electrum architecture (Figure 5) was built follow- ing the same principles as in Alloy. The Electrum Analyzer is implemented on top of the Alloy Analyzer, and relies on the Pardinus model-finder, which was built upon KodKod [36]. An Electrum specification might be seen as FOLTL [3][14] logic’s with structure. However, the Pardinus only uses FOLTL logic’s. Thus, a transformation is required. The main operation consists on removing all relational terms present in the Electrum Kernel formulas, replacing them with the corresponding FOLTL sub-formulas. When the interpretation is complete, the Pardinus has two distinct options. One is to practice model-checking through SAT solvers [6], while the other is to do it upon symbolic based model checkers (SMV [20]). The for- mer performs bounded-verification, while the latter supports both, bounded or unbounded verification. If the option is to execute model-checking through SAT, the traces must be made explicit. Thus, the FOLTL logic’s are expanded into FOL, and the Kodkod is used to interface with multiple SAT-solvers. When the aim is to execute model-checking upon SMV, the FOLTL logic’s are expanded into LTL, for later use of Electrod2. This tool compiles the LTL problems into SMV. In this work context it’s not relevant to understand the intermediates logic’s itself, or how they are converted between components. Thus, the following sub-sections will give a major focus on the Electrum options to perform verification. Namely, through bounded and unbounded model-checking techniques.
