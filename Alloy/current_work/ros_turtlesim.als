@@ -35,8 +35,8 @@ one sig Pose extends Interface {
 fact functionality {
 	Pose = where.0
 	no inbox + outbox
-	always (some Turtle.inbox implies vel2pose)
-	always (nop or low or high or multiplexer or some n: Node | some n.outbox implies send[n])
+	/* always (some Turtle.inbox implies vel2pose) */
+	always (nop or low or high or multiplexer or some n: Node | some n.outbox implies send[n] or vel2pose )
 }
 
 fact turtle_network_assumptions {

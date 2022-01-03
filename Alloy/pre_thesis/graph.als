@@ -5,7 +5,6 @@ abstract sig Node {
 	adj : set Node
 }
 
-/*The graph is undirected, ie, edges are symmetric.*/
 fact considerations {
 	adj = ~adj /* The graph is undirected. */
 	no iden & adj /* The graph contains no loops.  */

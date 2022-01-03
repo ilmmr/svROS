@@ -2,7 +2,7 @@
 
 Robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. Concerning the complexity behind writting software code, due to the widely variety presented in the robot's hardware as in fields of action \cite{cousins2011exponential}, Robotic Operation System (ROS) presents itself as a middleware system, created to facilitate robotic systems development.
 
-In ROS, software flexibility was valued above all else, meaning that values like security were not duly valued, so ROS-based applications tend to face increased security risks, compromising the whole robotic network. As ROS became a standard for many robotic systems, and due to the scale and scope of the robotics growth, security ensurance must be addressed as a developing priority. \cite{diluoffo2018robot, kim2018security}
+In ROS, software flexibility was valued above all else, meaning that values like security were not duly valued, so ROS-based applications tend to face increased security risks, exposing the whole robotic network. As ROS became a standard for many robotic systems, and due to the scale and scope of the robotics growth, security ensurance must be addressed as a developing priority. \cite{diluoffo2018robot, kim2018security}
 
 The upgraded version of ROS, Robot Operating System 2 (ROS), presents itself as a framework for developing robotic systems, supported by a standard, the Data Distribution Service (DDS), where multiple middleware implementations are built over this standard, providing ROS applications multiple DDS-based specfications, as well as valued Quality of Service (QoS) settings over the transport configuration. 
 
@@ -269,7 +269,7 @@ The concerns about security take on particular importance, since robots are beco
 
 \subsection{Security Integration in ROS2}
 
-As aforementioned, ROS middleware faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing robots to be built as network distributed modules. As a result, techniques such as port scanning is usually used to compromise the data itself. Due to the ROS master role in the communication architecture, and its ability to connect to other nodes, exposing this node using port scanning poses a threat over the whole network. \cite{8794451} 
+As aforementioned, ROS middleware faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing robots to be built as network distributed modules. As a result, techniques such as port scanning is usually used to expose the data itself. Due to the ROS master role in the communication architecture, and its ability to connect to other nodes, exposing this node using port scanning poses a threat over the whole network. \cite{8794451} 
 
 There is also worries regarding how ROS controls node communication. Network security may be jeopardized, as a result of the publish-subscribe pattern transparency, where node-to-node communications are settled in plain text, making data content vulnerable to unauthorized usage. \cite{kim2018security}
 
@@ -325,11 +325,12 @@ The \textit{security} additional keyword-flag enables features regarding securit
 
 Upon the creation of the \textit{demo keystore}, three respective subdirectories are created, where each has their own role when it comes to security enhancment over the network.
 
-\begin{itemize}
-    \item[--] The \textit{enclaves} directory contains the security tools related to each enclave created. An \textit{enclave} is a group of ROS nodes, controlled by the same set of security rules, defined in its corresponding enclave directory. Each enclave includes files needed to enable security, such as CA certificates and their own private key (\texttt{key.pem}). % Besides containing each enclave created (for instance, in the figure above, a \texttt{/turtlesim/enclave} enclave is created), this directory also has a governance policy document \texttt{governance.xml}, as well as a signed copy file related to the CA permissions, \texttt{governance.p7s}. 
-    \item[--] The \textit{public} directory contains material that is permissible as public. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory, related to the CA \textit{public key}. It is used to validate the identity and permissions of each ROS network node by the CA. DDS supports the separation of identity and permission chains, however ROS usually uses the former \texttt{ca.cert.perm} file, meaning that only a CA is used for both these processes.
-    \item[--] The \textit{private} directory contains material that is considered private. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory, related to the CA \textit{private key}. It is used to modify the network policies, such as access permissions, and to add new participants. Similar to the public directory, the CA key corresponding to its identity and permissions can be stored in their corresponding individual directories.
-\end{itemize}
+[*]The \textit{enclaves} directory contains the security tools related to each enclave created. An \textit{enclave} is a group of ROS nodes, controlled by the same set of security rules, defined in its corresponding enclave directory. Each enclave includes files needed to enable security, such as CA certificates and their own private key (\texttt{key.pem}). % Besides containing each enclave created (for instance, in the figure above, a \texttt{/turtlesim/enclave} enclave is created), this directory also has a governance policy document \texttt{governance.xml}, as well as a signed copy file related to the CA permissions, \texttt{governance.p7s}. 
+
+[*]The \textit{public} directory contains material that is permissible as public. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory, related to the CA \textit{public key}. It is used to validate the identity and permissions of each ROS network node by the CA. DDS supports the separation of identity and permission chains, however ROS usually uses the former \texttt{ca.cert.perm} file, meaning that only a CA is used for both these processes.
+
+[*]The \textit{private} directory contains material that is considered private. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory, related to the CA \textit{private key}. It is used to modify the network policies, such as access permissions, and to add new participants. Similar to the public directory, the CA key corresponding to its identity and permissions can be stored in their corresponding individual directories.
+
 
 The following exports need to be sourced to force SROS2 security features, as they concern relevant environment variables.
 
@@ -396,7 +397,7 @@ The network is now sucessfully running as a secured environment, where nodes wit
 <node name="random" pkg="turtle_random" exec="random" args="--ros-args --enclave /random -r /low_topic:=/main_topic"/>
 \end{lstlisting}
 
-However, if the user forces the inverted remap, it is possible to control the turtle movement directly from the random controller, since no policie has been compromised. Although, the random controller is still publishing to the \textit{low\_topic}, the \textit{main\_topic} in which the turtle movement is concerned is remapped towards the \textit{low\_topic}. This concerns a problem that is not been duly address by the ROS community. It is unreasonable to expect this flexibility in a secured network, since policies initially settled can be easily compromised.
+However, if the user forces the inverted remap, it is possible to control the turtle movement directly from the random controller, since no policie has been disrespecteded. Although, the random controller is still publishing to the \textit{low\_topic}, the \textit{main\_topic} in which the turtle movement is concerned is remapped towards the \textit{low\_topic}. This concerns a problem that is not been duly address by the ROS community. It is unreasonable to expect this flexibility in a secured network, since policies initially settled can be easily compromised.
 
 \section{Related work}\label{s:relWork}
 
