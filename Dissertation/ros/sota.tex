@@ -30,7 +30,7 @@ Due to the sheer wide capabilities controlled by the master, this centralization
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.5\linewidth]{images/former-ros1-architecture.png}
+  \includegraphics[width=0.6\linewidth]{images/former-ros1-architecture.png}
   \caption{Robot Operating System architecture.}
   \label{fig:ros1-architecture}
 \end{figure}
@@ -63,7 +63,7 @@ DDS uses the Data-Centric Publish Subscribe (DCPS) model as its communication mo
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.4\linewidth]{images/dcps-model.png}
+    \includegraphics[width=0.6\linewidth]{images/dcps-model.png}
     \caption{DDS architecture: DCPS model with RTPS. Extracted from \cite{maruyama2016exploring}.}
     \label{fig:dcps-model}
 \end{figure}
@@ -79,7 +79,7 @@ Briefly speaking, DDS leverages the premise of a transport-independent virtualiz
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{images/dds-architecture.png}
+    \includegraphics[width=0.6\linewidth]{images/dds-architecture.png}
     \caption{Data Distributed System architecture in a nutshell.}
     \label{fig:dds-architecture-nutshell}
 \end{figure}
@@ -255,44 +255,49 @@ Another relevant concept behind ROS is the existence of nodes \textit{parameters
 \subsubsection{Node Composition}  
 
 Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single process, structurally abstracting some network parts, while improving the network's performance. However, there is a slight difference about how ROS and ROS2 approaches the node composition. In the former version of ROS, node composition was done over the combination of \textit{nodelets}, intentionally designed to ease the cost of overusing TCP for message-passing between nodes. Supported by the former idea of \textit{nodelets}, ROS2 introduces the \textit{components} as software code compiled into shared libraries, that can be loaded into a \textit{component container} process at runtime in the network, ensuring node composition. Node composition could also be applied for security matters. Suppose a scenario where multiple nodes respect the same security policies. By combining them into a single process, the mapping into this set of rules would be direct, easing the usage of security enclaves.
-               
+           
 
-\section{Security Analysis}
+\section{Security}
 
-Upon developing real-time systems, safety matters are often referred as critical, because of the overall integration with the real world. Security however, it is measured by evaluating different security issues by properly analyzing the system model. However, due to the high non-linearity and complexity of real-time systems, implementing such a thorough analysis method in near real-time remains a significant difficulty. \cite{diao2009design}
+The deployment of real-time systems implies critical concerning about safety and security \cite{maruyama2016exploring}, resulting of the demanding time-critical scenarios. Robotic systems fall under the umbrella of this broad system definition, as they feature unique cyber vulnerabilities related to its integration over highly networked environments, that confers great importance on exposing critical time-reliant scenarios. \cite{mcclean2013preliminary, dieber2017security} 
 
-The deployment of real-time systems results in the importance of concerning about safety in a performance point of view, resulting of the demanding time-critical scenarios. Many studies were made regarding the performance in both ROS and ROS2 (also regarding DDS Quality of Service policies \cite{maruyama2016exploring}), by analyzing using performance measurement approaches, providing a guided and supported review on how performance can directly affect time critical situations, where safety is involved. \cite{maruyama2016exploring, casini2019response} 
+The network security evaluation in a system is done over applying several analyzing techniques. Generally, these techniques do not cover every security aspect, as new vulnerabilities arise from the technology evolution. \cite{kaeo2004designing}
+The appliance of security countermeasures techniques upon configuring the system's network confers a critical step when aiming towards achieving security.
 
-System security concerning network exposure, often explored by unauthorized access and data leaking, can be treacherous and it is considered a complex subject, due to the abundance of different network security technologies that do not cover every security aspect, since absolute security does not exist, as new vulnerabilities arise from the technology evolution.\cite{kaeo2004designing} The appliance of security countermeasures techniques upon configuring the system's network confers a critical step when aiming towards achieving security. Within this vast topic, several different avenues of endeavor come to mind, each deserving of a substantial study. Network security entails pre-exploration of the system's network through practical networking security techniques, such as intrusion detection and traffic analysis. \cite{marin2005network}
+Within this vast topic, several different avenues of endeavor come to mind, each deserving of a substantial study. Network security entails pre-exploration of the system's network through practical networking security techniques, such as intrusion detection and traffic analysis. \cite{marin2005network} However, due to the high non-linearity and complexity of real-time systems, implementing such a thorough analysis method in near real-time remains a significant difficulty task. \cite{diao2009design}
 
-The concerns about security take on particular importance, since robots are becoming more frequently used and can directly affect the physical world. \textit{Cyber-physical} systems, commonly related to the arising of the automation concept of robots, feature unique vulnerabilities that exploit both cyber and physical nature of these devices. \cite{mcclean2013preliminary}Generally, when considering the deployment of a robotic system, the following information security pillars, over which attacking counter measures should be measured, are hopefully concerned: Confidentiality, Integrity and Availability. \cite{white2018procedurally}
+% Future robotic systems will be situated in highly networked environments where they communicate with industrial control systems, cloud services or other sy- stems at remote locations. In this trend of strong digitization of industrial systems (also sometimes referred to as Industry 4.0), cyber attacks are an in- creasing threat to the integrity of the robotic systems at the core of this new development. It is expected, that the Robot Operating System (ROS) will play an important role in robotics outside of pure research-oriented scenarios. ROS however has significant security issues which need to be addressed before such products should reach mass markets. \cite{dieber2017security}
+
+% System security concerning network exposure, often explored by unauthorized access and data leaking, can be treacherous and it is considered a complex subject, due to the abundance of different network security technologies that do not cover every security aspect, since absolute security does not exist, as new vulnerabilities arise from the technology evolution.\cite{kaeo2004designing} The appliance of security countermeasures techniques upon configuring the system's network confers a critical step when aiming towards achieving security. Within this vast topic, several different avenues of endeavor come to mind, each deserving of a substantial study. Network security entails pre-exploration of the system's network through practical networking security techniques, such as intrusion detection and traffic analysis. \cite{marin2005network}
+
+% The concerns about security take on particular importance, since robots are becoming more frequently used and can directly affect the physical world. \textit{Cyber-physical} systems, commonly related to the arising of the automation concept of robots, feature unique vulnerabilities that exploit both cyber and physical nature of these devices. \cite{mcclean2013preliminary} Generally, when considering the deployment of a robotic system, the following information security pillars, over which attacking counter measures should be measured, are hopefully concerned: Confidentiality, Integrity and Availability. \cite{white2018procedurally}
 
 \subsection{Security Integration in ROS2}
 
-As aforementioned, ROS middleware faces known vulnerabilities due to its architecture and model nature. ROS internal communication is built around TCP ports, allowing robots to be built as network distributed modules. As a result, techniques such as port scanning is usually used to expose the data itself. Due to the ROS master role in the communication architecture, and its ability to connect to other nodes, exposing this node using port scanning poses a threat over the whole network. \cite{8794451} 
+As aforementioned, ROS middleware faces known vulnerabilities due to its architecture model nature. The former ROS communication is built around TCP ports, allowing robots to be built as network distributed modules. As a result, techniques such as port scanning is usually used to expose the data itself. Due to the ROS master role in the communication architecture, and its ability to connect to other nodes, exposing this node poses a critical threat over the whole network. \cite{8794451} 
 
-There is also worries regarding how ROS controls node communication. Network security may be jeopardized, as a result of the publish-subscribe pattern transparency, where node-to-node communications are settled in plain text, making data content vulnerable to unauthorized usage. \cite{kim2018security}
+There was also worries regarding how ROS handled node communication. Network security may be jeopardized, as a result of the publish-subscribe pattern transparency, where node-to-node communications are settled in plain text, making data content vulnerable to unauthorized usage. \cite{kim2018security}
 
-Aside from ensuring a well-structured communication architecture, DDS integration over ROS2 also guarantees security properties, where ROS's flexibility is preserved despite this increase on security. The \textit{DDS-Security} \cite{dds-s} is a specification that serves as an add-on to the DDS protocol, defined by a set of plugins (Authentication, Access Control, Cryptographic, Logging, Data Tagging), combined in a Service Plugin Interface (SPI) architecture. 
+As result of the \textit{Data Distribution Service} (DDS) implementation as a flexible middleware interface in the ROS2 architecture, issues regarding security is no longer mainly ROS-dependent. Thus, when it comes to addressing security over communication, and subsequently data protection enhancment, ROS2 is heavily reliant on how the DDS standard is able to manage security. \cite{kim2018security, 8794451}
 
-The provided specification ensures protection against unauthorized access to data, considering the publish-subscribe pattern, as well as data manipulation and replay attacks. \cite{8442103, ros-dds-integration}
+The \textit{Object Management Group} (OMG) \cite{3}, the already mentioned organization who is responsible for maintaining the DDS standard, accounts security integration by supplying an in-depth security specification, consequently adding features to the already developed DDS standard. The \textit{DDS-Security} is a specification that serves as a security extension to the DDS protocol, defined by a set of plugins (Authentication, Access Control, Cryptographic, Logging, Data Tagging), combined in a \textit{Service Plugin Interface (SPI)} architecture. \cite{8442103, ros-dds-integration}
 
-% Depending on the security requirements needed for a particular application, the usage of these plugins may be adjusted. The existence of a \textit{Standardized Plugin API} enables this customization, serving as an interface between modules and DDS security protocols, while also incorporating all features of secure communications. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{images/dds-security-architecture.png}
+    \caption{DDS-Security Architecture. Extracted from \cite{dds-s}.}
+    \label{fig:dds-security-architecture}
+\end{figure}
 
-%\begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.5\linewidth]{images/dds-security.png}
-%     \caption{DDS-Security API with their respective security plugins.}
-%     \label{fig:dds-security}
-% \end{figure}
+This specification enables its integration by furnishing a \textit{Security Model} supplied to the DDS standard, whereas the \textit{Service Plugin Interface} architecture is responsible for granting plugin enhancment for compliant DDS implementations. Moreover, depending on the security requirements needed for a particular application, these plugins might be adjusted by the latter's runtime DDS implementation. \cite{dds-s}
 
-Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over the ROS application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset, concerning the DDS-Security functionality. 
+Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over ROS's application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset, extending ROS2's functionality to make use of the DDS-Security functionality. 
 
 The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture. \cite{kim2018security} The SROS2 configuration is done over applying a set of security files to each ROS2 participant, considering the assignment approach (strict or permissive) that is being used.
 
 Since this security integrity on ROS2 is consider a recent technology implementation \cite{ros-dds-integration}, the developer must be aware of improper configuration, that can still lead to security problems. However, the variety of capabilities in SROS2 toolset attempts to aid with security configuration across environments. 
 
-\subsection{Security Configuration}
+\subsection{SROS2 Configuration}
 
 To properly introduce the set of tools that SROS2 provides, the \texttt{TurtleSim} application already presented will now account the security features, as to provide authentication and encryption over the network communication, as well as access control policies over the application nodes. 
             
@@ -325,11 +330,11 @@ The \textit{security} additional keyword-flag enables features regarding securit
 
 Upon the creation of the \textit{demo keystore}, three respective subdirectories are created, where each has their own role when it comes to security enhancment over the network.
 
-[*]The \textit{enclaves} directory contains the security tools related to each enclave created. An \textit{enclave} is a group of ROS nodes, controlled by the same set of security rules, defined in its corresponding enclave directory. Each enclave includes files needed to enable security, such as CA certificates and their own private key (\texttt{key.pem}). % Besides containing each enclave created (for instance, in the figure above, a \texttt{/turtlesim/enclave} enclave is created), this directory also has a governance policy document \texttt{governance.xml}, as well as a signed copy file related to the CA permissions, \texttt{governance.p7s}. 
+\textbullet\  The \textit{enclaves} directory contains the security tools related to each enclave created. An \textit{enclave} is a group of ROS nodes, controlled by the same set of security rules, defined in its corresponding enclave directory. Each enclave includes files needed to enable security, such as CA certificates and their own private key (\texttt{key.pem}). % Besides containing each enclave created (for instance, in the figure above, a \texttt{/turtlesim/enclave} enclave is created), this directory also has a governance policy document \texttt{governance.xml}, as well as a signed copy file related to the CA permissions, \texttt{governance.p7s}. 
 
-[*]The \textit{public} directory contains material that is permissible as public. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory, related to the CA \textit{public key}. It is used to validate the identity and permissions of each ROS network node by the CA. DDS supports the separation of identity and permission chains, however ROS usually uses the former \texttt{ca.cert.perm} file, meaning that only a CA is used for both these processes.
+\textbullet\  The \textit{public} directory contains material that is permissible as public. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory, related to the CA \textit{public key}. It is used to validate the identity and permissions of each ROS network node by the CA. DDS supports the separation of identity and permission chains, however ROS usually uses the former \texttt{ca.cert.perm} file, meaning that only a CA is used for both these processes.
 
-[*]The \textit{private} directory contains material that is considered private. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory, related to the CA \textit{private key}. It is used to modify the network policies, such as access permissions, and to add new participants. Similar to the public directory, the CA key corresponding to its identity and permissions can be stored in their corresponding individual directories.
+\textbullet\  The \textit{private} directory contains material that is considered private. A Certificate Authority certificate, \texttt{ca.cert.pem} is stored in this directory, related to the CA \textit{private key}. It is used to modify the network policies, such as access permissions, and to add new participants. Similar to the public directory, the CA key corresponding to its identity and permissions can be stored in their corresponding individual directories.
 
 
 The following exports need to be sourced to force SROS2 security features, as they concern relevant environment variables.
@@ -398,36 +403,3 @@ The network is now sucessfully running as a secured environment, where nodes wit
 \end{lstlisting}
 
 However, if the user forces the inverted remap, it is possible to control the turtle movement directly from the random controller, since no policie has been disrespecteded. Although, the random controller is still publishing to the \textit{low\_topic}, the \textit{main\_topic} in which the turtle movement is concerned is remapped towards the \textit{low\_topic}. This concerns a problem that is not been duly address by the ROS community. It is unreasonable to expect this flexibility in a secured network, since policies initially settled can be easily compromised.
-
-\section{Related work}\label{s:relWork}
-
-This section intends to present previous developed work regarding the main concepts on what this thesis rests. The subsection \ref{s:relWork-sec} aims to provide a comprehensive overview over works that attended to prevent security issues related to the deployment of robotic systems using Robot Operating System, as its application enhancer. It is then followed by the subsection % \ref{s:relWork-sa} regarding some of the current static analysis approaches on ROS applications. The latter subsection 
-\ref{s:relWork-pv} that concerns about previous work addressing property verification and model checking techniques over ROS applications.
-
-\subsection{Security Overview}\label{s:relWork-sec}
-
-% This section aims to present previous works that attended security matters related to the deployment of robotic systems using Robot Operating System as its application enhancer. When developing real-time systems, safety matters are often referred as critical, because of the overall integration with the real world. Security however, it is measured by evaluating different security issues by properly analysing the system model. However, due to the high nonlinearity and complexity of real-time systems, implementing such a thorough analysis method in near real-time remains a significant difficulty. \cite{diao2009design}
-
-% The deployment of real-time systems results in the importance of concerning about safety in a performance point of view, resulting of the demanding time-critical scenarios. Many studies were made regarding the performance in both ROS and ROS2 (also regarding DDS Quality of Service policies \cite{maruyama2016exploring}), by analysing using performance measurement approaches, providing a guided and supported review on how performance can directly affect time critical situations, where safety is envolved. \cite{maruyama2016exploring, casini2019response} 
-
-% System security concerning network exposure, often explored by unauthorized acess and data leaking, can be treacherous and it is considered a complex subject, due to the abundance of different network security technologies that do not cover every security aspect, since absolute security does not exist, as new vulnerabilites arise from the tecnology evolution.\cite{kaeo2004designing} The creation and deployment of security countermeasures are essential upon configurating the network towards achieving security. Within this vast topic, several different avenues of endeavor come to mind, each deserving of a substantial study. Network security means exploring the network beforehand by computer intrusion detection, traffic analysis, network monitoring, alongside many other practical networking security aspects. \cite{marin2005network}
-
-The literature concerning the network security enhancment that Robot Operating System 2 furnishes, by offering the SROS2 toolset, is quite limited. Most of the existing work is on the exploration of the former version of ROS in terms of port exposure, contextualized in the approach considered to protect the system network.  
-
-Many researches were made regarding this issue that ROS faces, one in particular that explored the IPv4 address space of the Internet for instances of ROS, named \textit{Scanning the Internet for ROS: A View of Security in Robotics Research} \cite{8794451}, with the goal of identifying ROS vulnerable hosts, mostly master nodes since they provide information about their related topics and node's parameters, mainly by port scanning, so that developers could be aware of the possibility of exposure of their robots. % The performed scans furnished information about hosts that could either be a sensor, an actuator or even a simulator. Topics were also identified since they provide evidence of what is likely to be available to an attacker. This study is rather relevant because of how easily can attackers gather information about potential robots, and control them further on, through the public Internet, making it unavoidable to develop mechanisms concerning security.
-
-Following the need of supplying security assurance over ROS applications, several approaches were presented. A study that is rather relevant because of the similarity between their proposal and the one that SROS2 has to offer is the one presented on the \textit{Application-level security for ROS-based applications} \cite{application-security-ros}. The approach primarily focused on applying security measures on the application layer, by mainly running an Authentication Server, storing certificates and files related to trusted domain participants, while controlling and providing session keys related to the communication process. Even though encryption and authentication measures are concerned, the protected network is still perceived from the "outside", meaning that security attacks, such as denial of service, still persist which cannot be handled on the application level alone. Secure Robot Operating System (SROS) \cite{white2016sros} was initially developed as an experimental tool (later evolved to SROS2 as a supporting tool for ROS2), which supports TLS for all socket transport, node restrictions and chains of trust, guaranteeing publishers authorization when it comes to publish to a specific topic. Another worth-mentioned tool is Rosbridge \cite{crick2017rosbridge}, which provides a WebSocket interface to ROS and corresponding server to allow interaction between applications and ROS nodes, by using TLS as support and also access control over topics and API calls. 
-
-The present works addressing ROS security methods tend to concern solutions to prevent vulnerabilites and issues that might compromise robotic applications deployed, while considering performance as priority. In terms of applying formal methods to verify properties regarding the domain of ROS2 and ROS2 security as models, there are minimal existent works. Despite this, the following section consists of several articles proposed to validate robotic systems, using formal methods as core.
-
-% \subsection{Static Analysis}\label{s:relWork-sa}
-
-\subsection{Analysis and Verification}\label{s:relWork-pv}
-
-Static analysis over ROS represents a major contribution to this domain, in which researchers aim to tackle issues arised from miss configurations or code inconsistencies. The noteworthy  \textit{HAROS} framework \cite{santos2016framework} holds great value thanks to its contribution on improving ROS's software quality. \textit{HAROS} makes use of several analysis techniques to exert quality evaluation of ROS software, followed by ways of feedbacking inconsistencies using predefined code metrics. As this framework seeks to be flexible when it comes to adding functionality, further static analysis works improvements have been proposed as plugins. In both \cite{santos2019static} and \cite{santos2018property}, it is presented additional functionality to the framework, through applying architectural considerations over metamodel designing, where the latter supports the former by supplying property-based specifications. These techniques confers great help back to developers, since static analysis offers advantageable usage over raw review of software code. 
-
-The literature concerning property verification over model checking tools is quite extensive. Regarding ROS applications, some approaches were presented that mainly focused on modelling the ROS node-communication, while real-time properties were also considered as support to the target language. In \cite{halder2017formal}, \textit{UPPAAL} model checker is used to model ROS applications, supported by a concrete robot example, that is followed by techniques to verify properties regarding its behaviour. In \cite{9341085} is presented a notable proposal, where \textit{Electrum} \cite{lwspecification}, the former version of the current Alloy Analyzer, is used as an additional plug-in to the already mentioned \textit{HAROS} framework. Through ROS launch configurations, the plugin automatically generated models using Electrum and performs verification over these models, to then feedback issues related to their ROS system behaviour.
-
-As ROS2 domain regards the use of DDS communication protocol, a few works on DDS modelling analysis deserve to be mentioned, as they might give important background for property verification over communications protocols. In \cite{alaerjan2017modeling}, it is proposed a technique to model the DCPS architectural design that DDS makes use of, alongside with new approaches to the current DDS behaviour. Supported by several modelling techniques for publish-subscribe systems, in \cite{liu2018formal}, DDS in ROS2 is formalized as a timed automata, consequently followed by model verification over property-checking. These works conceive value concepts and procedures useful for this thesis contextualization.
-
-A few studies on robotics should be recognized in which techniques such as model-checking were performed. Despite the fact that they do not address the domain of ROS, they nonetheless give helpful background for the robotics research over formal approaches. A case study \cite{near2011lightweight} presents a novel approach over systems that require static analysis based on software assumptions and proper analysis within its environment usage, where user-interaction comes in hand. Concerning this novel idea, a medical system is concerned as a case study, where multiple safety-based considerations are expected, as well as, an end-to-end critical property that must be satisfied over the entire analysis course. Another notable work regarding former analysis using Alloy specification language is presented in \cite{mansoor2018modeling}, where a safety-critical scenario is proposed under the domain of surgical robots. The formal techniques used allows overview over a surgical robot arm, taking into consideration possible violations of important safety properties. Although these studies presents favorable outcomes, their focus lies on a particular area of study. As a result, they lack on providing solutions to a vast majority of situations.

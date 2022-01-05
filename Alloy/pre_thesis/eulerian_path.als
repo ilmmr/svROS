@@ -2,24 +2,32 @@ module eulerian_path
 /* open graph */
 
 /* Each node as a set of outgoing edges, representing a directed graph without multiple edged. */
-sig ENode  {
-	adj : set ENode, 
-	var visited : set ENode
+sig Node  {
+	var adj : set Node, 
+	var visited : set Node
 }
-one sig Init extends ENode {}
-var one sig Euler in ENode{}
+{
+	always adj' = adj
+	once no visited
+	// this not in adj
+}
+
+// check { all n : Node | n.adj not in n.(Node<:iden) implies n not in n.adj }
+
+one sig Init extends Node {}
+var one sig Euler in Node {}
 
 /* Graph assumptions */
 fact graph_assumptions {
 	adj = ~adj /* The graph is undirected. */
-	no iden & adj /* The graph contains no loops.  */
-	ENode ->ENode  in *(adj + ~adj)  /* The graph is connected. */
+	// no iden & adj /* The graph contains no loops.  */
+	Node ->Node in *(adj + ~adj)  /* The graph is connected. */
 }
 
 fact assumptions {
 	/* Initial configuration */
 	Euler = Init
-	no visited
+	//no visited
 	//some adj
 	eventually (adj in visited and Euler in Init)
 	always (move or stutter)
@@ -50,18 +58,28 @@ run example {
 	// eventually some eur_finish
 	/* Eurelian Path */
 	
-} for exactly 5 ENode
+} for exactly 5 Node
 
-assert safety {
+assert safety_visited {
 	always visited in visited'
 } 
-check safety 
+check safety_visited 
+
+/* 
+assert safety_eulerian {
+
+} check safety_eulerian
+
+assert safety_3 {
+
+}
+*/ 
 
 /* forall nodes eventually Euler = n -> liveness */
 /* se always tudo visited entao para todo o nodo once euler = n -> safety */ 
-assert eulerian {
+/* assert eulerian {
 	all n : node | 
-}
+} */
 
 
 

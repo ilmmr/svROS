@@ -1,6 +1,6 @@
 \chapter{Alloy Specification Framework}\label{c:alloy}
 
-As aforementioned, this thesis aims to tackle the security vulnerabilities resulted from the miss-configuration over ROS files. In this chapter, it is intended to explore the Alloy framework that is relevant to overcome the above-mentioned challenge. % as well as previous developed work that has the same or similar goals as this thesis (\ref{s:alloy-relWork}).
+As aforementioned, this dissertation aims to tackle the security vulnerabilities resulted from the miss-configuration over ROS files. In this chapter, it is intended to explore the Alloy framework that is relevant to overcome the above-mentioned challenge. % as well as previous developed work that has the same or similar goals as this thesis (\ref{s:alloy-relWork}).
 
 The increasingly usage of robotics onto safety-critical systems results in demanding considerations over ensuring the proper correctness of both software and hardware, as failures mainly regarding the security domain might lead to fatal consequences. Thus, the use of formal methods and verification techniques, especially in systems highly reliant on flexibility and reliability, is recommended to avoid security-critical faults. \cite{carvalho2020analysis, clarke2011model} Software frameworks designed for this purpose must provide methods to perform structural design over systems with rich structures, abstracting their behaviour as a conventional model. Additionally, these frameworks must support features to enable automate analysis, in which property evaluation over these designed models is used as technique. 
 
@@ -18,9 +18,9 @@ Performing software testing has been regarded as the established assessment proc
 
 % Model-based testing arises as a viable alternative technique, in which both test cases and intended behaviour relies on the design of an abstract mode, presenting remarkable benefits to the latter approach. \cite{apfelbaum1997model} Thus, to perform full verification over systems, the \textit{model-checking} technique can be used to automatically interpret counterexamples as test cases, consequently enabling far better degrees of coverage than conventional testing. \cite{fraser2009testing, beyer2017software}
 
-\textit{Model Checking} presents itself as a novel technique with the purpose of verifying temporal properties over the system finite-state that is duly represented as a conclusive model. Additionally, it enables \textit{model-based testing} by automatically interpreting counterexamples as test cases, resulting in significantly greater degrees of coverage than conventional testing. \cite{fraser2009testing, beyer2017software} This technique is becoming highly used due to its importance as an early phase approach upon developing systems \cite{lwspecification}, as it confers the most valued functionality over model-checkers, which concrete models, regarding the software architecture, is exhaustively checked over behavioral properties. 
+\textit{Model Checking} presents itself as a novel technique with the purpose of verifying temporal properties over the system finite-state, with the latter being duly represented as a conclusive model. Additionally, it enables \textit{model-based testing} by automatically interpreting counterexamples as test cases, resulting in significantly greater degrees of coverage than conventional testing. \cite{fraser2009testing, beyer2017software} This technique is becoming highly used due to its importance as an early phase approach upon developing systems \cite{lwspecification}, as it confers the most valued functionality over model-checking frameworks, in which concrete models, regarding the software architecture, is exhaustively checked over behavioural properties. 
 
-It provides highly automatic verification procedures, in which other techniques, such as theorem provers fails to address, due to its deductive reasoning nature. The representation of not satisfied specifications over counterexamples, confers great functionality to this technique, often required for debugging matters.
+It provides highly automatic verification procedures, where other techniques, such as theorem provers fails to address, due to its deductive reasoning nature. The representation of not satisfied specifications over counterexamples, confers great functionality to this technique, often required for debugging matters.
 However, the system's inevitable state expansion consequently causes the complexity increase on verification procedure. This is referred to as the \textit{state explosion problem}, in which model-checking is unable to handle the size of the state space, failing as system verifying technique. \cite{clarke2011model, clarke1997model} 
 
 % Bounded e Unbounded techniques ? Alloy accounts both techniques ....
@@ -84,51 +84,123 @@ qualName ::= [this/] ( name / )* name
 
 \newpage
 
-\subsection{System Modelling}\label{c:alloy-sm}
+\subsection{Alloy Language}\label{c:alloy-language}
+
+\subsubsection{Relation Logic}
+
+\subsubsection{Linear Temporal Logic}
+
+
+\subsection{Structural Modelling}\label{c:alloy-sm}
 
 Alloy aims to address the complexity behind richly structured systems, that require critical control over their intended behaviour, by presenting a novel approach for abstracting these systems as conventional models. System's structures can be specified over time-evolving states, where its behaviour clearly identifies the states' inbetween transitions. Thus, the conception of system transitioning offers a great formal approach when it comes to reason about the system's design.
 
-The Alloy structural definition relies on a relation way of connecting system's elements, where the latter is abstracted in terms of relations. In Alloy, unary relations, commonly known as sets, are labelled as \textit{signatures}, that are inhabited by a set of \textit{atoms}, from a finite universe of discourse. Atoms are perceived as the lowest-grain elements, with no particular semantics attached. A signature, identified by the keyword \textit{sig}, might include multiple \textit{field} declarations enclosed between braces, addressing relation between the signature's atoms and a set or other relation. Fields are inhabited by tuples of atoms from the universe, that must meet the same arity.
+The Alloy structural definition relies on a relation way of connecting system's elements, where the latter is abstracted in terms of relations. In Alloy, unary relations, commonly known as sets, are labelled as \textit{signatures}, that are inhabited by a set of \textit{atoms}, from a finite universe of discourse. Atoms are perceived as the lowest-grain elements, with no particular semantics attached. A signature, identified by the keyword $sig$, might include multiple \textit{field} declarations enclosed between braces, addressing relation between the signature's atoms and a set or other relation. Fields are inhabited by tuples of atoms from the universe, that must meet the same arity.
 
-Signatures can either be perceived as a top-level signature, or as other signature's subset. Signature hierarchy is conceivable through disjoint extensions (\textit{extends}), or by set inclusion (\textit{in}). The \textit{abstract} keyword declares a signature that contains no atoms beyond those within its extensions. 
+Signatures can either be perceived as a top-level signature, or as other signature's subset. Signature hierarchy is conceivable through disjoint extensions ($extends$), or by set inclusion ($in$). The $abstract$ keyword declares a signature that contains no atoms beyond those within its extensions. 
 
-To address default configuration over the universe's multiplicity, both signatures and fields can be specified under a multiplicity constraint. The former constrains the number of signature atoms, where it is commonly used to express singleton sets, over the constraint keyword \textit{one sig}. Fields, however, makes great use of multiplicities, offering behaviour expressness over relations between atoms. Additionally to these model constraints, implicitly specified over the course of the modelling process, system assumptions can be defined over axioms, expressed as \textit{facts}, where multiple constraints can be incorporated.
+To address default configuration over the universe's multiplicity, both signatures and fields can be specified under a multiplicity constraint. The former constrains the number of signature atoms, where it is commonly used to express singleton sets, over the constraint keyword $one\ sig$. Fields, however, makes great use of multiplicities, offering behaviour expressness over relations between atoms. Additionally to these model constraints, implicitly specified over the course of the modelling process, system assumptions can be defined over axioms, expressed as $facts$, where multiple constraints can be incorporated.
 
-Moreover, the lattest Alloy version enables evaluation changing throughout the trace evolution, consequently allowing the consideration of both signatures and fields as time mutable declarations, through the usage of the keyword \textit{var}.
+Moreover, the lattest Alloy version enables evaluation changing throughout the trace evolution, consequently allowing the consideration of both signatures and fields as time mutable declarations, through the usage of the keyword $var$.
 
 Throughout the sections that follow, it will be presented an illustrive example over which graph theory rests, this being the study of \textit{Eulerian Circuits}. This example will be used to duly contextualize both modelling and verification process in Alloy. \textit{Eulerian Circuits} must meet several behaviour constraints over the classic graph definition, that must be addressed over axioms. However, the structural modelling must be provided beforehand.
 
 \subsubsection{Model Structure}
 
+With regard to the presented example, as it falls under the study of graphs theory \cite{west2001introduction}, it follows an abstract representation of the graph mathematical structure. In this sense, a graph is made up of nodes which are connected by edges. 
+
+Considering the Alloy's abstract ability to reduce complexity over model designing, at a high degree of abstraction, graphs can be represented as a set of \textit{nodes}, that connect together over relations, with no need to address edges as a separated structure declaration. 
+
+\begin{lstlisting}[title={Graph representation over a sigle Node declaration.}, otherkeywords = {abstract, sig, module, var, set, fact, extends, no, in}, label={lst:node}]
+sig Node {
+    adj : set Node, 
+    var visited : set Node
+}
+\end{lstlisting}
+
+As depicted above, the $sig$ keyword followed by the corresponding \textit{Node} signature declaration, represents the state of our intended example. The \textit{Node} signature is defined by a static set of node \textit{atoms}, that combined denotes the finite universe of discourse.
+
+Then, \textit{fields} are enclosed between braces upon the \textit{Node} signature declaration. The \textit{adj} concerns the graph edges, where each node can be connected to a set of nodes. As it is identified as an immutable \textit{field}, the corresponding relation between atoms is static. Moreover, addressing additional graph functionality, it is desirable to concern about the visited nodes. The latter represents a mutable relation, identified by the keyword $var$, meaning that its evaluation may change during the course of the trace's evolution, as opposed to the static ones. 
+
+Relation multiplicity constraints are explicitly defined in the field declaration through the use of multiplicity operators, with those being $one$, $lone$, $some$ and $set$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{images/alloy_multiplicity.png}
+    \caption{Alloy Multiplicity constraints. Extracted from \cite{alloy-qr}.} 
+    \label{fig:alloy-multiplicity}
+\end{figure}
+
+
+Structural constraints can be entailed over implicity signature declaration. These are often referred as \textit{signature facts}, universally quantified over the signature's set. \cite{alloy-qr} Suppose a hypothetical design scenario, where the relation \textit{adj} is labelled as mutable. To ensure that the graph architecture consistency, in which, edges are structurally fixed, the following constraint can be specified. Additionally, consider the following \textit{graph} property, where it is desirable to express the following axiom: \textit{The graph contains no self-loops.}
+
+\begin{lstlisting}[title={\textit{Node} hypothetical constraints over the signature definition.}, otherkeywords = {abstract, sig, module, var, set, fact, extends, no, in, this, not, always, \', \=}]
+sig Node {
+    var adj : set Node, 
+    var visited : set Node
+} {
+    always adj' = adj
+    this not in adj
+}
+\end{lstlisting}
+
+As stated, the former poses a model incoherence within the \textit{Node} signature declaration, as \textit{adj} field is formerly labelled as mutable, that is later refuted by specifiying $always \ adj'\ =\ adj$. This latter introduces the Alloy language's ability to express temporal behaviour through these \textit{two} \textit{linear temporal logic} operators, $'$ and $always$ respectively. The $always$ operator expresses an universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/alloy_always.png}
+    \caption{$always$ behavioural representation.}
+    \label{fig:alloy-always}
+\end{figure}
+
+Whereas the latter expresses the \textit{no self-loop} graph property. Even though \textit{adj} is introduced as a relation between \textit{Nodes}, it is perceived as a set of \textit{Nodes} due to specification with the signature declaration. The keyword $this$ addresses each \textit{Node} atom, as self representation of the considered atom. The remaining specifies the intended behaviour, as it specifies the non-inclusion ($not\ in$) over the set of its adjacent nodes.
+
+% The considered property expressness has a high level of complexity attached, and can be easily simplified over \textit{this not in adj}, as they both hold the same value. However, for contextualization reasons, and to introduce to the reader multiple Alloy's operators, the above is taken into account.
+
+Aside from the structural constraints implicitly implied within signature's declaration, multiplicity over fields \ref{fig:alloy-multiplicity} and signatures also narrows the model's universe. 
+The field multiplicity operators could be used to limit the number of signature atoms. Despite this, signature multiplicity is frequently used to represent singleton $one\ sig$ sets.
+
+\begin{lstlisting}[title={\textit{Node} signature hierarchy.}, otherkeywords = {one, abstract, sig, module, var, set, fact, extends, no, in}]
+one sig Init extends Node {}
+var one sig Euler in Node {}
+\end{lstlisting}
+
+The above signatures accurately support the \textit{Eurelian Circuit} concept. 
+% explicar por alto o init e o euler
+
+Both signatures are preceded by the $one$ keyword, imposing a multiplicity constraint over each signature declaration. Setting the multiplicity to $one$ means that each assessed model instance must have precisely one \textit{Init} atom and one \textit{Euler} atom.
+
+It should be noted that, since the \textit{Node} declaration is not preceded by the $abstract$ keyword, its atoms do not solely belong to the \textit{Init} signature. 
+
+% falar in and extends
+
+Additional modelling constraints can be specified by making use of the $fact$ declaration. The formula specified inside each $fact$ declaration denotes a model axiom, that holds a truth model assumption, to serve as a premise for further reasoning.
+
+Thus, besides the structural properties that are implicitly considered within the signature hierarchy and fields multiplicity, there are some extra ones that should be explicitly expressed to achieve a correct model definition. 
+
 The \textit{Eulerian} path denotes a trail within a finite graph, with each graph edge being visited precisely once. Thus, this already implies that the graph must be connected, where each node must be reachable, and undirected, where edges are non-oriented. 
 
-\begin{lstlisting}[title={Graph definition.}, otherkeywords = {abstract, sig, module, set, fact, iden, no, in}]
-module graph
-
-abstract sig Node {
-    adj : set Node
-}
-
-fact considerations {
+\begin{lstlisting}[title={Graph restrictions through $fact$ declaration.}, otherkeywords = {abstract, sig, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>}]
+fact graph_considerations {
     adj = ~adj
-    no iden & adj
     Node->Node in *(adj + ~adj)
 }
 \end{lstlisting}
 
+The considered property expressness has a high level of complexity attached, and can be easily simplified over $Node->Node\ in\ *(adj\ +\ ~adj)$, as they both hold the same value. However, for contextualization reasons, and to introduce to the reader multiple Alloy's operators, the above is taken into account.
 
-% Everything is a relation
+\textbf{Everything is a relation}
 
-\subsection{System Behaviour}
+\subsection{Structural Behaviour}
 
-Model's behaviour representation represents the ability to express what is intended to happen during state transitions over the valid traces of a system. A \textit{trace} is represented as an infinite chain of states that completely describes a system's potential behavior.
+Model's behaviour representation represents the ability to express what is intended to happen during state transitions over the valid traces of a system. A \textit{trace} is represented as an infinite chain of states that completely describes a system's potential behaviour.
 
-Valid traces are constrained by explicit specification of axioms, identified using the \textit{facts} keyword. However, as explained above, model assumptions covered by each \textit{signature} declaration, also constrains the system's behaviour. 
-
+Valid traces are constrained by explicit specification of axioms, identified using the $fact$ keyword. However, as explained above, model assumptions covered by each $sig$ declaration, also constrains the system's behaviour. 
 
 \subsubsection{Behaviour Representation}
 
 % As previously explained, the model assumptions that are not covered by the signatures structure, should be declared within Electrum facts. However, not every property that we’re interested in validating and reason about, should be an assumption. Predicates are reusable boolean formulas built through Electrum expressions. All of these features, as well as the notion of reusable expressions (fun) and model assertions (assert), are conceptually grouped into Electrum paragraphs, as shown in the formal syntax 
+
 
 \section{Structural Analysis}
 
@@ -136,17 +208,17 @@ Structural modelling only confers an conventional way of formally expressing the
 
 This section aims to explain how Alloy conducts system analysis, with further explanations over the corresponding analysis commands, along with an overview on the Alloy Analyzer interactive exploration over a system's design. 
 
-\subsection{System Analysis and Verification}
+\subsection{Analysis and Verification}
 
 Alloy specification process does not establish a clear process separation over the model design and model analysis. This implies that analysis over model checking also accounts the model itself as a combination of properties specification. 
 
-The specification language holds \textit{two} analyzing commands, \textit{run} and \textit{check} respectivaly, as shown above in \textit{Alloy's syntax}. A \textit{Linear Temporal Logic (LTL) formula} is enclosed between braces, to be checked over. Upon executing, both commands accounts the enclosed formula $\psi_{f}$, as well as the model declaration ${M}$. Likewise in \textit{facts} declaration, several logic constraints can be combined into the formula $\psi_{f}$. Due to Alloy's implicit abstraction, both commands addresses the relational model specification as truth holder, with the latter being consisted by declarations over \textit{facts} and \textit{signatures}. 
+The specification language holds \textit{two} analyzing commands, $run$ and $check$ respectively, as shown above in \textit{Alloy's syntax}. A \textit{Linear Temporal Logic (LTL) formula} is enclosed between braces, to be checked over. Upon executing, both commands accounts the enclosed formula $\psi_{f}$, as well as the model declaration ${M}$. Likewise in $fact$ declaration, several logic constraints can be combined into the formula $\psi_{f}$. Due to Alloy's implicit abstraction, both commands addresses the relational model specification as truth holder, with the latter being consisted by declarations over $fact$ and $sig$. 
 
-Briefly speaking, \textit{run} instruct the model-checker to present an example that satisfies the considered formula $\psi_{f}$ over the model definition. This means that the following formula ($M \wedge \psi_{f}$) is expected to hold. The consistency of the \textit{facts} and \textit{signatures} is consequently verified since the model declaration $M$ is also considered in the latter formula. 
+Briefly speaking, $run$ instruct the model-checker to present an example that satisfies the considered formula $\psi_{f}$ over the model definition. This means that the following formula ($M \wedge \psi_{f}$) is expected to hold. The consistency of the \textit{facts} and \textit{signatures} is consequently verified since the model declaration $M$ is also considered in the latter formula. 
 
-Alloy makes use of the \textit{check} command to perform automatic verification over an \textit{assertion} declaration. The assertion $\psi_{f}$ verification is done over proving if the following satisfiability formula $M \models \psi_{f}$ is valid within the defined scopes. % while it accounts the declared \textit{facts} as truth holders. 
+Alloy makes use of the $check$ command to perform automatic verification over an $assertion$ declaration. The assertion $\psi_{f}$ verification is done over proving if the following satisfiability formula $M \models \psi_{f}$ is valid within the defined scopes. % while it accounts the declared \textit{facts} as truth holders. 
 
-As result of the first-order logic's undecidability problem, the consistency proofness over satisfiability formulas is not possible. \cite{vakili2012temporal} To ensure decidability, the Alloy Analyzer performs analysis over \textit{scopes}, assigned to each signature declaration. By default, if no scope is provided, the model-checker will account at most \textit{three} atoms for each signature, upon trying to provide an \textit{instance} that satisfies the former formula, consequently proving the behaviour specification (\textit{facts} considerations) consistency. Also, as scopes imposes a limit on the state space of an Alloy model, if no \textit{run} instance is returned, the formula can not be perceived as inconsistent, as scopes can not be properly set to satisfy the latter.
+As result of the first-order logic's undecidability problem, the consistency proofness over satisfiability formulas is not possible. \cite{vakili2012temporal} To ensure decidability, the Alloy Analyzer performs analysis over \textit{scopes}, assigned to each signature declaration. By default, if no scope is provided, the model-checker will account at most \textit{three} atoms for each signature, upon trying to provide an \textit{instance} that satisfies the former formula, consequently proving the behaviour specification (\textit{facts} considerations) consistency. Also, as scopes imposes a limit on the state space of an Alloy model, if no $run$ instance is returned, the formula can not be perceived as inconsistent, as scopes can not be properly set to satisfy the latter.
 
 \begin{figure}[H]
     \centering
@@ -164,7 +236,7 @@ Being SAT-based \cite{lwspecification}, the Alloy Analyzer tries to search for a
     \label{fig:alloy-check-2}
 \end{figure}
 
-Moreover, Alloy yields a command to specify the finite number of different steps, related to the expected intance's evaluation trace. This is due to the \textit{bounded} nature of the Alloy transitions between states, where the \textit{Bounded Model Checking} technique is considered as model-checking technique. The number of steps is set to \textit{ten} by default, although this may be adjusted using the keyword \textit{steps}, alonside with the bounded scopes specification. 
+Moreover, Alloy yields a command to specify the finite number of different steps, related to the expected intance's evaluation trace. This is due to the \textit{bounded} nature of the Alloy transitions between states, where the \textit{Bounded Model Checking} technique is considered as model-checking technique. The number of steps is set to \textit{ten} by default, although this may be adjusted using the keyword $steps$, alonside with the bounded scopes specification. 
 
 \subsubsection{Relevant Properties}
 
@@ -172,7 +244,13 @@ The verification process over \textit{Model Checking}, needs to account the form
 
 A \textit{safety property} asserts that "nothing bad should happen" during the system execution, meaning that, every trace state is expected. Consequently, if a trace that jeoperdizes a safety property is found, it can be assumed that the latter has a "bad" property prefix. Whereas, a \textit{liveness property} expresses that "something good will happen", implying the eventual occurrence of a state during the course of the system's execution. \cite{lamport1977proving}
 
+Clearly, due to the nature, each \textit{liveness} property is evaluated over infinite traces, as their verification holds possibility extend its property prefix ... However, in the presented example, it is forced to perform and present an \textit{Eulerian circuit}, so verifying the following liveness property is somewhat trivial, as its behaviour is forced upon the fact specification $eventually\ (\ adj\ in\ visited\ and Euler\ in\ Init\ )$. 
+
+Concerning 
+
 % Fairness Properties
+
+As the example described does not hold any 
 
 
 \subsection{Alloy Analyzer}
