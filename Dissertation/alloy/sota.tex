@@ -21,9 +21,10 @@ Performing software testing has been regarded as the established assessment proc
 \textit{Model Checking} presents itself as a novel technique with the purpose of verifying temporal properties over the system finite-state, with the latter being duly represented as a conclusive model. Additionally, it enables \textit{model-based testing} by automatically interpreting counterexamples as test cases, resulting in significantly greater degrees of coverage than conventional testing. \cite{fraser2009testing, beyer2017software} This technique is becoming highly used due to its importance as an early phase approach upon developing systems \cite{lwspecification}, as it confers the most valued functionality over model-checking frameworks, in which concrete models, regarding the software architecture, is exhaustively checked over behavioural properties. 
 
 It provides highly automatic verification procedures, where other techniques, such as theorem provers fails to address, due to its deductive reasoning nature. The representation of not satisfied specifications over counterexamples, confers great functionality to this technique, often required for debugging matters.
-However, the system's inevitable state expansion consequently causes the complexity increase on verification procedure. This is referred to as the \textit{state explosion problem}, in which model-checking is unable to handle the size of the state space, failing as system verifying technique. \cite{clarke2011model, clarke1997model} 
+However, the system's inevitable state expansion consequently causes the complexity increase on verification. This is referred to as the \textit{state explosion problem}, in which model-checking is unable to handle the size of the state space, failing as system verifying technique. \cite{clarke2011model, clarke1997model} 
 
 % Bounded e Unbounded techniques ? Alloy accounts both techniques ....
+
 \subsection{Bounded Model Checking}
 
 \subsection{LTL Model Checking}
@@ -35,60 +36,60 @@ The \textit{Alloy framework} presents itself as a formal modelling language, con
 As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consequently allows large specification development. \cite{carvalho2020analysis} The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required for understanding how system modelling is covered. 
 
 % Before accurately accounting both structural design as modelling technique and structural analysis, it follows the Alloy formal syntax.
+% 
+% \newpage 
+% 
+% \begin{lstlisting}[title={Alloy's syntax.}]
+% alloyModule ::= [moduleDecl] import* paragraph*
+% moduleDecl ::= module qualName [[name,+]]
+% import ::= open qualName [[qualName,+]] [as name]
+% paragraph ::= sigDecl | factDecl | predDecl | funDecl
+%     | assertDecl | cmdDecl
+% sigDecl ::= [var] [abstract] [mult] sig name,+ [sigExt] { fieldDecl,* } [block]
+% sigExt ::= extends qualName | in qualName [+ qualName]*
+% mult ::= lone | some | one
+% fieldDecl ::= [var] decl
+% decl ::= [disj] name,+ : [disj] expr
+% factDecl ::= fact [name] block
+% predDecl ::= pred [qualName .] name [paraDecls] block
+% funDecl ::= fun [qualName .] name [paraDecls] : expr { expr }
+% paraDecls ::= ( decl,* ) | [ decl,* ]
+% assertDecl ::= assert [name] block
+% cmdDecl ::= [name :] ( run | check ) ( qualName | block ) [scope]
+% scope ::= for number [but typescope,+] | for typescope,+
+% typescope ::= [exactly] number qualName
+% expr ::= const | qualName | @name | this
+%     | unOp expr | expr binOp expr | expr arrowOp expr
+%     | expr [ expr,* ]
+%     | expr [! | not] compareOp expr
+%     | expr ( => | implies ) expr else expr
+%     | let letDecl,+ blockOrBar
+%     | quant decl,+ blockOrBar
+%     | { decl,+ blockOrBar }
+%     | expr '
+%     | ( expr ) | block
+% const ::= [-] number | none | univ | iden
+% unOp ::= ! | not | no | mult | set | # | ~ | * | ^ 
+%     | always | eventually | after | before | historically | once
+% binOp ::= || | or | && | and | <=> | iff | => | implies | 
+%     & | + | - | ++ | <: | :> | . | until | releases | since | triggered | ;
+% arrowOp ::= [mult | set] -> [mult | set]
+% compareOp ::= in | = | < | > | =< | =>
+% letDecl ::= name = expr
+% block ::= { expr* }
+% blockOrBar ::= block | bar expr
+% bar ::= |
+% quant ::= all | no | sum | mult
+% qualName ::= [this/] ( name / )* name
+% \end{lstlisting}
+% 
+% \newpage
 
-\newpage 
-
-\begin{lstlisting}[title={Alloy's syntax.}]
-alloyModule ::= [moduleDecl] import* paragraph*
-moduleDecl ::= module qualName [[name,+]]
-import ::= open qualName [[qualName,+]] [as name]
-paragraph ::= sigDecl | factDecl | predDecl | funDecl
-    | assertDecl | cmdDecl
-sigDecl ::= [var] [abstract] [mult] sig name,+ [sigExt] { fieldDecl,* } [block]
-sigExt ::= extends qualName | in qualName [+ qualName]*
-mult ::= lone | some | one
-fieldDecl ::= [var] decl
-decl ::= [disj] name,+ : [disj] expr
-factDecl ::= fact [name] block
-predDecl ::= pred [qualName .] name [paraDecls] block
-funDecl ::= fun [qualName .] name [paraDecls] : expr { expr }
-paraDecls ::= ( decl,* ) | [ decl,* ]
-assertDecl ::= assert [name] block
-cmdDecl ::= [name :] ( run | check ) ( qualName | block ) [scope]
-scope ::= for number [but typescope,+] | for typescope,+
-typescope ::= [exactly] number qualName
-expr ::= const | qualName | @name | this
-    | unOp expr | expr binOp expr | expr arrowOp expr
-    | expr [ expr,* ]
-    | expr [! | not] compareOp expr
-    | expr ( => | implies ) expr else expr
-    | let letDecl,+ blockOrBar
-    | quant decl,+ blockOrBar
-    | { decl,+ blockOrBar }
-    | expr '
-    | ( expr ) | block
-const ::= [-] number | none | univ | iden
-unOp ::= ! | not | no | mult | set | # | ~ | * | ^ 
-    | always | eventually | after | before | historically | once
-binOp ::= || | or | && | and | <=> | iff | => | implies | 
-    & | + | - | ++ | <: | :> | . | until | releases | since | triggered | ;
-arrowOp ::= [mult | set] -> [mult | set]
-compareOp ::= in | = | < | > | =< | =>
-letDecl ::= name = expr
-block ::= { expr* }
-blockOrBar ::= block | bar expr
-bar ::= |
-quant ::= all | no | sum | mult
-qualName ::= [this/] ( name / )* name
-\end{lstlisting}
-
-\newpage
-
-\subsection{Alloy Language}\label{c:alloy-language}
-
-\subsubsection{Relation Logic}
-
-\subsubsection{Linear Temporal Logic}
+% \subsection{Alloy Language}\label{c:alloy-language}
+% 
+% \subsubsection{Relation Logic}
+% 
+% \subsubsection{Linear Temporal Logic}
 
 
 \subsection{Structural Modelling}\label{c:alloy-sm}
@@ -103,7 +104,7 @@ To address default configuration over the universe's multiplicity, both signatur
 
 Moreover, the lattest Alloy version enables evaluation changing throughout the trace evolution, consequently allowing the consideration of both signatures and fields as time mutable declarations, through the usage of the keyword $var$.
 
-Throughout the sections that follow, it will be presented an illustrive example over which graph theory rests, this being the study of \textit{Eulerian Circuits}. This example will be used to duly contextualize both modelling and verification process in Alloy. \textit{Eulerian Circuits} must meet several behaviour constraints over the classic graph definition, that must be addressed over axioms. However, the structural modelling must be provided beforehand.
+Throughout the sections that follow, it will be presented an illustrive example over which graph theory rests, this being the study of \textit{Eulerian Circuits}. This example will be used to duly contextualize both modelling and verification process in Alloy. \textit{Eulerian Circuits} must meet several behaviour constraints over the classic graph definition, that must be addressed over model constraints. However, the structural modelling must be provided beforehand.
 
 \subsubsection{Model Structure}
 
@@ -111,7 +112,7 @@ With regard to the presented example, as it falls under the study of graphs theo
 
 Considering the Alloy's abstract ability to reduce complexity over model designing, at a high degree of abstraction, graphs can be represented as a set of \textit{nodes}, that connect together over relations, with no need to address edges as a separated structure declaration. 
 
-\begin{lstlisting}[title={Graph representation over a sigle Node declaration.}, otherkeywords = {abstract, sig, module, var, set, fact, extends, no, in}, label={lst:node}]
+\begin{lstlisting}[title={Graph representation over a sigle Node declaration.}, otherkeywords = {abstract, sig, module, var, set, fact, extends, no, in}, label={lst:node},floatplacement=H]
 sig Node {
     adj : set Node, 
     var visited : set Node
@@ -134,7 +135,7 @@ Relation multiplicity constraints are explicitly defined in the field declaratio
 
 Structural constraints can be entailed over implicity signature declaration. These are often referred as \textit{signature facts}, universally quantified over the signature's set. \cite{alloy-qr} Suppose a hypothetical design scenario, where the relation \textit{adj} is labelled as mutable. To ensure that the graph architecture consistency, in which, edges are structurally fixed, the following constraint can be specified. Additionally, consider the following \textit{graph} property, where it is desirable to express the following axiom: \textit{The graph contains no self-loops.}
 
-\begin{lstlisting}[title={\textit{Node} hypothetical constraints over the signature definition.}, otherkeywords = {abstract, sig, module, var, set, fact, extends, no, in, this, not, always, \', \=}]
+\begin{lstlisting}[title={\textit{Node} hypothetical constraints over the signature definition.}, otherkeywords = {abstract, sig, module, var, set, fact, extends, no, in, this, not, always, \', \=}, floatplacement=H]
 sig Node {
     var adj : set Node, 
     var visited : set Node
@@ -144,11 +145,13 @@ sig Node {
 }
 \end{lstlisting}
 
-As stated, the former poses a model incoherence within the \textit{Node} signature declaration, as \textit{adj} field is formerly labelled as mutable, that is later refuted by specifiying $always \ adj'\ =\ adj$. This latter introduces the Alloy language's ability to express temporal behaviour through these \textit{two} \textit{linear temporal logic} operators, $'$ and $always$ respectively. The $always$ operator expresses an universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state.
+As stated, the former poses a model incoherence within the \textit{Node} signature declaration, as \textit{adj} field is formerly labelled as mutable, that is later refuted by specifiying $always \ adj'\ =\ adj$. This latter introduces the Alloy language's ability to express temporal behaviour through these \textit{two} \textit{linear temporal logic} operators, $'$ and $always$ respectively. 
+
+The $always$ operator expresses an universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state. Alloy integrates LTL into the standard relational logic, therefore, supporting both linear temporal logic unary and binary modal operator.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/alloy_always.png}
+    \includegraphics[width=0.6\linewidth]{images/alloy_always.png}
     \caption{$always$ behavioural representation.}
     \label{fig:alloy-always}
 \end{figure}
@@ -157,54 +160,123 @@ Whereas the latter expresses the \textit{no self-loop} graph property. Even thou
 
 % The considered property expressness has a high level of complexity attached, and can be easily simplified over \textit{this not in adj}, as they both hold the same value. However, for contextualization reasons, and to introduce to the reader multiple Alloy's operators, the above is taken into account.
 
-Aside from the structural constraints implicitly implied within signature's declaration, multiplicity over fields \ref{fig:alloy-multiplicity} and signatures also narrows the model's universe. 
-The field multiplicity operators could be used to limit the number of signature atoms. Despite this, signature multiplicity is frequently used to represent singleton $one\ sig$ sets.
+Aside from the structural constraints implicitly implied within signature's declaration, multiplicity over fields \ref{fig:alloy-multiplicity} and signatures also narrows the model's universe. The field multiplicity operators could be used to limit the number of signature atoms. Despite this, signature multiplicity is frequently used to represent singleton $one\ sig$ sets.
 
-\begin{lstlisting}[title={\textit{Node} signature hierarchy.}, otherkeywords = {one, abstract, sig, module, var, set, fact, extends, no, in}]
+\begin{lstlisting}[title={\textit{Node} signature hierarchy.}, otherkeywords = {one, abstract, sig, module, var, set, fact, extends, no, in}, floatplacement=H]
 one sig Init extends Node {}
 var one sig Euler in Node {}
 \end{lstlisting}
 
-The above signatures accurately support the \textit{Eurelian Circuit} concept. 
-% explicar por alto o init e o euler
+The above signatures accurately support the \textit{Eurelian} circuit concept. An \textit{Eurelian} path denotes a trail in a finite graph where every edge is visited exactly once. Additionally, an \textit{Eurelian} circuit implies that the path must start and end at the same node, denoted as \textit{Init}. As this latter differs from the remaining \textit{Node} atoms, the $extends$ keyword must be used to imply hierarchy disjointness. The \textit{Euler} node is an abstract representation of the current node that is being visited. As this impose a mutable state ($var$) over nodes, hierarchy disjointness is not appropriate. Hence, to properly model that the \textit{Euler} node can be included in an arbitrary atom, signature inclusion ($in$) should be used.
 
-Both signatures are preceded by the $one$ keyword, imposing a multiplicity constraint over each signature declaration. Setting the multiplicity to $one$ means that each assessed model instance must have precisely one \textit{Init} atom and one \textit{Euler} atom.
+Both signatures are preceded by the $one$ keyword, imposing a multiplicity constraint over each signature declaration. Setting the multiplicity to $one$ means that each assessed model instance must have precisely one \textit{Init} atom and one \textit{Euler} atom. It should be noted that, since the \textit{Node} declaration is not preceded by the $abstract$ keyword, its atoms do not solely belong to the \textit{Init} signature. 
 
-It should be noted that, since the \textit{Node} declaration is not preceded by the $abstract$ keyword, its atoms do not solely belong to the \textit{Init} signature. 
+Additional modelling constraints can be specified by making use of the $fact$ declaration. The formula specified inside each $fact$ declaration denotes a model axiom, that holds a truth model assumption, to serve as a premise for further reasoning. 
 
-% falar in and extends
+The \textit{Eulerian} path denotes a trail within a finite graph, with each graph edge being visited precisely once. Thus, this already implies that the graph must be connected, where each node must be reachable, and undirected, where edges are non-oriented. Moreover, to properly specify the initial behaviour of our intended model, every edge must start unvisited ($no\ visited$) and the \textit{Euler} node should included in the \textit{Init} node. 
 
-Additional modelling constraints can be specified by making use of the $fact$ declaration. The formula specified inside each $fact$ declaration denotes a model axiom, that holds a truth model assumption, to serve as a premise for further reasoning.
-
-Thus, besides the structural properties that are implicitly considered within the signature hierarchy and fields multiplicity, there are some extra ones that should be explicitly expressed to achieve a correct model definition. 
-
-The \textit{Eulerian} path denotes a trail within a finite graph, with each graph edge being visited precisely once. Thus, this already implies that the graph must be connected, where each node must be reachable, and undirected, where edges are non-oriented. 
-
-\begin{lstlisting}[title={Graph restrictions through $fact$ declaration.}, otherkeywords = {abstract, sig, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>}]
-fact graph_considerations {
+\begin{lstlisting}[title={Graph restrictions through $fact$ declaration.}, otherkeywords = {abstract, sig, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>, \&}, floatplacement=H]
+fact eulerian_considerations {
     adj = ~adj
+    no iden & adj
     Node->Node in *(adj + ~adj)
+    
+    Euler = Init
+    no visited
 }
 \end{lstlisting}
 
-The considered property expressness has a high level of complexity attached, and can be easily simplified over $Node->Node\ in\ *(adj\ +\ ~adj)$, as they both hold the same value. However, for contextualization reasons, and to introduce to the reader multiple Alloy's operators, the above is taken into account.
+These expressions, above specified, makes use of some valued Alloy operators, consequently identified either as a set-theory operator or as a relational operator. Despite the extensive number of operators supplied by Alloy's language, every expression, through the usage of \textit{FOL} quantifiers and \textit{LTL} operators, is later translated to boolean-based expressions. 
 
-\textbf{Everything is a relation}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/alloy_relational_logic.jpg}
+    \caption{Relational Logic Syntax.}
+    \label{fig:alloy-rel}
+\end{figure}
+
+Regarding set-theory, set intersection (denoted by $\&$) and set conjunction (denoted by $+$) are introduced. The remaining are relational based operators. The $\sim adj$ denotes the converse relation of \textit{adj}, and the $\rightarrow$ represents the Cartesian product operator. The reflexive transitive closure operator ($\ast$) confers the
+smallest transitive $\ast(adj\ +\ ~adj)$ relation containing all the identifiers, reachable in zero or more steps, through the implict use of the set composition operator ($\cdot$). The other transitive closure $\string^$ is defined as $\string^ rel\ =\ \ast rel\ -\ iden$.
+
+\begin{figure}[H]
+    \[\string^ rel\ =\ rel\ + rel \cdot rel\ +\ rel \cdot rel \cdot rel\ + ... \]  
+\caption{Reflexive transitive closure operator.}
+\label{math:alloy-transitive}
+\end{figure}
+
+In order to prevent unwanted model structural scenarios, the intended model can be visualized over the \textit{Alloy Visualizer}, upon executing the $run$ analyzing command. In the Figure \ref{fig:alloy-eulerian_1} is depicted an instance of an acceptable configuration of the \textit{Eulerian} circuit with \textit{5 Node} atoms, since every model constraint was duly specified.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{images/alloy_eulerian_1.png}
+    \caption{Acceptable \textit{Eulerian} graph model design.}
+    \label{fig:alloy-eulerian_1}
+\end{figure}
+
+
+\subsubsection{Everything is a Relation}
+
+As previously stated, Alloy emphasizes the mathematical relation concept to describe systems as a conventional designed model, through conceiving a set $R$ of relations. Moreover, Alloy confers the ability to express their relations as \textit{variable}. \cite{lwspecification} An Alloy relation presents itself as a set of tuples of \textit{atoms} drawn from the same universe context. Subsequently, each relation tuple must meet the same arity of the relation. \cite{alloy-docs}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{images/alloy_evaluator1.png}
+    \caption{\textit{Node} and \textit{adj} relations.}
+    \label{fig:alloy-evaluator_1}
+\end{figure}
+
+The \textit{Alloy Evaluator} \cite{alloy-6} confers additional functionality to the \textit{Visualizer}. It allows the user to type Alloy-based expressions against the existing model, used to gather structure information about the existing model. \cite{alloy-docs} In the Figure \ref{fig:alloy-evaluator_1} is presented both \textit{Node} signature and \textit{adj} relation, regarding the model depicted in the Figure \ref{fig:alloy-eulerian_1}.
+
+Additionally, the use of the relational based operators $<:$ and $:>$ denote explicit restriction over relations, with the former restricting its domain, and the latter restricting its range.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{images/alloy_evaluator2.png}
+    \caption{\textit{Init} adjacent nodes.}
+    \label{fig:alloy-evaluator_2}
+\end{figure}
+
 
 \subsection{Structural Behaviour}
 
-Model's behaviour representation represents the ability to express what is intended to happen during state transitions over the valid traces of a system. A \textit{trace} is represented as an infinite chain of states that completely describes a system's potential behaviour.
+Model's behaviour representation represents the ability to express what is intended to happen during state transitions over the valid traces of a system. A \textit{trace} is represented as an infinite chain of states that completely describes a system's potential behaviour. Valid traces are constrained by explicit specification of axioms, identified using the $fact$ keyword, alongside with the implicit model assumptions covered by each $sig$ declaration, also constrains the system's behaviour.
 
-Valid traces are constrained by explicit specification of axioms, identified using the $fact$ keyword. However, as explained above, model assumptions covered by each $sig$ declaration, also constrains the system's behaviour. 
+Despite the usefulness in restricting the system's traces, it is not ideal to express every property as a model assumption. System transitions are declared over events, where each event is conveniently specified in separate \textit{predicates}. The latter, denoted as $pred$, enables Alloy to express boolean formulas that only hold their value when invoked. 
 
-\subsubsection{Behaviour Representation}
+Generally, events are specified with their respective event \textit{guards} and event \textit{effects}. A guard specifies a formula that must be true prior to the occurrence of the related event. Oppositely, an effect regards how the system evolves through the next state, providing a valid outcome of its event. To specify the effect we need to somehow evaluate the value of a formula in the next state or refer to the value of sets and relations in the next state. To evaluate a formula in the next state we precede it with the temporal operator after. To evaluate an expression in the next state we append it the operator '.
+
+In order to provide a proper contextualization over these concepts, it is desirable to recall the \textit{Eulerian} circuit example. 
+
+\begin{lstlisting}[title={Graph visiting event.}, otherkeywords = {pred, some, \:, \., not, in, ', \=, \+, \-\>}, floatplacement=H]
+pred traverse {
+    some adj_node : Euler.adj {
+        adj_node not in Euler.visited
+        visited' = visited + Euler->adj_node + adj_node->Euler
+        Euler' = adj_node
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[title={Graph stutter event.}, otherkeywords = {pred, ', \=}, floatplacement=H]
+pred stutter {
+    visited' = visited
+    Euler' = Euler
+}
+\end{lstlisting}
+    
+
+%\subsubsection{Behaviour Representation}
 
 % As previously explained, the model assumptions that are not covered by the signatures structure, should be declared within Electrum facts. However, not every property that we’re interested in validating and reason about, should be an assumption. Predicates are reusable boolean formulas built through Electrum expressions. All of these features, as well as the notion of reusable expressions (fun) and model assertions (assert), are conceptually grouped into Electrum paragraphs, as shown in the formal syntax 
+
+% Back to the Lightbot case, the actual model already defines precisely which are the valid states in the system. However, nothing has been stated regarding to its possible evolution, that is, the valid set of operations in each state.
+
+%Due to Electrum high-expressiveness, there are multiple forms to introduce behaviour. One of the simplest is through the declaration of implicit operations through predicates. Following the assumption that, every possible trace within the system, needs to be a random pseudo-permutation of these operations executed upon a well-defined initial state. This method, when applied consistently, represents a model design pattern known as Implicit Operation Idiom [10]. For instance, in the Lightbot software, the system state evolves, regarding to the configu- ration, when the robot takes some action. That is, if the robot has some command to move, jump, turn (left or right) or to switch some light (on or off). In order to express the complete possible behaviour, a predicate must be specified for each possible action. Taking the move operation as example, the predicate on Listing 2.5 illustrates a possible specification of the operation under an Implicit Operation Idiom. The pre-conditions (line 2) of this operation state that, the robot position height in the next state must be the same as the actual. The pos-conditions (lines 3-11) declare the set of conditions that must to be hold in the successor state, which may vary according to the actual orientation. Finally, the frame-conditions (lines 11-14) express the conditions that depicted the remain relations, which are supposed to keep the same after the operation. As previously claimed, in order to be possible to check and reason about properties in the system, it’s necessary to introduce the notion of an execution trace. Here, upon a macro- perspective, it will be completely defined the allowed behaviour of the system, by restricting the set of valid operations to those previously stated. Thus, after every possible operation has been specified, the axiom shown in Listing 2.6 must be introduced.
 
 
 \section{Structural Analysis}
 
-Structural modelling only confers an conventional way of formally expressing the intended behaviour over a software component. To perform verification over the specified behaviour, it is advisable to implement analysis techniques, while supporting a illustrative way of exploring the behaviour through simulations. 
+Structural modelling only confers a conventional way of formally expressing the intended behaviour over a software component. To perform verification over the specified behaviour, it is advisable to implement analysis techniques, while supporting an illustrative way of exploring the behaviour through simulations. 
 
 This section aims to explain how Alloy conducts system analysis, with further explanations over the corresponding analysis commands, along with an overview on the Alloy Analyzer interactive exploration over a system's design. 
 
@@ -214,7 +286,7 @@ Alloy specification process does not establish a clear process separation over t
 
 The specification language holds \textit{two} analyzing commands, $run$ and $check$ respectively, as shown above in \textit{Alloy's syntax}. A \textit{Linear Temporal Logic (LTL) formula} is enclosed between braces, to be checked over. Upon executing, both commands accounts the enclosed formula $\psi_{f}$, as well as the model declaration ${M}$. Likewise in $fact$ declaration, several logic constraints can be combined into the formula $\psi_{f}$. Due to Alloy's implicit abstraction, both commands addresses the relational model specification as truth holder, with the latter being consisted by declarations over $fact$ and $sig$. 
 
-Briefly speaking, $run$ instruct the model-checker to present an example that satisfies the considered formula $\psi_{f}$ over the model definition. This means that the following formula ($M \wedge \psi_{f}$) is expected to hold. The consistency of the \textit{facts} and \textit{signatures} is consequently verified since the model declaration $M$ is also considered in the latter formula. 
+Briefly speaking, $run$ instruct the model-checker to present an example that satisfies the considered formula $\psi_{f}$ over the model definition. This means that the following formula ($M \wedge \psi_{f}$) is expected to hold. The consistency of the \textit{facts} and \textit{signatures} is consequently verified since the model declaration $M$ is also considered. 
 
 Alloy makes use of the $check$ command to perform automatic verification over an $assertion$ declaration. The assertion $\psi_{f}$ verification is done over proving if the following satisfiability formula $M \models \psi_{f}$ is valid within the defined scopes. % while it accounts the declared \textit{facts} as truth holders. 
 
@@ -238,19 +310,55 @@ Being SAT-based \cite{lwspecification}, the Alloy Analyzer tries to search for a
 
 Moreover, Alloy yields a command to specify the finite number of different steps, related to the expected intance's evaluation trace. This is due to the \textit{bounded} nature of the Alloy transitions between states, where the \textit{Bounded Model Checking} technique is considered as model-checking technique. The number of steps is set to \textit{ten} by default, although this may be adjusted using the keyword $steps$, alonside with the bounded scopes specification. 
 
-\subsubsection{Relevant Properties}
+\subsubsection{Behavioural Properties}
 
-The verification process over \textit{Model Checking}, needs to account the formal specification of properties that are relevant to reason about the system's behaviour. \cite{baier2008principles} With regard of ensuring the correctness of a system's expected behaviour, \textit{Safety} and \textit{Liveness} properties must be appropriatly specified, where its verification technique was motivated by distinct techniques. \cite{kindler1994safety} The former requires an invariance argument, where the latter requires a well-foundedness argument to prove its system satisfiability. \cite{alpern1987recognizing}
+The verification process over \textit{Model Checking}, needs to account the formal specification of properties that are relevant to reason about the system's temporal behaviour. \cite{baier2008principles} 
 
-A \textit{safety property} asserts that "nothing bad should happen" during the system execution, meaning that, every trace state is expected. Consequently, if a trace that jeoperdizes a safety property is found, it can be assumed that the latter has a "bad" property prefix. Whereas, a \textit{liveness property} expresses that "something good will happen", implying the eventual occurrence of a state during the course of the system's execution. \cite{lamport1977proving}
+Alloy makes use of the relational logic (Figure \ref{fig:alloy-rel}) to ensure the well-formedness of the system, which falls short when it comes to supplying support over temporal behaviour. Thereby, Alloy includes temporal connectives from \textit{Linear Temporal Logic} (LTL), that acknowledges the system's states along the trace evolution. \cite{lwspecification, alloy-6, 9341085}
 
-Clearly, due to the nature, each \textit{liveness} property is evaluated over infinite traces, as their verification holds possibility extend its property prefix ... However, in the presented example, it is forced to perform and present an \textit{Eulerian circuit}, so verifying the following liveness property is somewhat trivial, as its behaviour is forced upon the fact specification $eventually\ (\ adj\ in\ visited\ and Euler\ in\ Init\ )$. 
+Ensuring the correctness of a system's behaviour relies on verifying properties regarding the latter's \textit{Safety} and \textit{Liveness}. Its verification technique is motivated by distinct approaches. \cite{kindler1994safety} The former requires an invariance argument, where the latter requires a well-foundedness argument to prove its system satisfiability. \cite{alpern1987recognizing}
 
-Concerning 
+A \textit{safety property} asserts that "nothing bad should happen" during the system execution, meaning that, every trace state is expected. Consequently, if a trace that jeoperdizes a safety property is found, it can be assumed that the latter has a "bad" property prefix. 
 
-% Fairness Properties
+\begin{lstlisting}[title={\textit{Safety Property}: The relation visited can only evolve through time.}, otherkeywords = {always, assert, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>, \&, '}, floatplacement=H]
+assert safety_visited {
+    always visited in visited'
+} 
+\end{lstlisting}
 
-As the example described does not hold any 
+\begin{lstlisting}[title={\textit{Safety Property}: If a node is visited, then once \textit{Euler} was 'inside' it.}, otherkeywords = {always, assert, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>, \&, all, \:, \., implies, once}, floatplacement=H]
+assert safety_euler {
+    always (all n :  Node | n in Node.visited implies once Euler = n)
+} 
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{images/alloy_once.png}
+    \caption{$once$ behavioural representation.}
+    \label{fig:alloy-once}
+\end{figure}
+
+Whereas, a \textit{liveness property} expresses that "something good will happen", implying the eventual occurrence of a state during the course of the system's execution. \cite{lamport1977proving}
+
+\begin{lstlisting}[title={\textit{Liveness Property}: Eventually every node will be visited.}, otherkeywords = {eventually, always, assert, all, \:, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>, \&}, floatplacement=H, label={liveness}]
+assert liveness_euler {
+    all n : Node | eventually Euler = n
+} 
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{images/alloy_eventually.png}
+    \caption{$eventually$ behavioural representation.}
+    \label{fig:alloy-eventually}
+\end{figure}
+
+The above-mentioned properties make use of \textit{2} relevant over time quantifiers. The $once$ operator expresses the past validation of a given formula. The $eventually$ operator expresses an existence quantifier, imposing the formula verification somewhere along the trace evolution. \cite{alloy-docs} 
+
+Liveness properties evaluation process reasons about states that eventually might reach the wanted scenario, it is advisable to consider \textit{fairness} constraints, intentionally specified to rule out infinite traces with unrealistic behaviour. \cite{baier2008principles} Briefly, a \textit{fairness} constraint imposes fairly considerations on the system model paths. \cite{wahlfairness} 
+
+Since the former liveness property does not hold any unrealistic infinite trace behaviour, no fairness property was specified. Thus, its verification is somewhat trivial, as the expected behaviour is forced in a model constraint specification.
 
 
 \subsection{Alloy Analyzer}

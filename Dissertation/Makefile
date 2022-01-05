@@ -1,9 +1,9 @@
 dissertation:
-	pdflatex -interaction=nonstopmode dissertation.tex
+	pdflatex dissertation.tex
 	bibtex dissertation
 	makeindex dissertation.idx
-	pdflatex -interaction=nonstopmode dissertation.tex
-	pdflatex -interaction=nonstopmode dissertation.tex
+	pdflatex dissertation.tex
+	pdflatex dissertation.tex
 
 .PHONY:clean
 .SILENT:clean
