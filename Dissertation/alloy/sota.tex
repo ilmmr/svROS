@@ -25,9 +25,8 @@ However, the system's inevitable state expansion consequently causes the complex
 
 % Bounded e Unbounded techniques ? Alloy accounts both techniques ....
 
-\subsection{Bounded Model Checking}
+\subsection{Model Checking in Alloy}
 
-\subsection{LTL Model Checking}
 
 \section{Structural Design}
 
@@ -274,7 +273,7 @@ pred stutter {
 
 Unexpected behavior can occur if no constraints are set on how the system grows through such mutable expressions. Constraints imposed on mutable expressions that should remain unchanged in the next state are referred as \textit{frame conditions}, a formula with primes ($'$) stating the "no change" effect. \cite{alloy-docs}
 
-It is advisable to consider the "nothing changes" possibility in the evaluation of the trace evolution. The \textit{stutter} predicate presents a different reasoning approach about the behaviour of the system, where frame conditions formulas are enclosed between braces. 
+It is advisable to consider the "nothing changes" possibility in the evaluation of the trace evolution. The \textit{stutter} predicate captures the "no effect" reasoning approach about the behaviour of the system, where frame conditions formulas are enclosed between braces.
 
 Every conceivable trace inside the system must be a permutation of these event handlers performed on a well-defined initial state. When used consistently, this approach constitutes a model design pattern called as Implicit Operation Idiom. \cite{gheyi2007formally}
 
@@ -285,19 +284,18 @@ pred _init {
 }
 \end{lstlisting}
 
-The \textit{init} states valid conditions valid in the first state. Thus, to properly specify the initial behaviour of our intended model, every edge must start unvisited ($no\ visited$) and the \textit{Euler} node should start in the \textit{Init} node.
+The \textit{\_init} states valid conditions valid in the first state. Thus, to properly specify the initial behaviour of our intended model, every edge must start unvisited ($no\ visited$) and the \textit{Euler} node should start in the \textit{Init} node.
 
 As previously claimed, to reason about state transition, the notion of an execution trace should be duly introduced. The system's permissible behavior will be thoroughly specified by restricting the set of valid operations. As it already been specified every acceptable operation, it is presented the following $fact$ axiom. 
 
 \begin{lstlisting}[title={Trace constraint through the use of an axiom.}, otherkeywords = {fact, ', \=, no, eventually, in\ , and, always, or}, floatplacement=H]
 fact traces {
     _init
-    eventually (adj in visited and Euler in Init)
     always (move or stutter)
 }
 \end{lstlisting}
 
-The temporal operator $always$ followed by the desired formula is used to impose a state constraint, that must hold one of the \textit{2} events, over the full trace evaluation. Moreover, to impose the expected behavioural representation of an \textit{Eulerian} circuit, the $eventually$ (Figure \ref{fig:alloy-eventually}) operator is considered to specify the desired final state, where every edge is visited and the \textit{Euler} node finishes where it started.
+The temporal operator $always$ followed by the desired formula is used to impose a state constraint, that must hold one of the \textit{2} events, over the full trace evaluation. This axiom, as explained, must account the initial state (\textit{\_init}) conditions.
 
 The notion of reusable expressions ($fun$) and model assertions ($assert$), are also conceptually included in the Alloy's event idiom. This idiom flexibility allows the developer to define action hierarchy, alongside with sharing atoms passed as parameters, resulting in simpler way of managing specifications. \cite{lwspecification, alloy-docs}
 
@@ -336,7 +334,18 @@ Being SAT-based \cite{lwspecification}, the Alloy Analyzer tries to search for a
     \label{fig:alloy-check-2}
 \end{figure}
 
-Moreover, Alloy yields a command to specify the finite number of different steps, related to the expected intance's evaluation trace. This is due to the \textit{bounded} nature of the Alloy transitions between states, where the \textit{Bounded Model Checking} technique is considered as model-checking technique. The number of steps is set to \textit{ten} by default, although this may be adjusted using the keyword $steps$, alonside with the bounded scopes specification. 
+Moreover, Alloy yields a command to specify the finite number of different steps, related to the expected instance's evaluation trace. This is due to the \textit{bounded} nature of the Alloy transitions between states, where the \textit{Bounded Model Checking} technique is considered as model-checking technique. The number of steps is set to \textit{10} by default, although this may be adjusted using the keyword $steps$, alongside with the bounded scopes specification. 
+
+The following $run$ example makes use of both scopes and steps definitions. Moreover, the formula specified in the $run$ states the expected behavioural representation of an \textit{Eulerian} circuit. The $eventually$ (Figure \ref{fig:alloy-eventually}) operator is considered to specify the desired final state, where every edge is visited and the \textit{Euler} node finishes where it started.
+
+\begin{lstlisting}[title={Bounded Model Checking: Eventually the graph will represent an \textit{Eulerian} circuit.}, otherkeywords = {run, eventually, in, and, for, exactly, \5, steps}, floatplacement=H]
+run example {
+    eventually (adj in visited and Euler in Init)
+} for exactly 5 Node, exactly 5 steps
+\end{lstlisting}
+
+This particular $run$ yields no instance, so its corresponding formula $M \wedge \psi_{p}$ does not hold, since imposing \textit{5} steps is not sufficient to provide an instance where the desired state, defined by the latter formula, is reached.
+
 
 \subsubsection{Behavioural Properties}
 
@@ -369,9 +378,9 @@ assert safety_euler {
 
 Whereas, a \textit{liveness property} expresses that "something good will happen", implying the eventual occurrence of a state during the course of the system's execution. \cite{lamport1977proving}
 
-\begin{lstlisting}[title={\textit{Liveness Property}: Eventually every node will be visited.}, otherkeywords = {eventually, always, assert, all, \:, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>, \&}, floatplacement=H, label={liveness}]
+\begin{lstlisting}[title={\textit{Liveness Property}: Eventually the graph will represent an \textit{Eulerian} circuit.}, otherkeywords = {assert, eventually, in, and}]
 assert liveness_euler {
-    all n : Node | eventually Euler = n
+    eventually (adj in visited and Euler in Init)
 } 
 \end{lstlisting}
 
@@ -384,14 +393,73 @@ assert liveness_euler {
 
 The above-mentioned properties make use of \textit{2} relevant over time quantifiers. The $once$ operator expresses the past validation of a given formula. The $eventually$ operator expresses an existence quantifier, imposing the formula verification somewhere along the trace evolution. \cite{alloy-docs} 
 
-Liveness properties evaluation process reasons about states that eventually might reach the wanted scenario, it is advisable to consider \textit{fairness} constraints, intentionally specified to rule out infinite traces with unrealistic behaviour. \cite{baier2008principles} Briefly, a \textit{fairness} constraint imposes fairly considerations on the system's trace evolution. \cite{wahlfairness} 
+Moreover, the liveness property states the expected behavioural representation of an \textit{Eulerian} circuit, where the $eventually$ (Figure \ref{fig:alloy-eventually}) operator is considered to specify the desired final state. However, its verification, using $check\ liveness\_euler$, yields a counterexample, as it is possible to always perform the \textit{stutter} event, and thus the expected behaviour never happens. This scenario results in an implausible infinite trace behavior, which must be handled by adding fairness to the trace assessment. 
 
-Since the former liveness property does not hold any unrealistic infinite trace behaviour, no fairness property was specified. Thus, its verification is somewhat trivial, as the expected behaviour is forced in a model constraint specification.
+Liveness properties evaluation process reasons about states that eventually might reach the wanted scenario, it is advisable to consider \textit{fairness} constraints, intentionally specified to rule out infinite traces with unrealistic behaviour, such as system stuttering. \cite{baier2008principles} Briefly, a \textit{fairness} constraint imposes fairly considerations on the system's trace evolution. \cite{wahlfairness} 
+
+\begin{lstlisting}[title={\textit{Fairness predicate}: If \textit{Euler} has an adjacent node, it will eventually visit the latter.}, otherkeywords = {pred, eventually, always, implies, some, \.}]
+pred fairness {
+	(eventually always some Euler.adj) implies (always eventually traverse)
+}
+\end{lstlisting}
+
+The latter imposes a fairness constraint regarding the trace evolution, ensuring that trace stuttering is not possible as long as the \textit{Euler} node has some adjacent node that is not been visited yet. As expected, by instructing the Analyzer to check the asserted property ($check\ liveness\_euler$), it will return no counterexample.
+
+\begin{lstlisting}[title={\textit{Liveness} property accounting the fairness constraint. It yields no counterexample.}, otherkeywords = {assert, in, and, eventually, check}]
+assert liveness_euler {
+	fairness implies eventually (adj in visited and Euler in Init)
+} check liveness_euler
+\end{lstlisting}
 
 \subsection{Alloy Analyzer}
 
-Normally, the specification process upon abstracting the system as a conventional model is carried out interactively, since considerations about model validation must be preceded by the model specification. The already mentioned analysis techniques, $run$ and $check$ analysis commands respectively, instruct the Analyzer to check and provide analysis over their implicit formula nature. Moreover, the Analyzer is capable of providing model instances concerning the formula evaluation, depicted graphically as graph-like structures, through the usage of the Alloy \textit{Visualizer}, allowing instance interaction over multiple configuration buttons. Additionally, concerning the user comprehension, the graphical depiction of these instances can be customized using \textit{Themes}.
+Normally, the specification process upon abstracting the system as a conventional model is carried out interactively, since considerations about model validation must be preceded by the model specification. The already mentioned analysis techniques, $run$ and $check$ analysis commands respectively, instruct the Analyzer to check and provide analysis over their implicit formula nature. Moreover, the Analyzer is capable of providing model instances concerning the formula evaluation, depicted graphically as graph-like structures, through the usage of the Alloy \textit{Visualizer}, allowing instance interaction over multiple configuration buttons. Additionally, concerning the user comprehension, the graphical depiction of these instances can be customized using \textit{Themes}, through the \mybox{Theme} toolbar button.
 
-% Model checking alloy e grafico kodkod etc
-% alloy visualizer
-% safety e liveness e fairness
+Recall the $run$ example that failed to provide a model instance due to the $steps$ explicit limitation. To find an \textit{Eulerian} circuit instance for $n$ nodes, the minimum of $n+1$ steps are required.
+
+\begin{lstlisting}[title={Bounded Model Checking: Eventually the graph will represent an \textit{Eulerian} circuit.}, otherkeywords = {run, eventually, in, and, for, exactly, \5, steps}, floatplacement=H]
+run example {
+    eventually (adj in visited and Euler in Init)
+} for exactly 5 Node
+\end{lstlisting}
+
+Producing a concrete instance might be quite helpful throughout the modeling process. The $run$ command presented above is capable of providing a model instance as it performs Bounded Model Checking for at most \textit{10} steps. The Analyzer executes the command and generates an instance regarding the latter, consequently producing a visual graphical (Figure \ref{fig:alloy-valid-run}) through the usage of the Visualizer.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{images/alloy_run.png}
+    \caption{Partial graphical view of the \textit{two} initial states. The \textit{Euler} node starts in the \textit{Init} node, and then moves towards an adjacent node.}
+    \label{fig:alloy-valid-run}
+\end{figure}
+
+The Visualizer furnishes a toolbar with multiple configuration buttons, allowing interactive customization over alternative instances. \cite{alloy-docs} Traces can also be interactively overviewed through transition buttons ($ \rightarrow $ and $ \leftarrow $), enabling forward and backward trace navigation.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{images/alloy_buttons.png}
+    \caption{Alloy Visualizer toolbar.}
+    \label{fig:alloy-toolbar}
+\end{figure}
+
+The \mybox{New Config} instructs the Analyzer to provide a new trace configuration, where immutable model expressions (sets and relations) are depicted with new values. Consequently, the Visualizer will present an execution trace regarding the new model configuration. The \mybox{New Trace} instructs the Analyzer to present a new execution trace, regarding the same model configuration. The \mybox{New Init} requests for a new trace representation, where the initial state is forced to present different model expressions values. At last, the \mybox{New Fork} allows alternative transition behaviour exploration over the same starting state, depicting a new transition post-state. The latter could differ on the result of a given event, or it can display the outcome of a different event. \cite{alloy-docs}
+
+Alloy forces the property formula translation into an LTL formula, considering the finitude of its universe of comprehension. Due to the emphasis on representing instances over infinite traces, every Alloy instance generated by the Analyzer, captures an infinite trace through \textit{lassos}, where a looping state is reached.
+
+Concerning performance in the evaluation over infinite traces, Alloy considers the Bounded Model Checking technique as the first approach towards the model verification. Here, the corresponding LTL formula is verified for all \textit{lasso} traces of size up to a bounded number of steps. So, the verification is not complete, due to the SAT time-bounded nature. However, it still confers great functionality, as infinite traces can often be represented as finite traces, making verification within small scopes possible. \cite{jackson2012software}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{images/alloy_infinite_trace.png}
+    \caption{Some infinite traces can be represented by finite \textit{lasso} traces.}
+    \label{fig:alloy-infinite}
+\end{figure}
+
+Oppositely, the Analyzer can be instructed to perform Unbounded Model Checking towards achieving consistency over model verification, without bounding traces upfront. \cite{alloy-6, alloy-docs} This is feasible as the state space is finite due to the Alloy analysis way of bounding signatures. Consequently, it constrains infinite traces as periodic \textit{lasso} traces (Figure \ref{fig:alloy-infinite}).
+
+To perform complete model-checking, an appropriate solver must be selected in the \mybox{Options} menu, and the time scope must be specified under the following syntax: $for\ 1..\ steps$. Consider the previous $run$ command in terms of the Unbounded Model Checking approach. 
+
+\begin{lstlisting}[title={Unbounded Model Checking: Eventually the graph will represent an \textit{Eulerian} circuit.}, otherkeywords = {run, eventually, in, and, for, exactly, \5, steps}, floatplacement=H]
+run example {
+    eventually (adj in visited and Euler in Init)
+} for exactly 5 Node, 1.. steps
+\end{lstlisting}

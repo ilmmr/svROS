@@ -31,7 +31,6 @@ fact eulerian_assumptions {
 pred assumptions {
 	/* Initial configuration */
 	//some adj
-	eventually (adj in visited and Euler in Init)
 	always (move or stutter)
 }
 
@@ -50,12 +49,6 @@ pred stutter {
 	Euler'=Euler
 }
 
-
-fact traces {
-	init
-	eventually (adj in visited and Euler in Init)
-	always (move or stutter)
-}
 /* 
 fun eur_finish : ENode {
 	{ node : ENode | Euler' in node and once Euler in node }
@@ -63,9 +56,7 @@ fun eur_finish : ENode {
 */
 
 run example {
-	// eventually some eur_finish
-	/* Eurelian Path */
-	
+	eventually (adj in visited and Euler in Init)
 } for exactly 5 Node
 
 assert safety_visited {
@@ -82,9 +73,14 @@ assert safety_euler_visited {
 	always (all n :  Node | n in Node.visited implies once Euler = n)
 } check safety_euler_visited
 
+pred fairness {
+	(eventually always some Euler.adj) implies (always eventually move)
+} 
+
 assert liveness_euler {
-	all n :  Node | eventually Euler = n
+	fairness implies eventually (adj in visited and Euler in Init)
 } check liveness_euler
+
 /* forall nodes eventually Euler = n -> liveness */
 /* se always tudo visited entao para todo o nodo once euler = n -> safety */ 
 /* assert eulerian {
