@@ -50,6 +50,12 @@ pred stutter {
 	Euler'=Euler
 }
 
+
+fact traces {
+	init
+	eventually (adj in visited and Euler in Init)
+	always (move or stutter)
+}
 /* 
 fun eur_finish : ENode {
 	{ node : ENode | Euler' in node and once Euler in node }

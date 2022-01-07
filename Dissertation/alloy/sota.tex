@@ -2,9 +2,9 @@
 
 As aforementioned, this dissertation aims to tackle the security vulnerabilities resulted from the miss-configuration over ROS files. In this chapter, it is intended to explore the Alloy framework that is relevant to overcome the above-mentioned challenge. % as well as previous developed work that has the same or similar goals as this thesis (\ref{s:alloy-relWork}).
 
-The increasingly usage of robotics onto safety-critical systems results in demanding considerations over ensuring the proper correctness of both software and hardware, as failures mainly regarding the security domain might lead to fatal consequences. Thus, the use of formal methods and verification techniques, especially in systems highly reliant on flexibility and reliability, is recommended to avoid security-critical faults. \cite{carvalho2020analysis, clarke2011model} Software frameworks designed for this purpose must provide methods to perform structural design over systems with rich structures, abstracting their behaviour as a conventional model. Additionally, these frameworks must support features to enable automate analysis, in which property evaluation over these designed models is used as technique. 
+The increasingly usage of robotics onto safety-critical systems results in demanding considerations over ensuring the proper correctness of both software and hardware, as failures mainly regarding the security domain might lead to fatal consequences. Thus, the use of formal methods and verification techniques, especially in systems highly reliant on flexibility and reliability, is recommended to avoid security-critical faults. \cite{clarke2011model} Software frameworks designed for this purpose must provide methods to perform structural design over systems with rich structures, abstracting their behaviour as a conventional model. Additionally, these frameworks must support features to enable automate analysis, in which property evaluation over these designed models is used as technique. 
 
-The \textit{Alloy Framework} \cite{alloy-DJ}, fits within within this context, as it furnishes a declarative relation-based language, used for software modelling, complemented with extended tools supporting analysis over these models. \cite{alloy-6} The language combination of both relational and linear temporal logic (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the model $M$ is exhaustively checked over property verification. \cite{lwspecification, carvalho2020analysis}
+The \textit{Alloy Framework} \cite{alloy-DJ}, fits within within this context, as it furnishes a declarative relation-based language, used for software modelling, complemented with extended tools supporting analysis over these models. \cite{alloy-6} The language combination of both relational and linear temporal logic (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the model $M$ is exhaustively checked over property verification. \cite{lwspecification}
 
 The framework \textit{analyzer} takes the specified model's restrictions into account, performing bounded and unbounded model checking to find instances that satisfy those implied restrictions. It can be also be useful for checking model properties, where the analyzer will try to return a counterexample instance. Instances are displayed by the framework Visualizer, alongside with the modelling process steps, regarding a trace representation. Instances appearance can be customized, using the \textit{theme}'s extension. \cite{alloy-6}
 
@@ -33,7 +33,7 @@ However, the system's inevitable state expansion consequently causes the complex
 
 The \textit{Alloy framework} presents itself as a formal modelling language, conceived to properly address model-checking techniques over their specification language, where both structural design and temporal behaviour, naturally specified over properties, can easily be defined. Formerly, Alloy was inherently static \cite{lwspecification}, meaning that it only excel the structural design, where its language was based on first-order logic. The analysis process relied on a bounded model checking technique with no support for temporal behaviour. Notwithstanding, the latest realease of Alloy confers the ability to properly deal with expressive temporal properties, as well as trace evaluation over time, while employing the former structural approach. 
 
-As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consequently allows large specification development. \cite{carvalho2020analysis} The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required for understanding how system modelling is covered. 
+As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consequently allows large specification development. \cite{lwspecification} The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required for understanding how system modelling is covered. 
 
 % Before accurately accounting both structural design as modelling technique and structural analysis, it follows the Alloy formal syntax.
 % 
@@ -100,7 +100,7 @@ The Alloy structural definition relies on a relation way of connecting system's 
 
 Signatures can either be perceived as a top-level signature, or as other signature's subset. Signature hierarchy is conceivable through disjoint extensions ($extends$), or by set inclusion ($in$). The $abstract$ keyword declares a signature that contains no atoms beyond those within its extensions. 
 
-To address default configuration over the universe's multiplicity, both signatures and fields can be specified under a multiplicity constraint. The former constrains the number of signature atoms, where it is commonly used to express singleton sets, over the constraint keyword $one\ sig$. Fields, however, makes great use of multiplicities, offering behaviour expressness over relations between atoms. Additionally to these model constraints, implicitly specified over the course of the modelling process, system assumptions can be defined over axioms, expressed as $facts$, where multiple constraints can be incorporated.
+To address default configuration over the universe's multiplicity, both signatures and fields can be specified under a multiplicity constraint. The former constrains the number of signature atoms, where it is commonly used to express singleton sets, over the constraint keyword $one\ sig$. Fields, however, makes great use of multiplicities, offering behaviour expressness over relations between atoms. Additionally to these model constraints, explicitly specified over the course of the modelling process, system assumptions can be defined over axioms, expressed as $facts$, where multiple constraints can be incorporated. \cite{gheyi2007formally}
 
 Moreover, the lattest Alloy version enables evaluation changing throughout the trace evolution, consequently allowing the consideration of both signatures and fields as time mutable declarations, through the usage of the keyword $var$.
 
@@ -133,7 +133,7 @@ Relation multiplicity constraints are explicitly defined in the field declaratio
 \end{figure}
 
 
-Structural constraints can be entailed over implicity signature declaration. These are often referred as \textit{signature facts}, universally quantified over the signature's set. \cite{alloy-qr} Suppose a hypothetical design scenario, where the relation \textit{adj} is labelled as mutable. To ensure that the graph architecture consistency, in which, edges are structurally fixed, the following constraint can be specified. Additionally, consider the following \textit{graph} property, where it is desirable to express the following axiom: \textit{The graph contains no self-loops.}
+Structural constraints can be entailed over explicitly signature declaration. These are often referred as \textit{signature facts}, universally quantified over the signature's set. \cite{alloy-qr} Suppose a hypothetical design scenario, where the relation \textit{adj} is labelled as mutable. To ensure that the graph architecture consistency, in which, edges are structurally fixed, the following constraint can be specified. Additionally, consider the following \textit{graph} property, where it is desirable to express the following axiom: \textit{The graph contains no self-loops.}
 
 \begin{lstlisting}[title={\textit{Node} hypothetical constraints over the signature definition.}, otherkeywords = {abstract, sig, module, var, set, fact, extends, no, in, this, not, always, \', \=}, floatplacement=H]
 sig Node {
@@ -145,7 +145,7 @@ sig Node {
 }
 \end{lstlisting}
 
-As stated, the former poses a model incoherence within the \textit{Node} signature declaration, as \textit{adj} field is formerly labelled as mutable, that is later refuted by specifiying $always \ adj'\ =\ adj$. This latter introduces the Alloy language's ability to express temporal behaviour through these \textit{two} \textit{linear temporal logic} operators, $'$ and $always$ respectively. 
+As stated, the former poses a model incoherence within the \textit{Node} signature declaration, as \textit{adj} field is formerly labelled as mutable, that is later refuted by specifying $always \ adj'\ =\ adj$. This latter introduces the Alloy language's ability to express temporal behaviour through these \textit{two} \textit{linear temporal logic} operators, $'$ and $always$ respectively. 
 
 The $always$ operator expresses an universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state. Alloy integrates LTL into the standard relational logic, therefore, supporting both linear temporal logic unary and binary modal operator.
 
@@ -160,7 +160,7 @@ Whereas the latter expresses the \textit{no self-loop} graph property. Even thou
 
 % The considered property expressness has a high level of complexity attached, and can be easily simplified over \textit{this not in adj}, as they both hold the same value. However, for contextualization reasons, and to introduce to the reader multiple Alloy's operators, the above is taken into account.
 
-Aside from the structural constraints implicitly implied within signature's declaration, multiplicity over fields \ref{fig:alloy-multiplicity} and signatures also narrows the model's universe. The field multiplicity operators could be used to limit the number of signature atoms. Despite this, signature multiplicity is frequently used to represent singleton $one\ sig$ sets.
+Aside from the structural constraints implied within signature's declaration, multiplicity over fields \ref{fig:alloy-multiplicity} and signatures also narrows the model's universe. The field multiplicity operators could be used to limit the number of signature atoms. Despite this, signature multiplicity is frequently used to represent singleton $one\ sig$ sets.
 
 \begin{lstlisting}[title={\textit{Node} signature hierarchy.}, otherkeywords = {one, abstract, sig, module, var, set, fact, extends, no, in}, floatplacement=H]
 one sig Init extends Node {}
@@ -173,16 +173,13 @@ Both signatures are preceded by the $one$ keyword, imposing a multiplicity const
 
 Additional modelling constraints can be specified by making use of the $fact$ declaration. The formula specified inside each $fact$ declaration denotes a model axiom, that holds a truth model assumption, to serve as a premise for further reasoning. 
 
-The \textit{Eulerian} path denotes a trail within a finite graph, with each graph edge being visited precisely once. Thus, this already implies that the graph must be connected, where each node must be reachable, and undirected, where edges are non-oriented. Moreover, to properly specify the initial behaviour of our intended model, every edge must start unvisited ($no\ visited$) and the \textit{Euler} node should included in the \textit{Init} node. 
+The \textit{Eulerian} path denotes a trail within a finite graph, with each graph edge being visited precisely once. Thus, this already implies that the graph must be connected, where each node must be reachable, and undirected, where edges are non-oriented.
 
 \begin{lstlisting}[title={Graph restrictions through $fact$ declaration.}, otherkeywords = {abstract, sig, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>, \&}, floatplacement=H]
 fact eulerian_considerations {
     adj = ~adj
     no iden & adj
     Node->Node in *(adj + ~adj)
-    
-    Euler = Init
-    no visited
 }
 \end{lstlisting}
 
@@ -196,7 +193,7 @@ These expressions, above specified, makes use of some valued Alloy operators, co
 \end{figure}
 
 Regarding set-theory, set intersection (denoted by $\&$) and set conjunction (denoted by $+$) are introduced. The remaining are relational based operators. The $\sim adj$ denotes the converse relation of \textit{adj}, and the $\rightarrow$ represents the Cartesian product operator. The reflexive transitive closure operator ($\ast$) confers the
-smallest transitive $\ast(adj\ +\ ~adj)$ relation containing all the identifiers, reachable in zero or more steps, through the implict use of the set composition operator ($\cdot$). The other transitive closure $\string^$ is defined as $\string^ rel\ =\ \ast rel\ -\ iden$.
+smallest transitive $\ast(adj\ +\ ~adj)$ relation containing all the identifiers, reachable in zero or more steps, through the implicit use of the set composition operator ($\cdot$). The other transitive closure $\string^$ is defined as $\string^ rel\ =\ \ast rel\ -\ iden$.
 
 \begin{figure}[H]
     \[\string^ rel\ =\ rel\ + rel \cdot rel\ +\ rel \cdot rel \cdot rel\ + ... \]  
@@ -239,39 +236,70 @@ Additionally, the use of the relational based operators $<:$ and $:>$ denote exp
 
 \subsection{Structural Behaviour}
 
-Model's behaviour representation represents the ability to express what is intended to happen during state transitions over the valid traces of a system. A \textit{trace} is represented as an infinite chain of states that completely describes a system's potential behaviour. Valid traces are constrained by explicit specification of axioms, identified using the $fact$ keyword, alongside with the implicit model assumptions covered by each $sig$ declaration, also constrains the system's behaviour.
+Model's behaviour representation represents the ability to express what is intended to happen during state transitions over the valid traces of a system. A \textit{trace} is represented as an infinite chain of states that completely describes a system's potential behaviour. Valid traces are constrained by explicit specification of axioms, identified using the $fact$ keyword, alongside with the explicit model assumptions covered by each $sig$ declaration, also constrains the system's behaviour. \cite{gheyi2007formally}
 
-Despite the usefulness in restricting the system's traces, it is not ideal to express every property as a model assumption. System transitions are declared over events, where each event is conveniently specified in separate \textit{predicates}. The latter, denoted as $pred$, enables Alloy to express boolean formulas that only hold their value when invoked. 
+Despite the usefulness in restricting the system's traces, it is not ideal to express every property as a model assumption. Alloy high level of expressiveness enables the behaviour representation over multiple forms through an event idiom. \cite{lwspecification}
 
-Generally, events are specified with their respective event \textit{guards} and event \textit{effects}. A guard specifies a formula that must be true prior to the occurrence of the related event. Oppositely, an effect regards how the system evolves through the next state, providing a valid outcome of its event. To specify the effect we need to somehow evaluate the value of a formula in the next state or refer to the value of sets and relations in the next state. To evaluate a formula in the next state we precede it with the temporal operator after. To evaluate an expression in the next state we append it the operator '.
+System transitions are declared over events, where each event is conveniently specified in separate \textit{predicates}. The latter, denoted as $pred$, enables Alloy to express boolean formulas that only hold their value when invoked. 
 
-In order to provide a proper contextualization over these concepts, it is desirable to recall the \textit{Eulerian} circuit example. 
+Generally, events are specified with their respective event \textit{guards} and event \textit{effects}. A guard specifies a formula that must be true prior to the occurrence of the related event. Oppositely, an effect regards how the system evolves through the next state, providing a valid outcome of its event. The effect must account the mutable variables of the model through the usage of the $'$ operator, to guarantee the non-occurrence of unexpected behaviour. In addition, the temporal operator $after$ can be used to hold the truth of a formula in the next state.
 
-\begin{lstlisting}[title={Graph visiting event.}, otherkeywords = {pred, some, \:, \., not, in, ', \=, \+, \-\>}, floatplacement=H]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{images/alloy_after.png}
+    \caption{$after$ behavioural representation.}
+    \label{fig:alloy-after}
+\end{figure}
+
+In order to provide a proper contextualization over these concepts, it is desirable to recall the \textit{Eulerian} circuit example. The process of visiting nodes must be specified as it confers the main functionality within the graph theory. It follows the \textit{traverse} predicate to effectively express the latter process. 
+
+\begin{lstlisting}[title={\textit{Eulerian} visiting event.}, otherkeywords = {pred, some, \:, \., not, in, ', \=, \+, \-\>}, floatplacement=H]
 pred traverse {
-    some adj_node : Euler.adj {
-        adj_node not in Euler.visited
-        visited' = visited + Euler->adj_node + adj_node->Euler
-        Euler' = adj_node
+    some adjn : Euler.adj {
+        adjn not in Euler.visited
+        visited' = visited + Euler->adjn + adjn->Euler
+        Euler' = adjn
     }
 }
 \end{lstlisting}
 
-\begin{lstlisting}[title={Graph stutter event.}, otherkeywords = {pred, ', \=}, floatplacement=H]
+The first guard states the existence of some node \textit{adjn}, that must be related to the \textit{Euler} node ($Euler \cdot adj$). Another guard is specified to cover the \textit{Eulerian} condition where each edge must be visited exactly once ($adjn\ not\ in\ Euler \cdot visited$). It is followed by \textit{2} effects, where the \textit{visited} relation must account the latest visited edge, and the \textit{Euler} node must be incorporated in the respective adjacent node, within the next state.
+
+\begin{lstlisting}[title={\textit{Eulerian} stutter event.}, otherkeywords = {pred, ', \=}, floatplacement=H]
 pred stutter {
     visited' = visited
     Euler' = Euler
 }
 \end{lstlisting}
-    
 
-%\subsubsection{Behaviour Representation}
+Unexpected behavior can occur if no constraints are set on how the system grows through such mutable expressions. Constraints imposed on mutable expressions that should remain unchanged in the next state are referred as \textit{frame conditions}, a formula with primes ($'$) stating the "no change" effect. \cite{alloy-docs}
 
-% As previously explained, the model assumptions that are not covered by the signatures structure, should be declared within Electrum facts. However, not every property that we’re interested in validating and reason about, should be an assumption. Predicates are reusable boolean formulas built through Electrum expressions. All of these features, as well as the notion of reusable expressions (fun) and model assertions (assert), are conceptually grouped into Electrum paragraphs, as shown in the formal syntax 
+It is advisable to consider the "nothing changes" possibility in the evaluation of the trace evolution. The \textit{stutter} predicate presents a different reasoning approach about the behaviour of the system, where frame conditions formulas are enclosed between braces. 
 
-% Back to the Lightbot case, the actual model already defines precisely which are the valid states in the system. However, nothing has been stated regarding to its possible evolution, that is, the valid set of operations in each state.
+Every conceivable trace inside the system must be a permutation of these event handlers performed on a well-defined initial state. When used consistently, this approach constitutes a model design pattern called as Implicit Operation Idiom. \cite{gheyi2007formally}
 
-%Due to Electrum high-expressiveness, there are multiple forms to introduce behaviour. One of the simplest is through the declaration of implicit operations through predicates. Following the assumption that, every possible trace within the system, needs to be a random pseudo-permutation of these operations executed upon a well-defined initial state. This method, when applied consistently, represents a model design pattern known as Implicit Operation Idiom [10]. For instance, in the Lightbot software, the system state evolves, regarding to the configu- ration, when the robot takes some action. That is, if the robot has some command to move, jump, turn (left or right) or to switch some light (on or off). In order to express the complete possible behaviour, a predicate must be specified for each possible action. Taking the move operation as example, the predicate on Listing 2.5 illustrates a possible specification of the operation under an Implicit Operation Idiom. The pre-conditions (line 2) of this operation state that, the robot position height in the next state must be the same as the actual. The pos-conditions (lines 3-11) declare the set of conditions that must to be hold in the successor state, which may vary according to the actual orientation. Finally, the frame-conditions (lines 11-14) express the conditions that depicted the remain relations, which are supposed to keep the same after the operation. As previously claimed, in order to be possible to check and reason about properties in the system, it’s necessary to introduce the notion of an execution trace. Here, upon a macro- perspective, it will be completely defined the allowed behaviour of the system, by restricting the set of valid operations to those previously stated. Thus, after every possible operation has been specified, the axiom shown in Listing 2.6 must be introduced.
+\begin{lstlisting}[title={\textit{Eulerian} Initial State.}, otherkeywords = {pred, ', \=, no}, floatplacement=H]
+pred _init {
+    Euler = Init
+    no visited
+}
+\end{lstlisting}
+
+The \textit{init} states valid conditions valid in the first state. Thus, to properly specify the initial behaviour of our intended model, every edge must start unvisited ($no\ visited$) and the \textit{Euler} node should start in the \textit{Init} node.
+
+As previously claimed, to reason about state transition, the notion of an execution trace should be duly introduced. The system's permissible behavior will be thoroughly specified by restricting the set of valid operations. As it already been specified every acceptable operation, it is presented the following $fact$ axiom. 
+
+\begin{lstlisting}[title={Trace constraint through the use of an axiom.}, otherkeywords = {fact, ', \=, no, eventually, in\ , and, always, or}, floatplacement=H]
+fact traces {
+    _init
+    eventually (adj in visited and Euler in Init)
+    always (move or stutter)
+}
+\end{lstlisting}
+
+The temporal operator $always$ followed by the desired formula is used to impose a state constraint, that must hold one of the \textit{2} events, over the full trace evaluation. Moreover, to impose the expected behavioural representation of an \textit{Eulerian} circuit, the $eventually$ (Figure \ref{fig:alloy-eventually}) operator is considered to specify the desired final state, where every edge is visited and the \textit{Euler} node finishes where it started.
+
+The notion of reusable expressions ($fun$) and model assertions ($assert$), are also conceptually included in the Alloy's event idiom. This idiom flexibility allows the developer to define action hierarchy, alongside with sharing atoms passed as parameters, resulting in simpler way of managing specifications. \cite{lwspecification, alloy-docs}
 
 
 \section{Structural Analysis}
@@ -356,14 +384,13 @@ assert liveness_euler {
 
 The above-mentioned properties make use of \textit{2} relevant over time quantifiers. The $once$ operator expresses the past validation of a given formula. The $eventually$ operator expresses an existence quantifier, imposing the formula verification somewhere along the trace evolution. \cite{alloy-docs} 
 
-Liveness properties evaluation process reasons about states that eventually might reach the wanted scenario, it is advisable to consider \textit{fairness} constraints, intentionally specified to rule out infinite traces with unrealistic behaviour. \cite{baier2008principles} Briefly, a \textit{fairness} constraint imposes fairly considerations on the system model paths. \cite{wahlfairness} 
+Liveness properties evaluation process reasons about states that eventually might reach the wanted scenario, it is advisable to consider \textit{fairness} constraints, intentionally specified to rule out infinite traces with unrealistic behaviour. \cite{baier2008principles} Briefly, a \textit{fairness} constraint imposes fairly considerations on the system's trace evolution. \cite{wahlfairness} 
 
 Since the former liveness property does not hold any unrealistic infinite trace behaviour, no fairness property was specified. Thus, its verification is somewhat trivial, as the expected behaviour is forced in a model constraint specification.
 
-
 \subsection{Alloy Analyzer}
 
-The specification process is usually performed interactively. The user takes a first approach to the model specification, and then proceed to its refinement towards the model validation. In order to ease this process and improve the user comprehension of model instances and counter-examples, the Electrum Analyzer provides a Visualizer capable of showing a navi- gable set of graphical instances that are produced by command executions. A set of features that allow a full instance theme customization and an instant expression evaluation are also provided by the Analyzer.
+Normally, the specification process upon abstracting the system as a conventional model is carried out interactively, since considerations about model validation must be preceded by the model specification. The already mentioned analysis techniques, $run$ and $check$ analysis commands respectively, instruct the Analyzer to check and provide analysis over their implicit formula nature. Moreover, the Analyzer is capable of providing model instances concerning the formula evaluation, depicted graphically as graph-like structures, through the usage of the Alloy \textit{Visualizer}, allowing instance interaction over multiple configuration buttons. Additionally, concerning the user comprehension, the graphical depiction of these instances can be customized using \textit{Themes}.
 
 % Model checking alloy e grafico kodkod etc
 % alloy visualizer
