@@ -2,13 +2,13 @@
 
 As aforementioned, this dissertation aims to tackle the security vulnerabilities resulted from the miss-configuration over ROS files. In this chapter, it is intended to explore the Alloy framework that is relevant to overcome the above-mentioned challenge. % as well as previous developed work that has the same or similar goals as this thesis (\ref{s:alloy-relWork}).
 
-The increasingly usage of robotics onto safety-critical systems results in demanding considerations over ensuring the proper correctness of both software and hardware, as failures mainly regarding the security domain might lead to fatal consequences. Thus, the use of formal methods and verification techniques, especially in systems highly reliant on flexibility and reliability, is recommended to avoid security-critical faults. \cite{clarke2011model} Software frameworks designed for this purpose must provide methods to perform structural design over systems with rich structures, abstracting their behaviour as a conventional model. Additionally, these frameworks must support features to enable automate analysis, in which property evaluation over these designed models is used as technique. 
+The increasing usage of robotics onto safety-critical systems results in demanding considerations over ensuring the proper correctness of both software and hardware, as failures mainly regarding the security domain might lead to fatal consequences. Thus, the use of formal methods and verification techniques, especially in systems highly reliant on flexibility and reliability, is recommended to avoid security-critical faults. \cite{clarke2011model} Software frameworks designed for this purpose must provide methods to perform structural design over systems with rich structures, abstracting their behaviour as a conventional model. Additionally, these frameworks must support features to enable automate analysis, in which property evaluation over these designed models is used as technique. 
 
-The \textit{Alloy Framework} \cite{alloy-DJ}, fits within within this context, as it furnishes a declarative relation-based language, used for software modelling, complemented with extended tools supporting analysis over these models. \cite{alloy-6} The language combination of both relational and linear temporal logic (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the model $M$ is exhaustively checked over property verification. \cite{lwspecification}
+The \textit{Alloy Framework} \cite{alloy-DJ}, fits within this context, as it furnishes a declarative relation-based language, used for software modelling, complemented with extended tools supporting analysis over these models. \cite{alloy-6} The language combination of both relational and linear temporal logic (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the model $M$ is exhaustively checked over property verification. \cite{lwspecification}
 
 The framework \textit{analyzer} takes the specified model's restrictions into account, performing bounded and unbounded model checking to find instances that satisfy those implied restrictions. It can be also be useful for checking model properties, where the analyzer will try to return a counterexample instance. Instances are displayed by the framework Visualizer, alongside with the modelling process steps, regarding a trace representation. Instances appearance can be customized, using the \textit{theme}'s extension. \cite{alloy-6}
 
-This chapter will go through these principles in further depth, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain, supported by a previously configured example where ROS communication architecture is structurally modelled. Since system analysis rely on the reasonable implementation of Model-Checking techniques, the follwing section within this subject intends to cover a clear contextualization on this matter. % since it is highly important on understanding how Alloy's verification process works.
+This chapter will go through these principles in further depth, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain, supported by a previously configured example where ROS communication architecture is structurally modelled. Since system analysis rely on the reasonable implementation of Model-Checking techniques, the following section within this subject intends to cover a clear contextualization on this matter. % since it is highly important on understanding how Alloy's verification process works.
 
 \section{Model Checking}
 
@@ -30,7 +30,7 @@ However, the system's inevitable state expansion consequently causes the complex
 
 \section{Structural Design}
 
-The \textit{Alloy framework} presents itself as a formal modelling language, conceived to properly address model-checking techniques over their specification language, where both structural design and temporal behaviour, naturally specified over properties, can easily be defined. Formerly, Alloy was inherently static \cite{lwspecification}, meaning that it only excel the structural design, where its language was based on first-order logic. The analysis process relied on a bounded model checking technique with no support for temporal behaviour. Notwithstanding, the latest realease of Alloy confers the ability to properly deal with expressive temporal properties, as well as trace evaluation over time, while employing the former structural approach. 
+The \textit{Alloy framework} presents itself as a formal modelling language, conceived to properly address model-checking techniques over their specification language, where both structural design and temporal behaviour, naturally specified over properties, can easily be defined. Formerly, Alloy was inherently static \cite{lwspecification}, meaning that it only excel the structural design, where its language was based on first-order logic. The analysis process relied on a bounded model checking technique with no support for temporal behaviour. Notwithstanding, the latest release of Alloy confers the ability to properly deal with expressive temporal properties, as well as trace evaluation over time, while employing the former structural approach. 
 
 As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consequently allows large specification development. \cite{lwspecification} The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required for understanding how system modelling is covered. 
 
@@ -99,11 +99,11 @@ The Alloy structural definition relies on a relation way of connecting system's 
 
 Signatures can either be perceived as a top-level signature, or as other signature's subset. Signature hierarchy is conceivable through disjoint extensions ($extends$), or by set inclusion ($in$). The $abstract$ keyword declares a signature that contains no atoms beyond those within its extensions. 
 
-To address default configuration over the universe's multiplicity, both signatures and fields can be specified under a multiplicity constraint. The former constrains the number of signature atoms, where it is commonly used to express singleton sets, over the constraint keyword $one\ sig$. Fields, however, makes great use of multiplicities, offering behaviour expressness over relations between atoms. Additionally to these model constraints, explicitly specified over the course of the modelling process, system assumptions can be defined over axioms, expressed as $facts$, where multiple constraints can be incorporated. \cite{gheyi2007formally}
+To address default configuration over the universe's multiplicity, both signatures and fields can be specified under a multiplicity constraint. The former constrains the number of signature atoms, where it is commonly used to express singleton sets, over the constraint keyword $one\ sig$. Fields, however, makes great use of multiplicities by restricting behaviour over relations between atoms. In addition to these model constraints, explicitly specified over the course of the modelling process, system assumptions can be defined over axioms, expressed as $facts$, where multiple constraints can be incorporated. \cite{gheyi2007formally}
 
-Moreover, the lattest Alloy version enables evaluation changing throughout the trace evolution, consequently allowing the consideration of both signatures and fields as time mutable declarations, through the usage of the keyword $var$.
+Moreover, the latest Alloy version enables evaluation changing throughout the trace evolution, consequently allowing the consideration of both signatures and fields as time mutable declarations, through the usage of the keyword $var$.
 
-Throughout the sections that follow, it will be presented an illustrive example over which graph theory rests, this being the study of \textit{Eulerian Circuits}. This example will be used to duly contextualize both modelling and verification process in Alloy. \textit{Eulerian Circuits} must meet several behaviour constraints over the classic graph definition, that must be addressed over model constraints. However, the structural modelling must be provided beforehand.
+Throughout the sections that follow, it will be presented an illustrative example over which graph theory rests, this being the study of \textit{Eulerian Circuits}. This example will be used to duly contextualize both modelling and verification process in Alloy. \textit{Eulerian Circuits} must meet several behaviour constraints over the classic graph definition, that must be addressed over model constraints. However, the structural modelling must be provided beforehand.
 
 \subsubsection{Model Structure}
 
@@ -146,7 +146,7 @@ sig Node {
 
 As stated, the former poses a model incoherence within the \textit{Node} signature declaration, as \textit{adj} field is formerly labelled as mutable, that is later refuted by specifying $always \ adj'\ =\ adj$. This latter introduces the Alloy language's ability to express temporal behaviour through these \textit{two} \textit{linear temporal logic} operators, $'$ and $always$ respectively. 
 
-The $always$ operator expresses an universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state. Alloy integrates LTL into the standard relational logic, therefore, supporting both linear temporal logic unary and binary modal operator.
+The $always$ operator expresses a universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state. Alloy integrates LTL into the standard relational logic, therefore, supporting both linear temporal logic unary and binary modal operator.
 
 \begin{figure}[H]
     \centering
@@ -182,7 +182,7 @@ fact eulerian_considerations {
 }
 \end{lstlisting}
 
-These expressions, above specified, makes use of some valued Alloy operators, consequently identified either as a set-theory operator or as a relational operator. Despite the extensive number of operators supplied by Alloy's language, every expression, through the usage of \textit{FOL} quantifiers and \textit{LTL} operators, is later translated to boolean-based expressions. 
+These expressions, above specified, make use of some valued Alloy operators, consequently identified either as a set-theory operator or as a relational operator. Despite the extensive number of operators supplied by Alloy's language, every expression, through the usage of \textit{FOL} quantifiers and \textit{LTL} operators, is later translated to boolean-based expressions. 
 
 \begin{figure}[H]
     \centering
@@ -310,7 +310,7 @@ This section aims to explain how Alloy conducts system analysis, with further ex
 
 Alloy specification process does not establish a clear process separation over the model design and model analysis. This implies that analysis over model checking also accounts the model itself as a combination of properties specification. 
 
-The specification language holds \textit{two} analyzing commands, $run$ and $check$ respectively, as shown above in \textit{Alloy's syntax}. A \textit{Linear Temporal Logic (LTL) formula} is enclosed between braces, to be checked over. Upon executing, both commands accounts the enclosed formula $\psi_{f}$, as well as the model declaration ${M}$. Likewise in $fact$ declaration, several logic constraints can be combined into the formula $\psi_{f}$. Due to Alloy's implicit abstraction, both commands addresses the relational model specification as truth holder, with the latter being consisted by declarations over $fact$ and $sig$. 
+The specification language holds \textit{two} analyzing commands, $run$ and $check$ respectively, as shown above in \textit{Alloy's syntax}. A \textit{Linear Temporal Logic (LTL) formula} is enclosed between braces, to be checked over. Upon executing, both commands accounts the enclosed formula $\psi_{f}$ and the model declaration ${M}$. Likewise in $fact$ declaration, several logic constraints can be combined into the formula $\psi_{f}$. Due to Alloy's implicit abstraction, both commands addresses the relational model specification as truth holder, with the latter being consisted by declarations over $fact$ and $sig$. 
 
 Briefly speaking, $run$ instruct the model-checker to present an example that satisfies the considered formula $\psi_{f}$ over the model definition. This means that the following formula ($M \wedge \psi_{f}$) is expected to hold. The consistency of the \textit{facts} and \textit{signatures} is consequently verified since the model declaration $M$ is also considered. 
 
@@ -325,7 +325,7 @@ As result of the first-order logic's undecidability problem, the consistency pro
     \label{fig:alloy-check-1}
 \end{figure}
 
-Being SAT-based \cite{lwspecification}, the Alloy Analyzer tries to search for a \textit{lasso trace} instance that satistfies the formula $M \models \psi_{f}$ over the \textit{check} command, it performs the latter refutation ($(M \wedge \neg \psi_{p})$ by applying \textit{De Morgan's laws}), yielding a counter-example if the latter is satisfied. This technique is called \textit{Proof by Refutation}: $M$ entails $\psi_{p}$, denoted by $M \models \psi_{f}$, \textit{if and only if} $(M \wedge \neg \psi_{p})$ is unsatisfiable, reducing validity to unsatisfiability.
+Being SAT-based \cite{lwspecification}, the Alloy Analyzer tries to search for a \textit{lasso trace} instance that satisfies the formula $M \models \psi_{f}$ over the \textit{check} command, it performs the latter refutation ($(M \wedge \neg \psi_{p})$ by applying \textit{De Morgan's laws}), yielding a counter-example if the latter is satisfied. This technique is called \textit{Proof by Refutation}: $M$ entails $\psi_{p}$, denoted by $M \models \psi_{f}$, \textit{if and only if} $(M \wedge \neg \psi_{p})$ is unsatisfiable, reducing validity to unsatisfiability.
 
 \begin{figure}[H]
     \centering
@@ -355,7 +355,7 @@ Alloy makes use of the relational logic (Figure \ref{fig:alloy-rel}) to ensure t
 
 Ensuring the correctness of a system's behaviour relies on verifying properties regarding the latter's \textit{Safety} and \textit{Liveness}. Its verification technique is motivated by distinct approaches. \cite{kindler1994safety} The former requires an invariance argument, where the latter requires a well-foundedness argument to prove its system satisfiability. \cite{alpern1987recognizing}
 
-A \textit{safety property} asserts that "nothing bad should happen" during the system execution, meaning that, every trace state is expected. Consequently, if a trace that jeoperdizes a safety property is found, it can be assumed that the latter has a "bad" property prefix. 
+A \textit{safety property} asserts that "nothing bad should happen" during the system execution, meaning that, every trace state is expected. Consequently, if a trace that jeopardizes a safety property is found, it can be assumed that the latter has a "bad" property prefix. 
 
 \begin{lstlisting}[title={\textit{Safety Property}: The relation visited can only evolve through time.}, otherkeywords = {always, assert, module, set, fact, iden, no, in, \=, \*, \+, \~, \-\>, \&, '}, floatplacement=H]
 assert safety_visited {
@@ -413,7 +413,9 @@ assert liveness_euler {
 
 \subsection{Alloy Analyzer}
 
-Normally, the specification process upon abstracting the system as a conventional model is carried out interactively, since considerations about model validation must be preceded by the model specification. The already mentioned analysis techniques, $run$ and $check$ analysis commands respectively, instruct the Analyzer to check and provide analysis over their implicit formula nature. Moreover, the Analyzer is capable of providing model instances concerning the formula evaluation, depicted graphically as graph-like structures, through the usage of the Alloy \textit{Visualizer}, allowing instance interaction over multiple configuration buttons. Additionally, concerning the user comprehension, the graphical depiction of these instances can be customized using \textit{Themes}, through the \mybox{Theme} toolbar button.
+Normally, the specification process upon abstracting the system as a conventional model is carried out interactively, since considerations about model validation must be preceded by the model specification. The already mentioned analysis techniques, $run$ and $check$ analysis commands respectively, instruct the Analyzer to check and provide analysis over their implicit formula nature. 
+
+Moreover, the Analyzer is capable of providing model instances concerning the formula evaluation, depicted graphically as graph-like structures, through the usage of the Alloy \textit{Visualizer}. The latter allows instance interaction over multiple configuration buttons. Additionally, concerning the user comprehension, the graphical depiction of these instances can be customized using \textit{Themes}, through the \mybox{Theme} toolbar button.
 
 Recall the $run$ example that failed to provide a model instance due to the $steps$ explicit limitation. To find an \textit{Eulerian} circuit instance for $n$ nodes, the minimum of $n+1$ steps are required.
 

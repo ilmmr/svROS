@@ -87,25 +87,25 @@ In order to abstract \textit{rcl} from the specifications complexity of these im
 
 \subsection{Computation Graph}
 
-From a logical perspective \cite{casini2019response}, ROS applications are composed of many software modules that operate as computation nodes, allowing its participation into the ROS global data space. The primarily use of publish-subscribe model approach as communication type, through \textit{message-passing} patterns, confers additional concept complexity to the application architecture, where the latter can be naturally represented as a \textit{computation graph}. 
+From a logical perspective \cite{casini2019response}, ROS applications are composed of many software modules that operate as computation nodes, allowing its participation into the ROS global data space. The primarily use of publish-subscribe model approach as communication type, through \textit{message-passing} patterns, confers additional concept complexity to the application architecture, where the latter can be naturally represented as a \textit{computation graph}. \cite{cousins2010welcome}
 
 The application's computation graph presents itself as a graphical network, where runtime named entities have their unique role when it comes to data distribution. The mainly used network entities are \textit{Node Instances}, \textit{Topics} and \textit{Interfaces}, which will be covered in this presented section.
 
 \subsubsection{Node Instances}
 
-The application development is done over package orchestrating, where each logically represents a useful software module. Packages might be compromised by numerous \textit{nodes}, that can be perceived as processes that will likely perform computation over the network. It is worth mentioning that, nodes can be connected within a single package or between multiple packages, as they are built over their corresponding packages.
+The application development is done over package orchestrating, where each logically represents a useful software module. Packages might be compromised by numerous \textit{nodes}, that can be perceived as processes that will likely perform computation over the network. It is worth mentioning that, nodes can be connected within a single package or between multiple packages, as they are built over their corresponding packages. \cite{cousins2010welcome, intro-ros}
 
-The network is comprised by many nodes, running simultaneously and exchanging data between them, where each node addresses its corresponding network module purpose. Fault tolerance features are guaranteed as nodes have their corresponding unique name, allowing communication in an unambiguous manner, which confers a suitable approach when developing a complex robotic system.
+The network is comprised by many nodes, running simultaneously and exchanging data between them, where each node addresses its corresponding network module purpose. \cite{ros2documentation} Fault tolerance features are guaranteed as nodes have their corresponding unique name, allowing communication in an unambiguous manner, which confers a suitable approach when developing a complex robotic system.
 
-The notable usage o callback functions provide great functionality when it comes to manage the node's behaviour in the communication process. Additionally, \textit{timers} can also be used, since they provide a useful way of managing these callbacks, by time-assigning.
+The notable usage of callback functions provide great functionality when it comes to manage the node's behaviour in the communication process. Additionally, \textit{timers} can also be used, since they provide a useful way of managing these callbacks, by time-assigning.
 
 \subsubsection{Communication}
 
-Message-passing is the primary means by which nodes communicate with one another. The \textit{message} definition is a well-typed data structure, which commonly characterizes every data structure concerning the information exchange between nodes. A message is defined by its data type, also known as its \textit{interface}, which can either be primitive (\textit{integer}, \textit{string}, \textit{boolean}, among others), or defined by a complex data structure, where multiple data types are assigned to their corresponding variables. 
+Message-passing is the primary means by which nodes communicate with one another. The \textit{message} definition is a well-typed data structure, which commonly characterizes every data structure concerning the information exchange between nodes. A message is defined by its data type, also known as its \textit{interface}, which can either be primitive (\textit{integer}, \textit{string}, \textit{boolean}, among others), or defined by a complex data structure, where multiple data types are assigned to their corresponding variables. \cite{ros2documentation, intro-ros}
 
-ROS computation graph provides \textit{3} different ways of establish node communication, those being \textit{Topics}, \textit{Actions} and \textit{Services}, where each one has its different corresponding interface, specified in different folders with unique namespaces. 
+ROS computation graph provides \textit{3} different ways of establish node communication, those being \textit{Topics}, \textit{Actions} and \textit{Services}, where each one has its different corresponding interface, specified in different folders with unique namespaces. \cite{ros2documentation}
 
-\textit{Topics} are perhaps the most common method, naturally perceived as middle-communication buses, over which messages are passed through. As semantic approach, communication through topics is handled by the publishing-subscribing pattern. A node publishes the message to any number of topics, that are then subscribed by nodes that want to get access to that message. Topics provide a multicast routing scheme, where publish data is casted into the multiple nodes that are subscribed to the topic. 
+\textit{Topics} are perhaps the most common method, naturally perceived as middle-communication buses, over which messages are passed through. As semantic approach, communication through topics is handled by the publishing-subscribing pattern. A node publishes the message to any number of topics, that are then subscribed by nodes that want to get access to that message. Topics provide a multicast routing scheme, where publish data is casted into the multiple nodes that are subscribed to the topic. \cite{casini2019response}
 
 \begin{figure}[H]
     \centering
@@ -116,7 +116,7 @@ ROS computation graph provides \textit{3} different ways of establish node commu
 
 A specific \textit{topic} is created upon specifying its entity name over either a publisher or a subscriber callback instance. Whenever a node creates a publisher, intentionally instantiated to publish a message through a specified topic, \textit{roscore} is used to advertise the latter, enabling message passing to the corresponding topic subscribers. Message processing is done via the node's callback functions, which are activated upon message receipt, as it can also be utilized for publishing purposes. \cite{casini2019response}
 
-Even though \textit{topics} are the most conventional way of communication, due to its multicast scheme, subscribers can not be identified by the publishers, so logging and synchronization becomes rather difficult.
+Even though \textit{topics} are the most conventional way of communication, due to its multicast scheme, subscribers can not be identified by the publishers, so logging and synchronization becomes rather difficult. \cite{intro-ros}
 
 The use of \textit{services} enables a client node, that can also be seen as a topic subscriber, to request data from a server, that likewise a topic publisher, furnish data through a service. The data is only provided when the client node makes a request. Each service is always linked to just one server node, and does not maintain active connections. To address the service stalling that the former ROS issued due to the service's synchronization nature, ROS2 services are asynchronous, since it is possible to specify a callback function that is triggered when the service server responds back to the client.
 
@@ -124,7 +124,7 @@ Other notable way of exchanging data is by setting goals through \textit{Actions
 
 \subsubsection{Launch Files}
 
-A conventional way of deploying a ROS application is through the use of \textit{launch files}, enabling the multi-configuration over entire robotic applications, where network involved nodes can be individually pre-configurated. Therefore, ROS makes use of the \textit{roslaunch} to automatically initialize the whole network, simultaneously launching each node. This provides a simpler way of monitoring the system nodes. In the Figure \ref{fig:ros-lf} is depicted a launch file example regarding an application composed by \textit{4} nodes.
+A conventional way of deploying a ROS application is through the use of \textit{launch files}, enabling the multi-configuration over entire robotic applications, where network involved nodes can be individually pre-configurated. Therefore, ROS makes use of the \textit{roslaunch} to automatically initialize the whole network, simultaneously launching each node. \cite{intro-ros} This provides a simpler way of monitoring the system nodes. In the Figure \ref{fig:ros-lf} is depicted a launch file example regarding an application composed by \textit{4} nodes.
 
 Additional node configuration, such as name remapping and parameter adjustments, can be specified under the \textit{args} tag, which offers great functionality to the launching process. 
 
@@ -132,11 +132,13 @@ Distinctive namespaces allow the system to start the nodes, without any name nor
 
 \subsubsection{Parameters}   
 
-Another relevant concept behind ROS is the existence of nodes \textit{parameters}, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a global \textit{parameter server}, managed by its corresponding ROS Master. However, in ROS2 each node declares and manages its own parameters, by using the predefined commands \textit{get} and \textit{set}. Additionally, using a parameter function callback, the node's parameters can easily be edited.
+Another relevant concept behind ROS is the existence of nodes \textit{parameters}, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a global \textit{parameter server}, managed by its corresponding ROS Master. \cite{intro-ros} However, in ROS2 each node declares and manages its own parameters, by using the predefined commands \textit{get} and \textit{set}. Additionally, using a parameter function callback, the node's parameters can easily be edited. \cite{ros2documentation}
         
 \subsubsection{Node Composition}  
 
-Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single process, structurally abstracting some network parts, while improving the network's performance. However, there is a slight difference about how ROS and ROS2 approaches the node composition. In the former version of ROS, node composition was done over the combination of \textit{nodelets}, intentionally designed to ease the cost of overusing TCP for message-passing between nodes. Supported by the former idea of \textit{nodelets}, ROS2 introduces the \textit{components} as software code compiled into shared libraries, that can be loaded into a \textit{component container} process at runtime in the network, ensuring node composition. Node composition could also be applied for security matters. Suppose a scenario where multiple nodes respect the same security policies. By combining them into a single process, the mapping into this set of rules would be direct, easing the usage of security enclaves.
+Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single process, structurally abstracting some network parts, while improving the network's performance. \cite{ros2documentation} However, there is a slight difference about how ROS and ROS2 approaches node composition. 
+
+In the former version of ROS, node composition was done over the combination of \textit{nodelets}, intentionally designed to ease the cost of overusing TCP for message-passing between nodes. \cite{ros-nodelets} Supported by the former idea of \textit{nodelets}, ROS2 introduces the \textit{components} as software code compiled into shared libraries, that can be loaded into a \textit{component container} process at runtime in the network, ensuring node composition. Node composition could also be applied for security matters. Suppose a scenario where multiple nodes respect the same security policies. By combining them into a single process, the mapping into this set of rules would be direct, easing the usage of security enclaves. \cite{ros2documentation}
            
 
 \section{Security}
@@ -155,7 +157,7 @@ As aforementioned, ROS middleware faces known vulnerabilities due to its archite
 
 There was also worries regarding how ROS handled node communication. Network security may be jeopardized, as a result of the publish-subscribe pattern transparency, where node-to-node communications are settled in plain text, making data content vulnerable to unauthorized usage. \cite{kim2018security}
 
-As result of the \textit{Data Distribution Service} (DDS) implementation as a flexible middleware interface in the ROS2 architecture, issues regarding security is no longer mainly ROS-dependent. Thus, when it comes to addressing security over communication, and subsequently data protection enhancment, ROS2 is heavily reliant on how the DDS standard is able to manage security. \cite{kim2018security, 8794451}
+As result of the \textit{Data Distribution Service} (DDS) implementation as a flexible middleware interface in the ROS2 architecture, issues regarding security is no longer mainly ROS-dependent. Thus, when it comes to addressing security over communication, and subsequently data protection enhancement, ROS2 is heavily reliant on how the DDS standard is able to manage security. \cite{kim2018security, 8794451}
 
 The \textit{Object Management Group} (OMG) \cite{3}, the already mentioned organization who is responsible for maintaining the DDS standard, accounts security integration by supplying an in-depth security specification, consequently adding features to the already developed DDS standard. The \textit{DDS-Security} is a specification that serves as a security extension to the DDS protocol, defined by a set of plugins (Authentication, Access Control, Cryptographic, Logging, Data Tagging), combined in a \textit{Service Plugin Interface (SPI)} architecture. \cite{8442103, ros-dds-integration}
 
@@ -168,15 +170,44 @@ The \textit{Object Management Group} (OMG) \cite{3}, the already mentioned organ
 
 This specification enables its integration by furnishing a \textit{Security Model} supplied to the DDS standard, whereas the \textit{Service Plugin Interface} architecture is responsible for granting plugin enhancment for compliant DDS implementations. Moreover, depending on the security requirements needed for a particular application, these plugins might be adjusted by the latter's runtime DDS implementation. \cite{dds-s}
 
-Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over ROS's application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset, extending ROS2's functionality to make use of the DDS-Security functionality. 
+Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over ROS's application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset \cite{sros2-gh}, extending ROS2's functionality to make use of the DDS-Security functionality. 
 
-The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture. \cite{kim2018security} The SROS2 configuration is done over applying a set of security files to each ROS2 participant, considering the assignment approach (strict or permissive) that is being used.
+The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture. \cite{kim2018security} The SROS2 configuration is done over applying a set of security files to each ROS2 participant, considering the assignment approach (strict or permissive) that is being used. The variety of capabilities in SROS2 toolset attempts to aid with security configuration across environments, however, the developer must be aware of improper configuration, that can still lead to security problems. \cite{ros-dds-integration}
 
-Since this security integrity on ROS2 is consider a recent technology implementation \cite{ros-dds-integration}, the developer must be aware of improper configuration, that can still lead to security problems. However, the variety of capabilities in SROS2 toolset attempts to aid with security configuration across environments. 
+\subsection{Authentication and Encryption}
 
-\subsection{SROS2 Configuration}
+The DDS-Security specification ensures encryption and authentication using \textit{OpenSSL}, while accounting security functions based on encryption standards. \cite{takemoto2019performance} Accordingly, it implements a handshake-based standard, concerning the \textit{OpenSSL} protocols, \textit{Secure Sockets Layer} (SSL) and \textit{Transport Layer Security} (TLS), which are used respectively used to ensure encryption over the network communication. \cite{white2016sros, kim2018security}
 
-To properly introduce the set of tools that SROS2 provides, it follows an application example that will now account the security features, as to provide authentication and encryption over the network communication, as well as access control policies over the application nodes. 
+The handshake is used to achieve authentication within the DDS domain, where each participant must be authenticated prior to entering the data space. \cite{white2019network} Therefore, participants are presented to the secured environment regarding the Public Key Infrastructure (PKI). This latter is in charge of issuing a public certificate, accountable and signed by a trusted certificate authority (CA). \cite{white2019network, white2016sros} 
+
+Following the public key assignment, the \textit{Diffie-Hellman} key exchange protocol properly accounts the mentioned handshake, allowing both participants to exchange data over a shared secret key, while accounting their own public certificate information. \cite{kim2018security} The \textit{rcl} is capable of handling this DDS security requirement, levering ROS-based applications to support SROS2, accounting nodes as authenticated participants. \cite{white2016sros}
+
+As authentication is duly achieved throughout this handshake process, the DDS-Security specification takes advantage of the \textit{AES-GCM} encryption standard concerning data encryption over the implicit channel. \cite{kim2018security, takemoto2019performance} The \textit{key cryptosystem} algorithm \cite{takemoto2019performance} presented in the \textit{Advanced Encryption Standard (AES)} considers the usage of functions towards achieving data encryption over the established communication. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{images/ros_aes.png}
+    \caption{\textit{Advanced Encryption Standard} algorithm. Extracted from \cite{takemoto2019performance}.}
+    \label{fig:ros_aes}
+\end{figure}
+
+Here, the algorithm combines the shared key established with the message passed over the secure channel. Moreover, it is desirable to implement the \textit{Galois MAC (AES-GMAC)} encryption algorithm, that is based on block cipher operations, consequently adding encryption functionality to the AES algorithm. \cite{takemoto2019performance, kim2018security}
+
+It may also provide additional reader-specific message authentication codes using Galois MAC (AES-GMAC) [23]. The AES-GCM transformation produces both the ciphertext and a Message Authentication Code (MAC) using the same secret key. After a shared secret is established and both nonces were exchanged between two participants using the handshake protocol, participants can build master secrets using the HMAC-Based Key Derivation Function (HKDF) recommended by IETF RFC 5869 [24].
+
+\subsection{Security Enclaves}
+
+The authentication process within the ROS network relies on the notion of a network enclave. Conceptually, an enclave is a secure region in the application address space that maintains confidentiality and integrity, while computations are being carried out on data.
+
+As aforementioned, ROS2 relies on how handles DDS security over their \textit{Domain Participants}. DDS imposes the authentication of each participant prior to joining its \textit{Global Data Space}. \cite{white2019network} Accordingly, ROS2 ensures authentication over nodes by conceiving the idea of security enclaves, where security artifacts are stored to properly achieve security over the network data space. \cite{ros-security-enclaves}
+
+Previously, a node was perceived as a separated DDS participant. However, by considering node composition as a reliable way of matching multiple nodes simultaneously to the same security domain, this node perception as participants can not be taken into account, due to causing non-negligible overhead, as memory space becomes rather difficult to handle. \cite{ros-security-enclaves, ros-access-control}
+
+Concerning the enclave authentication procedure, its security artifacts must be addressable by a DDS participant, where the latter matches to a node sharing context. \cite{ros-security-enclaves}
+
+\subsection{Access Control}
+
+To properly introduce how SROS2 handles the access control over applications, it is first presented an application example that will now account the security features, followed by a brief explanation about how to guarantee control over the communication, accounting privileges. 
 
 \subsubsection{The \textit{TurtleSim} Application}
 
@@ -195,61 +226,17 @@ The \textit{multiplexer} node handles commands related to turtle's movement, act
 
 However, \textit{multiplexer} is not exclusive to the \textit{turtlesim} node, as it is still possible to directly publish commands to the topic that handles the turtle's movement, since security policies are yet to be implemented.
 
-
-\subsubsection{Configuration}
-
-In technically terms, a \textit{keystore} must be initiated beforehand, to provide a secured environment over the network. SROS2 yields a command that permits its creation. A keystore is a created directory where files regarding security are stored. By generating a keystore directory, it may then be sourced and utilized by \textit{rcl} features towards applying security to the application. The \textit{security} additional keyword-flag enables features regarding security matters, concerning the DDS-security artifacts.
-            
-\begin{lstlisting}[title={\textit{Keystore} creation using the proper SROS2 command.}]
-ros2 security create_keystore demo
-\end{lstlisting}
-
-Upon the creation of the \textit{demo} keystore, three respective subdirectories are created, where each has their own role when it comes to security enhancement over the network.
-
-\textbullet\  The \textit{enclaves} directory contains the security tools related to each enclave created. An \textit{enclave} is a group of ROS nodes, controlled by the same set of security rules, defined in its corresponding enclave directory.
-
-\textbullet\  The \textit{public} directory contains material that is permissible as public. A Certificate Authority certificate is stored in this directory, related to the CA \textit{public key}. It is used to validate the identity and permissions of each ROS network node by the CA. 
-
-\textbullet\  The \textit{private} directory contains material that is considered private. A Certificate Authority certificate is stored in this directory, related to the CA \textit{private key}. It is used to modify the network policies, such as access permissions, and to add new participants. Similar to the public directory, the CA key corresponding to its identity and permissions can be stored in their corresponding individual directories.
-
-The following exports need to be sourced to force SROS2 security features, as they concern relevant environment variables. The first sourced variable points to the directory root of the keystore, allowing ROS2 to identify where the security artifacts are kept. The second serves as the security enabler. The last variable sets which security strategy will be used when dealing with security files.
-            
-\begin{lstlisting}[title={SROS2 environment variables.}]
-export ROS_SECURITY_KEYSTORE=/demo
-export ROS_SECURITY_ENABLE=true
-export ROS_SECURITY_STRATEGY=Enforce
-\end{lstlisting}
-            
-\subsubsection{Understanding Security Enclaves}
-
-Once the keystore has been created, the respective enclaves can be implemented. As mentioned, an enclave is a group of nodes that follow the same security policy. Enclaves usage are specified upon execution time, implying that their security artifacts are actually used by running processes.
-
-Typically, a node is perceived as an abstraction of a DDS \textit{participant}. However, by considering node composition, as a reliable way for matching multiple nodes simultaneously to the same enclave, this node perception as participants can not be taken into account, due to causing non-negligible overhead. There is also not convenient to compose nodes as individual participants, as far as operating system's security is concerned, where permission distribution and memory becomes rather difficult to handle.
-
-To address this, each participant must be matched to a node shared context, instead of being directly related to a specific node. Thereby, the initial given definition of an enclave is not totally correct, since a participant can either be perceived as single node or as multiple node shared context. So, each enclave security artifacts are used by its respective DDS participant. 
-
-As long as security is enabled, the whole network must be properly authenticated. Thus, every node within the network must be authenticated, using an enclave as their identifier. Node composition can not be considered in this network, as it is not intended to share topic privileges. Note that, if an enclave was shared by multiple nodes, each node policy would be considered as common policy within the enclave.
-
-\begin{lstlisting}[title={\textit{TurtleSim} enclave creation.}]
-ros2 security create_key demo /turtlesim
-ros2 security create_key demo /multiplexer
-ros2 security create_key demo /keyboard
-ros2 security create_key demo /random
-\end{lstlisting}
-
-The keystore creation, alongside with their respective enclaves, only ensures security over the network communication, in which node authentication and data encryption are concerned. With the proper use of port scanning tools, data encryption can be easily verified. Authentication is ensured upon the enclave's creation. However, to properly apply security over the \textit{TurtleSim} application, access control policies must be appropriately covered.
-
-\subsubsection{Access Control}
+\subsubsection{Access Control Configuration}
 
 To accurately achieve topic exclusivity, in which the turtle's movement is uniquely concerned by the \textit{multiplexer} node, \textit{access control} policies must be applied. The remaining nodes should be considered untrustworthy, denying any potential undesired turtle's movement.
             
 In order to provide access control, each permission file needs to be modified, accounting the network policies restrictions. This is ensured by adding security permissions to these files, with the mandatory signature of the Certificate Authority. A suitable way of editing the permission file, \textit{permissions.xml} (file that dictates how the enclave manages the permissions within the network) is by creating a policy file, that explicitly specifies the set of permissions of each enclave.
 
-Following the \textit{ConArmor} policy language \cite{white2018procedurally}, the \textit{SROS2 policy file} confers a restrict \textit{XML schema}, where security policies bind profiles to access permissions for network objects, granting privileges back to a certain profile. \textit{Profiles} are implemented under the \textit{enclave} declaration, to duly support the node composition into a single process, enabling the possibility of combining multiple profiles, respectively addressing its corresponding node. Typically, each \textit{enclave} declaration is linked to a corresponding ROS node, naturally perceived as a DDS participant. 
+Following the \textit{ConArmor} policy language \cite{white2018procedurally}, the \textit{SROS2 policy file} confers a restrict \textit{XML schema}, where security policies bind profiles to access permissions for network objects, granting privileges back to a certain profile. \textit{Profiles} are implemented under the \textit{enclave} declaration, to duly support the node composition into a single process, enabling the possibility of combining multiple profiles, respectively addressing its corresponding node. Typically, each \textit{enclave} declaration is linked to a corresponding ROS node, naturally perceived as a DDS participant.
 
-\textit{Objects} are classified over a subsystem type, structurally characterized by permissions tags. Then \textit{object privileges} are controlled over access values, either \textit{allow} or \textit{deny}, attributed to their corresponding permissions tags. For instance, consider the \textit{topics} domain, where a profile can either publish or subscribe to that topic. To properly address the allowance of a profile privilege over a topic, the permission tag (either subscribe or publish) must be followed with the \textit{allow} tag.
+\textit{Objects} are classified over a subsystem type, structurally characterized by permissions tags. Then \textit{object privileges} are controlled over access values, either \textit{allow} or \textit{deny}, attributed to their corresponding permissions tags. For instance, consider the \textit{topics} domain, where a profile can either publish or subscribe to that topic. To properly address the allowance of a profile privilege over a topic, the permission tag (either subscribe or publish) must be followed with the \textit{allow} tag. \cite{ros-access-control}
 
-The policy design approach works under the \textit{Mandatory Access Control} (MAC), that denies any privilege by default. The only way of allowing access to any object, is by explicitly specifying the subject's privilege access. 
+The policy design approach works under the \textit{Mandatory Access Control} (MAC), that denies any privilege by default. The only way of allowing access to any object, is by explicitly specifying the subject's privilege access. \cite{ros-access-control, white2018procedurally}
 
 \begin{lstlisting}[title={Setting permissions into each enclave.}]
 ros2 security create_permission demo /turtlesim policies.xml
@@ -269,8 +256,8 @@ As it follows, security is enabled within this network as well as policy control
     <node name="multiplexer" pkg="multiplexer" exec="multiplexer" args="--ros-args --enclave /multiplexer" />
 </launch>
 \end{lstlisting}
-\label{fig:ros-lf}
 \caption{\textit{TurtleSim} launch file.}
+\label{fig:ros-lf}
 \end{figure}
 
 The network is now sucessfully running as a secured environment, where nodes within this network can not be perceived from outside, neither their topic list. To prove that access control is properly employed, the user may want to try to enhance the turtle movement directly from the random controller, by forcing the remapping of the \textit{low\_topic} to the \textit{main\_topic}. Thus, by attempting to remap the \textit{low\_topic} topic prevents the node from launching, since the random node is only allowed to publish through the \textit{low\_topic}. 
