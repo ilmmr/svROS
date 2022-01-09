@@ -218,7 +218,7 @@ The communication establishment over different participants must be preceded by 
 
 \subsubsection{Access Control}
 
-As aforementioned, the defined DDS specification handles policy control over the DDS domain through the Access Control plugin, where authenticated parties respective operations are imposed by policy restrictions \cite{dds-s, white2019network}. DDS-related capabilities, that concern domains within the \textit{Global Data Space}, are either assigned or restricted to those authenticated participants \cite{ros-dds-integration}. 
+As aforementioned, the defined DDS specification handles policy control over the DDS domain through the Access Control plugin, where authenticated parties respective operations are imposed by policy restrictions \cite{dds-s, white2019network}. Domains within the \textit{Global Data Space} are controlled over a set of DDS-related capabilities, that are either assigned or restricted to the authenticated participants \cite{ros-dds-integration}. 
 
 Authenticated participants must be granted access to certain domains, where their roles on data transportation must be accordingly accounted by access permissions. If a participant is perceived as a domain data publisher, the domain restrictions must provide publishing privileges to its data topic \cite{white2019network}. 
 
@@ -230,7 +230,7 @@ Furthermore, the Access Control plugin employs \textit{2} configuration document
 
 \textbullet\ Participant Permissions: \textit{XML} document containing the permissions assigned to a given domain participant.
 
-Notably, these configuration files are signed by a trusting Certificate Authority (CA) \cite{ros-dds-integration}. Its corresponding permissions certificate confers protection against elevation of privilege attacks. Therefore, if the policy integrity is jeopardized, the handshake between authenticated parties fails to commence \cite{white2016sros}.
+Notably, these configuration files are signed by a trusting Certificate Authority (CA) \cite{ros-dds-integration}. The CA's Permission Certificate confers protection against elevation of privilege attacks. Therefore, if the policy integrity is jeopardized, the handshake establishment between authenticated parties fails to commence \cite{white2016sros}.
 
 \subsubsection{Communication and Encryption}
 
@@ -291,23 +291,48 @@ Following the \textit{ConArmor} policy language \cite{white2018procedurally}, th
 Depicted in the Figure \ref{fig:ros-access-file}, it is presented a policy file where access control privileges are distributed across enclaves, and their inherited profiles. Recall the \textit{TurtleSim} example, the following \textit{XML} policy file addresses the access to topics for each respective enclave. 
 
 \begin{figure}[H]
-\begin{lstlisting}[otherkeywords = {xml, version, encoding, policy, version, enclave, enclaves, profile, profiles, topic, topics, service, services, action, actions, xmlns:xi, path, ns, node, publish, subscribe, reply, request, call, execute}]
+\begin{lstlisting}[otherkeywords = {xml, version, encoding, policy, version, enclave, enclaves, profile, profiles, topic, topics, xmlns:xi, path, ns, node, publish, subscribe, reply, request, call, execute, xi:include, href, xpointer}]
 <?xml version="1.0" encoding="UTF-8"?>
 <policy version="0.2.0"
   xmlns:xi="http://www.w3.org/2001/XInclude">
   <enclaves>
-    <enclave path="/">
+    <enclave path="/multiplexer">
       <profiles>
-        <profile ns="/" node="default">
-          <topics publish="ALLOW" subscribe="ALLOW">
-            <topic>/*</topic>
+        <profile ns="/" node="multiplexer">
+          <topics publish="ALLOW" >
+            <topic>move_turtle</topic>
           </topics>
-          <services reply="ALLOW" request="ALLOW">
-            <service>/*</service>
-          </services>
-          <actions call="ALLOW" execute="ALLOW">
-            <action>/*</action>
-          </actions>
+          <topics subscribe="ALLOW" >
+            <topic>high_priority</topic>
+            <topic>low_priority</topic>
+          </topics>
+        </profile>
+      </profiles>
+    </enclave>
+    <enclave path="/turtlesim">
+      <profiles>
+        <profile ns="/" node="turtlesim">
+          <topics subscribe="ALLOW" >
+            <topic>move_turtle</topic>
+          </topics>
+        </profile>
+      </profiles>
+    </enclave>
+    <enclave path="/keyboard">
+      <profiles>
+        <profile ns="/" node="keyboard">
+          <topics publish="ALLOW" >
+            <topic>high_priority</topic>
+          </topics>
+        </profile>
+      </profiles>
+    </enclave>
+    <enclave path="/random">
+      <profiles>
+        <profile ns="/" node="random">
+          <topics publish="ALLOW" >
+            <topic>low_priority</topic>
+          </topics>
         </profile>
       </profiles>
     </enclave>

@@ -4,9 +4,9 @@ As aforementioned, this dissertation aims to tackle the security vulnerabilities
 
 The increasing usage of robotics onto safety-critical systems results in demanding considerations over ensuring the proper correctness of both software and hardware, as failures mainly regarding the security domain might lead to fatal consequences. Thus, the use of formal methods and verification techniques, especially in systems highly reliant on flexibility and reliability, is recommended to avoid security-critical faults \cite{clarke2011model}. Software frameworks designed for this purpose must provide methods to perform structural design over systems with rich structures, abstracting their behaviour as a conventional model. Additionally, these frameworks must support features to enable automate analysis, in which property evaluation over these designed models is used as technique. 
 
-The \textit{Alloy Framework} \cite{alloy-DJ}, fits within this context, as it furnishes a declarative relation-based language, used for software modelling, complemented with extended tools supporting analysis over these models \cite{alloy-6}. The language combination of both relational and linear temporal logic (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the model $M$ is exhaustively checked over property verification \cite{lwspecification}.
+The \textit{Alloy Framework} \cite{alloy-DJ}, fits within this context, as it furnishes a declarative relation-based language, used for software modelling, complemented with extended tools supporting analysis over these models \cite{alloy-6}. The language combination of both \textit{Relational} and \textit{Linear Temporal Logic} (LTL) enables the ability to model both systems with rich structures and complex behaviour. To address the correctness over the specified model, Alloy performs model-checking techniques over these logic languages, where the model $M$ is exhaustively checked over property verification \cite{lwspecification}.
 
-The framework \textit{analyzer} takes the specified model's restrictions into account, performing bounded and unbounded model checking to find instances that satisfy those implied restrictions. It can be also be useful for checking model properties, where the analyzer will try to return a counterexample instance. Instances are displayed by the framework Visualizer, alongside with the modelling process steps, regarding a trace representation. Instances appearance can be customized, using the \textit{theme}'s extension \cite{alloy-6}.
+The framework \textit{analyzer} takes the specified model's restrictions into account, performing \textit{Bounded} and \textit{Unbounded} Model Checking to find instances that satisfy those implied restrictions. It can be also be useful for checking model properties, where the analyzer will try to return a counterexample instance. Instances are displayed by the framework Visualizer, alongside with the modelling process steps, regarding a trace representation. Instances appearance can be customized, using the \textit{theme}'s extension \cite{alloy-6}.
 
 This chapter will go through these principles in further depth, to give the reader a proper review on how Alloy is structured, as its importance as a model checker to the computation domain, supported by a previously configured example where ROS communication architecture is structurally modelled. Since system analysis rely on the reasonable implementation of Model-Checking techniques, the following section within this subject intends to cover a clear contextualization on this matter. % since it is highly important on understanding how Alloy's verification process works.
 
@@ -21,12 +21,35 @@ Performing software testing has been regarded as the established assessment proc
 \textit{Model Checking} presents itself as a novel technique with the purpose of verifying temporal properties over the system finite-state, with the latter being duly represented as a conclusive model. Additionally, it enables \textit{model-based testing} by automatically interpreting counterexamples as test cases, resulting in significantly greater degrees of coverage than conventional testing \cite{fraser2009testing, beyer2017software}. This technique is becoming highly used due to its importance as an early phase approach upon developing systems \cite{lwspecification}, as it confers the most valued functionality over model-checking frameworks, in which concrete models, regarding the software architecture, is exhaustively checked over behavioural properties. 
 
 It provides highly automatic verification procedures, where other techniques, such as theorem provers fails to address, due to its deductive reasoning nature. The representation of not satisfied specifications over counterexamples, confers great functionality to this technique, often required for debugging matters.
-However, the system's inevitable state expansion consequently causes the complexity increase on verification. This is referred to as the \textit{state explosion problem}, in which model-checking is unable to handle the size of the state space, failing as system verifying technique \cite{clarke2011model, clarke1997model}. 
+However, the system's inevitable state expansion consequently causes the complexity increase on verification. This is referred to as the \textit{state explosion problem}, in which model-checking is unable to handle the size of the state space \cite{clarke2011model, clarke1997model}. Yet, this is can be mitigated using bounded techniques.
 
-% Bounded e Unbounded techniques ? Alloy accounts both techniques ....
+Model Checking techniques accounts property verification of systems through the implicit use of temporal logic to express \textit{dynamic} behaviour through the course of the system evolution. Thus, the system must be abstractly represented as a transition system, perceived as concrete models, to perform property checking over the latter, while considering the formula defined in a temporal logic \cite{huth2004logic, vakili2012temporal}. 
 
-\subsection{Model Checking in Alloy}
+\vspace{0.5cm}
+\textbf{Transition System}
 
+A \textit{Transition System} is defined over a graph-based structure, that confers additional representation over the mathematical graph structure. The latter offers weak ability to provide a concrete system description over a discrete model. Commonly, transition system confers a labelling function that maps each state, naturally perceived as graph node, with so-called \textit{atomic propositions}. These propositions evaluate system variables in each state \cite{muller1999model, vakili2012temporal}.
+
+\textit{Kripke Structures} were intentionally conceived to address the model checking field of action, so they naturally fall under the umbrella of this vast domain \cite{muller1999model}.
+
+Conceptually, a \textit{Kripke Structure} defines a model $M$ with the following tuple structure $M = (S,I,R,p,L)$, where: $S$ is a finite set of states; $I$ represents a set of initial states, so naturally $I$ is a subset of $S$ ($I \subseteq S$); $r$ defines the \textit{transition relation} as it accounts the transitions between states; $L$ is an \textit{interpretation} that defines the labelling function; Accordingly, it assigns each state with a set of valid atomic propositions $p_{s}$ enjoyed by it, draw from the domain of $p$ ($p_{s} \subseteq p$). 
+
+\vspace{0.5cm}
+
+Model Checking is a \textit{model-based} technique in which property verification concerns are centered on the concept of \textit{satisfaction}. Therefore, the corresponding model-checker must be capable of checking if the model $M$ satisfies a desirable property, expressed as temporal logic formula $\psi$. As this computing process relies on a state representation, the formula verification also accounts a model state $s$. $M,s \models \psi$ \cite{huth2004logic, muller1999model}.
+
+Additionally, the semantics of the temporal logic relies on how the latter addresses time as an evolving approach towards state verification. Notably, temporal logics are either qualified as \textit{linear-time} or as \textit{branching-time} \cite{huth2004logic}. In the former approach, time is perceived as linear path and the corresponding transition system is abstracted by a set of infinite traces. The latter denotes time as a branching model, in which the transition system is abstracted by a set of infinite computation trees, consequently enabling non-deterministic considerations about the system evolution. The choice on the logic semantics relies on the system properties to be analyzed \cite{muller1999model}, as they confer different model-checking algorithms \cite{huth2004logic}. 
+
+
+% \subsection{Model Checking in Alloy}
+% 
+% Following the temporal logic semantics, Alloy specification language embeds the linear temporal logic into the first-order logic, thus, it makes use of both temporal and relational quantifiers to properly express behavioural verification over time \cite{lwspecification}. \textit{First-Order Temporal Logics} present additional techniques for reasoning about behaviour, while accounting the basis of the first-order logic, that usually confers the capability to express the well-formedness of the system structure \cite{lwspecification, konur2010survey}.
+% 
+% The \textit{FOLTL} syntax confers bounded and unbounded semantics, in which 
+% 
+% The Alloy Framework performs model checking through \textit{2} distinct techniques, those being the \textit{Bounded} and \textit{Unbounded}, already introduced earlier in this section, to verify that temporal properties hold considering the model specification \cite{lwspecification}. 
+% 
+% Usually, the \textit{Bounded} model checking is considered as first approach to validate the model specification. In addition, performing \textit{Unbounded} model checking proves to be a novel approach to check the model consistency, as it provides high degrees of reliability due to its verification coverage. 
 
 \section{Structural Design}
 
@@ -34,66 +57,11 @@ The \textit{Alloy framework} presents itself as a formal modelling language, con
 
 As intentionally design to formally abstract both system's configuration and behaviour, Alloy successfully incorporates a set of features, within a well-documented and wide-ranged syntax that consequently allows large specification development \cite{lwspecification}. The following subsection \ref{c:alloy-sm} addresses the Alloy concepts required for understanding how system modelling is covered. 
 
-% Before accurately accounting both structural design as modelling technique and structural analysis, it follows the Alloy formal syntax.
-% 
-% \newpage 
-% 
-% \begin{lstlisting}[title={Alloy's syntax.}]
-% alloyModule ::= [moduleDecl] import* paragraph*
-% moduleDecl ::= module qualName [[name,+]]
-% import ::= open qualName [[qualName,+]] [as name]
-% paragraph ::= sigDecl | factDecl | predDecl | funDecl
-%     | assertDecl | cmdDecl
-% sigDecl ::= [var] [abstract] [mult] sig name,+ [sigExt] { fieldDecl,* } [block]
-% sigExt ::= extends qualName | in qualName [+ qualName]*
-% mult ::= lone | some | one
-% fieldDecl ::= [var] decl
-% decl ::= [disj] name,+ : [disj] expr
-% factDecl ::= fact [name] block
-% predDecl ::= pred [qualName .] name [paraDecls] block
-% funDecl ::= fun [qualName .] name [paraDecls] : expr { expr }
-% paraDecls ::= ( decl,* ) | [ decl,* ]
-% assertDecl ::= assert [name] block
-% cmdDecl ::= [name :] ( run | check ) ( qualName | block ) [scope]
-% scope ::= for number [but typescope,+] | for typescope,+
-% typescope ::= [exactly] number qualName
-% expr ::= const | qualName | @name | this
-%     | unOp expr | expr binOp expr | expr arrowOp expr
-%     | expr [ expr,* ]
-%     | expr [! | not] compareOp expr
-%     | expr ( => | implies ) expr else expr
-%     | let letDecl,+ blockOrBar
-%     | quant decl,+ blockOrBar
-%     | { decl,+ blockOrBar }
-%     | expr '
-%     | ( expr ) | block
-% const ::= [-] number | none | univ | iden
-% unOp ::= ! | not | no | mult | set | # | ~ | * | ^ 
-%     | always | eventually | after | before | historically | once
-% binOp ::= || | or | && | and | <=> | iff | => | implies | 
-%     & | + | - | ++ | <: | :> | . | until | releases | since | triggered | ;
-% arrowOp ::= [mult | set] -> [mult | set]
-% compareOp ::= in | = | < | > | =< | =>
-% letDecl ::= name = expr
-% block ::= { expr* }
-% blockOrBar ::= block | bar expr
-% bar ::= |
-% quant ::= all | no | sum | mult
-% qualName ::= [this/] ( name / )* name
-% \end{lstlisting}
-% 
-% \newpage
-
-% \subsection{Alloy Language}\label{c:alloy-language}
-% 
-% \subsubsection{Relation Logic}
-% 
-% \subsubsection{Linear Temporal Logic}
-
-
 \subsection{Structural Modelling}\label{c:alloy-sm}
 
-Alloy aims to address the complexity behind richly structured systems, that require critical control over their intended behaviour, by presenting a novel approach for abstracting these systems as conventional models. System's structures can be specified over time-evolving states, where its behaviour clearly identifies the states' inbetween transitions. Thus, the conception of system transitioning offers a great formal approach when it comes to reason about the system's design.
+Alloy aims to address the complexity behind richly structured systems, that require critical control over their intended behaviour, by presenting a novel approach for abstracting these systems as conventional models. 
+
+System's structures can be specified over time-evolving states, where its behaviour clearly identifies the states' inbetween transitions. The conception of system transitioning offers a great formal approach when it comes to reason about the system's design.
 
 The Alloy structural definition relies on a relation way of connecting system's elements, where the latter is abstracted in terms of relations. In Alloy, unary relations, commonly known as sets, are labelled as \textit{signatures}, that are inhabited by a set of \textit{atoms}, from a finite universe of discourse. Atoms are perceived as the lowest-grain elements, with no particular semantics attached. A signature, identified by the keyword $sig$, might include multiple \textit{field} declarations enclosed between braces, addressing relation between the signature's atoms and a set or other relation. Fields are inhabited by tuples of atoms from the universe, that must meet the same arity.
 
@@ -146,7 +114,7 @@ sig Node {
 
 As stated, the former poses a model incoherence within the \textit{Node} signature declaration, as \textit{adj} field is formerly labelled as mutable, that is later refuted by specifying $always \ adj'\ =\ adj$. This latter introduces the Alloy language's ability to express temporal behaviour through these \textit{two} \textit{linear temporal logic} operators, $'$ and $always$ respectively. 
 
-The $always$ operator expresses a universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state. Alloy integrates LTL into the standard relational logic, therefore, supporting both linear temporal logic unary and binary modal operator.
+The $always$ operator expresses a universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state. Alloy integrates LTL into the standard Relational logic, therefore, supporting both linear temporal logic unary and binary modal operator.
 
 \begin{figure}[H]
     \centering
@@ -304,13 +272,15 @@ The notion of reusable expressions ($fun$) and model assertions ($assert$), are 
 
 Structural modelling only confers a conventional way of formally expressing the intended behaviour over a software component. To perform verification over the specified behaviour, it is advisable to implement analysis techniques, while supporting an illustrative way of exploring the behaviour through simulations. 
 
+Following the temporal logic semantics, Alloy specification language embeds the linear temporal logic into the first-order logic, thus, it makes use of both temporal and relational quantifiers to properly express behavioural verification over time \cite{lwspecification}. \textit{First-Order Temporal Logics} present additional techniques for reasoning about behaviour, while accounting the basis of the first-order logic, that usually confers the capability to express the well-formedness of the system structure \cite{lwspecification, konur2010survey}.
+
 This section aims to explain how Alloy conducts system analysis, with further explanations over the corresponding analysis commands, along with an overview on the Alloy Analyzer interactive exploration over a system's design. 
 
 \subsection{Analysis and Verification}
 
 Alloy specification process does not establish a clear process separation over the model design and model analysis. This implies that analysis over model checking also accounts the model itself as a combination of properties specification. 
 
-The specification language holds \textit{two} analyzing commands, $run$ and $check$ respectively, as shown above in \textit{Alloy's syntax}. A \textit{Linear Temporal Logic (LTL) formula} is enclosed between braces, to be checked over. Upon executing, both commands accounts the enclosed formula $\psi_{f}$ and the model declaration ${M}$. Likewise in $fact$ declaration, several logic constraints can be combined into the formula $\psi_{f}$. Due to Alloy's implicit abstraction, both commands addresses the relational model specification as truth holder, with the latter being consisted by declarations over $fact$ and $sig$. 
+The specification language holds \textit{two} analyzing commands, $run$ and $check$ respectively, as shown above in \textit{Alloy's syntax}. A \textit{First-Order Linear Temporal Logic} (FOLTL) formula is enclosed between braces, to be checked over. Upon executing, both commands accounts the enclosed formula $\psi_{f}$ and the model declaration ${M}$. Likewise in $fact$ declaration, several logic constraints can be combined into the formula $\psi_{f}$. Due to Alloy's implicit abstraction, both commands addresses the relational model specification as truth holder, with the latter being consisted by declarations over $fact$ and $sig$. 
 
 Briefly speaking, $run$ instruct the model-checker to present an example that satisfies the considered formula $\psi_{f}$ over the model definition. This means that the following formula ($M \wedge \psi_{f}$) is expected to hold. The consistency of the \textit{facts} and \textit{signatures} is consequently verified since the model declaration $M$ is also considered. 
 
@@ -321,7 +291,7 @@ As result of the first-order logic's undecidability problem, the consistency pro
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.4\linewidth]{images/check_alloy_1.png}
-    \caption{LTL formula $\psi$ verification using \textit{check}, accounting the \textit{Bounded} model checking technique.}
+    \caption{FOLTL formula $\psi$ verification using \textit{check}, accounting the \textit{Bounded} model checking technique.}
     \label{fig:alloy-check-1}
 \end{figure}
 
@@ -334,7 +304,7 @@ Being SAT-based \cite{lwspecification}, the Alloy Analyzer tries to search for a
     \label{fig:alloy-check-2}
 \end{figure}
 
-Moreover, Alloy yields a command to specify the finite number of different steps, related to the expected instance's evaluation trace. This is due to the \textit{bounded} nature of the Alloy transitions between states, where the \textit{Bounded Model Checking} technique is considered as model-checking technique. The number of steps is set to \textit{10} by default, although this may be adjusted using the keyword $steps$, alongside with the bounded scopes specification. 
+Moreover, Alloy yields a command to specify the finite number of different steps, related to the expected instance's evaluation trace. This is due to the bounded nature of the Alloy transitions between states, where the \textit{Bounded Model Checking} is considered as model-checking technique. The number of steps is set to \textit{10} by default, although this may be adjusted using the keyword $steps$, alongside with the bounded scopes specification. 
 
 The following $run$ example makes use of both scopes and steps definitions. Moreover, the formula specified in the $run$ states the expected behavioural representation of an \textit{Eulerian} circuit. The $eventually$ (Figure \ref{fig:alloy-eventually}) operator is considered to specify the desired final state, where every edge is visited and the \textit{Euler} node finishes where it started.
 
@@ -351,7 +321,7 @@ This particular $run$ yields no instance, so its corresponding formula $M \wedge
 
 The verification process over \textit{Model Checking}, needs to account the formal specification of properties that are relevant to reason about the system's temporal behaviour \cite{baier2008principles} .
 
-Alloy makes use of the relational logic (Figure \ref{fig:alloy-rel}) to ensure the well-formedness of the system, which falls short when it comes to supplying support over temporal behaviour. Thereby, Alloy includes temporal connectives from \textit{Linear Temporal Logic} (LTL), that acknowledges the system's states along the trace evolution \cite{lwspecification, alloy-6, 9341085}.
+Alloy makes use of the relational logic (Figure \ref{fig:alloy-rel}) to ensure the well-formedness of the system, which falls short when it comes to supplying support over temporal behaviour. Thereby, Alloy includes temporal connectives from FOLTL semantics, that acknowledges the system's states along the trace evolution \cite{lwspecification, alloy-6, 9341085}.
 
 Ensuring the correctness of a system's behaviour relies on verifying properties regarding the latter's \textit{Safety} and \textit{Liveness}. Its verification technique is motivated by distinct approaches \cite{kindler1994safety}. The former requires an invariance argument, where the latter requires a well-foundedness argument to prove its system satisfiability \cite{alpern1987recognizing}.
 
@@ -445,9 +415,9 @@ The Visualizer furnishes a toolbar with multiple configuration buttons, allowing
 
 The \mybox{New Config} instructs the Analyzer to provide a new trace configuration, where immutable model expressions (sets and relations) are depicted with new values. Consequently, the Visualizer will present an execution trace regarding the new model configuration. The \mybox{New Trace} instructs the Analyzer to present a new execution trace, regarding the same model configuration. The \mybox{New Init} requests for a new trace representation, where the initial state is forced to present different model expressions values. At last, the \mybox{New Fork} allows alternative transition behaviour exploration over the same starting state, depicting a new transition post-state. The latter could differ on the result of a given event, or it can display the outcome of a different event \cite{alloy-docs}.
 
-Alloy forces the property formula translation into an LTL formula, considering the finitude of its universe of comprehension. Due to the emphasis on representing instances over infinite traces, every Alloy instance generated by the Analyzer, captures an infinite trace through \textit{lassos}, where a looping state is reached.
+Alloy forces the property formula translation into an LTL-based formula, considering the finitude of its universe of comprehension. Due to the emphasis on representing instances over infinite traces, every Alloy instance generated by the Analyzer, captures an infinite trace through \textit{lassos}, where a looping state is reached.
 
-Concerning performance in the evaluation over infinite traces, Alloy considers the Bounded Model Checking technique as the first approach towards the model verification. Here, the corresponding LTL formula is verified for all \textit{lasso} traces of size up to a bounded number of steps. So, the verification is not complete, due to the SAT time-bounded nature. However, it still confers great functionality, as infinite traces can often be represented as finite traces, making verification within small scopes possible \cite{jackson2012software}.
+Concerning performance in the evaluation over infinite traces, Alloy considers the Bounded Model Checking technique as the first approach towards the model verification. Here, the corresponding formula is verified for all \textit{lasso} traces of size up to a bounded number of steps. So, the verification is not complete, due to the SAT time-bounded nature. However, it still confers great functionality, as infinite traces can often be represented as finite traces, making verification within small scopes possible \cite{jackson2012software}.
 
 \begin{figure}[H]
     \centering
@@ -456,7 +426,7 @@ Concerning performance in the evaluation over infinite traces, Alloy considers t
     \label{fig:alloy-infinite}
 \end{figure}
 
-Oppositely, the Analyzer can be instructed to perform Unbounded Model Checking towards achieving consistency over model verification, without bounding traces upfront \cite{alloy-6, alloy-docs}. This is feasible as the state space is finite due to the Alloy analysis way of bounding signatures. Consequently, it constrains infinite traces as periodic \textit{lasso} traces (Figure \ref{fig:alloy-infinite}).
+Oppositely, the Analyzer can be instructed to perform \textit{Unbounded Model Checking} towards achieving consistency over model verification, without bounding traces upfront \cite{alloy-6, alloy-docs}. This is feasible as the state space is finite due to the Alloy analysis way of bounding signatures. Consequently, it constrains infinite traces as periodic \textit{lasso} traces (Figure \ref{fig:alloy-infinite}).
 
 To perform complete model-checking, an appropriate solver must be selected in the \mybox{Options} menu, and the time scope must be specified under the following syntax: $for\ 1..\ steps$. Consider the previous $run$ command in terms of the Unbounded Model Checking approach. 
 
