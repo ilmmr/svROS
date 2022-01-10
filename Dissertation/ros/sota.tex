@@ -23,9 +23,10 @@ ROS was designed to provide as much as modularity and composability to the appli
 
 \subsection{Former Architecture}
 
-The Robot Operating System architecture is based on a hybrid peer-to-peer implementation, where network communication is done over message-passing through a publish-subscribe pattern. The architecture emphasized on approaching communication through a centralization perspective. It relied on the explicit implementation of a \textit{Master node}, that controlled every aspect of the communication establishment. Consequently, every information exchange within the network had to go through this master.
+The Robot Operating System architecture is based on a hybrid peer-to-peer implementation, where network communication is done over message-passing through a publish-subscribe pattern. The communication API relied on an XML-encoded remote procedure protocol. Transport libraries regarded the data exchange accounting serialization over sockets \cite{white2016sros}.
 
-Formerly, due to the sheer wide capabilities controlled by the master, this centralization approach was duly valorized. It naturally fits the purposes of a research tool, as it is simpler to monitor and analyze the system behaviour. However, because it is strongly reliant on the master node's availability, this communication architecture does not scale effectively, making it unsuitable for safety-critical or real-time applications. If the master fails, the entire system fails, representing a single point of failure and a huge performance bottleneck.
+The architecture emphasized on approaching communication through a centralization perspective. It relied on the explicit implementation of a \textit{Master node}, that controlled every aspect of the communication establishment. Consequently, every information exchange within the network had to go through this master.
+
 
 \begin{figure}[H]
   \centering
@@ -33,6 +34,8 @@ Formerly, due to the sheer wide capabilities controlled by the master, this cent
   \caption{Robot Operating System architecture.}
   \label{fig:ros1-architecture}
 \end{figure}
+
+Formerly, due to the sheer wide capabilities controlled by the master, this centralization approach was duly valorized. It naturally fits the purposes of a research tool, as it is simpler to monitor and analyze the system behaviour. However, because it is strongly reliant on the master node's availability, this communication architecture does not scale effectively, making it unsuitable for safety-critical or real-time applications. If the master fails, the entire system fails, representing a single point of failure and a huge performance bottleneck.
 
 Many research communities tried to fix these real-time issues by proposing potential solutions, while supporting the same architecture design. Unfortunately, fell short of meeting the requirements of real-time applications. It became clear to the ROS community that the framework had architectural limitations that could not be rearranged using the same design approach \cite{maruyama2016exploring}.
 
@@ -48,7 +51,7 @@ DDS uses the \textit{Data-Centric Publish Subscribe} (DCPS) model as its communi
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{images/dcps-model.png}
+    \includegraphics[width=0.4\linewidth]{images/dcps-model.png}
     \caption{DDS architecture: DCPS model with RTPS. Extracted from \cite{maruyama2016exploring}.}
     \label{fig:dcps-model}
 \end{figure}
@@ -189,7 +192,7 @@ Numerous researchers \cite{8794451, dieber2020penetration} have investigated the
 
 The ROS Master role in the communication architecture, and its ability to connect to other nodes, imposes many concerns about how to address security to ensure protection over the Master node. Exposing this node poses a critical threat over the whole network \cite{8794451}. 
 
-Moreover, there were also worries regarding the way ROS handled node communication. Network security may be jeopardized, as a result of the publish-subscribe pattern transparency, where node-to-node communications are settled in plain text, making data content vulnerable to unauthorized usage \cite{kim2018security}.
+Moreover, there were also worries regarding the way ROS handled node communication. Network security may be jeopardized, as a result of the publish-subscribe pattern transparency, where node-to-node communications are settled in plain text, making data content vulnerable to unauthorized usage \cite{kim2018security, white2016sros}. Additionally, the former API did not confer any message integrity technique, making applications vulnerable to packet sniffing and man-in-the-middle attacks \cite{white2016sros}.
  
 However, due to the high non-linearity and complexity of real-time systems, implementing such thorough analysis method in near real-time remains a significant difficult task \cite{diao2009design}.
 
@@ -263,7 +266,11 @@ As result of the \textit{Data Distribution Service} (DDS) implementation as a fl
 
 Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over ROS's application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset \cite{sros2-gh}, extending ROS2's functionality to make use of the DDS-Security functionality. 
 
-The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture \cite{kim2018security}. SROS2 configuration is done over applying a set of security files to each ROS2 participant, with regard to how DDS handles certificate assignment to their participants \cite{white2016sros}.
+The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture \cite{kim2018security}. 
+
+SROS2 configuration is done over applying a set of security files to each ROS2 participant, with regard to how DDS handles certificate assignment to their participants \cite{white2016sros}. 
+
+Consequently, the toolset allows certificate generation and allocation through a keyserver directory, where security enclaves and their respective authentication files are stored inside subfolders \cite{white2016sros, ros-dds-integration}. Moreover, SROS2 enables the keyserver configuration in a flexible way, allowing developers to restricit certificate and CA attributes to an arbitrary number of nodes, defined over the same namespace \cite{white2016sros}.
 
 The variety of capabilities in SROS2 toolset attempts to aid with security configuration across environments \cite{ros-dds-integration}. However, managing certificates and access control policies might lead to improper configuration. Additionally, orchestrating a real-time network towards achieving a secure environment confers to be a demanding process \cite{ros-dds-integration, white2019network}.
 
@@ -286,7 +293,9 @@ Concerning the enclave authentication procedure, its security artifacts must be 
 
 Following the \textit{ConArmor} policy language \cite{white2018procedurally}, the SROS2 toolset offers a \textit{XML schema}, where security policies bind profiles to access permissions for network objects, granting privileges back to a certain profile. \textit{Profiles} are implemented under the \textit{enclave} declaration, to duly support the node composition into a single process, enabling the possibility of combining multiple profiles, respectively addressing its corresponding node. Typically, each \textit{enclave} declaration is linked to a corresponding ROS node, naturally perceived as a DDS participant.
 
-\textit{Objects} are classified over a subsystem type, structurally characterized by permissions tags. Then \textit{object privileges} are controlled over access values, either \textit{allow} or \textit{deny}, attributed to their corresponding permissions tags \cite{ros-access-control}. The policy design approach works under the \textit{Mandatory Access Control} (MAC), that denies any privilege by default. The only way of allowing access to any object, is by explicitly specifying the subject's privilege access \cite{ros-access-control, white2018procedurally}.
+\textit{Objects} are classified over a subsystem type, structurally characterized by permissions tags. Then \textit{object privileges} are controlled over access values, either \textit{allow} or \textit{deny}, attributed to their corresponding permissions tags \cite{ros-access-control, white2018procedurally}. Briefly, each node profile is assigned to policies that concern some object identifier (OID). Each OID maps to a specific action, that is identified over a access value, allow or deny respectively \cite{white2016sros}.
+
+The policy design approach works under the \textit{Mandatory Access Control} (MAC), that denies any privilege by default. The only way of allowing access to any object, is by explicitly specifying the subject's privilege access \cite{ros-access-control, white2018procedurally, white2016sros}. Naturally, this policy approach confers great value towards security, since it denies any attempt of privilege gaining attack by ROS-based packages from non-trusted sources \cite{white2016sros}.
 
 Depicted in the Figure \ref{fig:ros-access-file}, it is presented a policy file where access control privileges are distributed across enclaves, and their inherited profiles. Recall the \textit{TurtleSim} example, the following \textit{XML} policy file addresses the access to topics for each respective enclave. 
 

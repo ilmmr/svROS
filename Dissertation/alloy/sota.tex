@@ -114,14 +114,14 @@ sig Node {
 
 As stated, the former poses a model incoherence within the \textit{Node} signature declaration, as \textit{adj} field is formerly labelled as mutable, that is later refuted by specifying $always \ adj'\ =\ adj$. This latter introduces the Alloy language's ability to express temporal behaviour through these \textit{two} \textit{linear temporal logic} operators, $'$ and $always$ respectively. 
 
-The $always$ operator expresses a universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state. Alloy integrates LTL into the standard Relational logic, therefore, supporting both linear temporal logic unary and binary modal operator.
-
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\linewidth]{images/alloy_always.png}
+    \includegraphics[width=0.7\linewidth]{images/alloy_always.png}
     \caption{$always$ behavioural representation.}
     \label{fig:alloy-always}
 \end{figure}
+
+The $always$ operator expresses a universal quantifier over time, imposing a constraint throughout the trace. The $'$ operator evaluates the \textit{adj} relation in the next state. So, the formula specifies that the evaluation of \textit{adj} in the next state is always the same of the current state. Alloy integrates LTL into the standard Relational logic, therefore, supporting both linear temporal logic unary and binary modal operator.
 
 Whereas the latter expresses the \textit{no self-loop} graph property. Even though \textit{adj} is introduced as a relation between \textit{Nodes}, it is perceived as a set of \textit{Nodes} due to specification with the signature declaration. The keyword $this$ addresses each \textit{Node} atom, as self representation of the considered atom. The remaining specifies the intended behaviour, as it specifies the non-inclusion ($not\ in$) over the set of its adjacent nodes.
 
@@ -168,28 +168,18 @@ smallest transitive $\ast(adj\ +\ ~adj)$ relation containing all the identifiers
 \label{math:alloy-transitive}
 \end{figure}
 
-In order to prevent unwanted model structural scenarios, the intended model can be visualized over the \textit{Alloy Visualizer}, upon executing the $run$ analyzing command. In the Figure \ref{fig:alloy-eulerian_1} is depicted an instance of an acceptable configuration of the \textit{Eulerian} circuit with \textit{5 Node} atoms, since every model constraint was duly specified.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.4\linewidth]{images/alloy_eulerian_1.png}
-    \caption{Acceptable \textit{Eulerian} graph model design.}
-    \label{fig:alloy-eulerian_1}
-\end{figure}
-
-
 \subsubsection{Everything is a Relation}
 
 As previously stated, Alloy emphasizes the mathematical relation concept to describe systems as a conventional designed model, through conceiving a set $R$ of relations. Moreover, Alloy confers the ability to express their relations as \textit{variable} \cite{lwspecification}. An Alloy relation presents itself as a set of tuples of \textit{atoms} drawn from the same universe context. Subsequently, each relation tuple must meet the same arity of the relation \cite{alloy-docs}.
 
+The \textit{Alloy Evaluator} \cite{alloy-6} confers additional functionality to the \textit{Visualizer}. It allows the user to type Alloy-based expressions against the existing model, used to gather structure information about the existing model \cite{alloy-docs}. In the Figure \ref{fig:alloy-evaluator_1} is presented both \textit{Node} signature and \textit{adj} relation, regarding the model depicted in the Figure \ref{fig:alloy-eulerian_1}.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.4\linewidth]{images/alloy_evaluator1.png}
+    \includegraphics[width=0.5\linewidth]{images/alloy_evaluator1.png}
     \caption{\textit{Node} and \textit{adj} relations.}
     \label{fig:alloy-evaluator_1}
 \end{figure}
-
-The \textit{Alloy Evaluator} \cite{alloy-6} confers additional functionality to the \textit{Visualizer}. It allows the user to type Alloy-based expressions against the existing model, used to gather structure information about the existing model \cite{alloy-docs}. In the Figure \ref{fig:alloy-evaluator_1} is presented both \textit{Node} signature and \textit{adj} relation, regarding the model depicted in the Figure \ref{fig:alloy-eulerian_1}.
 
 Additionally, the use of the relational based operators $<:$ and $:>$ denote explicit restriction over relations, with the former restricting its domain, and the latter restricting its range.
 
@@ -199,6 +189,17 @@ Additionally, the use of the relational based operators $<:$ and $:>$ denote exp
     \caption{\textit{Init} adjacent nodes.}
     \label{fig:alloy-evaluator_2}
 \end{figure}
+
+
+In order to prevent unwanted model structural scenarios, the intended model can be visualized over the \textit{Alloy Visualizer}, upon executing the $run$ analyzing command. In the Figure \ref{fig:alloy-eulerian_1} is depicted an instance of an acceptable configuration of the \textit{Eulerian} circuit with \textit{5 Node} atoms, since every model constraint was duly specified.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/alloy_eulerian_1.png}
+    \caption{Acceptable \textit{Eulerian} graph model design.}
+    \label{fig:alloy-eulerian_1}
+\end{figure}
+
 
 
 \subsection{Structural Behaviour}
@@ -365,7 +366,7 @@ The above-mentioned properties make use of \textit{2} relevant over time quantif
 
 Moreover, the liveness property states the expected behavioural representation of an \textit{Eulerian} circuit, where the $eventually$ (Figure \ref{fig:alloy-eventually}) operator is considered to specify the desired final state. However, its verification, using $check\ liveness\_euler$, yields a counterexample, as it is possible to always perform the \textit{stutter} event, and thus the expected behaviour never happens. This scenario results in an implausible infinite trace behavior, which must be handled by adding fairness to the trace assessment. 
 
-Liveness properties evaluation process reasons about states that eventually might reach the wanted scenario, it is advisable to consider \textit{fairness} constraints, intentionally specified to rule out infinite traces with unrealistic behaviour, such as system stuttering \cite{baier2008principles}. Briefly, a \textit{fairness} constraint imposes fairly considerations on the system's trace evolution \cite{wahlfairness}.
+Liveness properties evaluation process reasons about states that eventually might reach the wanted scenario. Then, it is advisable to consider \textit{fairness} constraints, intentionally specified to rule out infinite traces with unrealistic behaviour, such as system stuttering \cite{baier2008principles}. Briefly, a \textit{fairness} constraint imposes fairly considerations on the system's trace evolution \cite{wahlfairness}.
 
 \begin{lstlisting}[title={\textit{Fairness predicate}: If \textit{Euler} has an adjacent node, it will eventually visit the latter.}, otherkeywords = {pred, eventually, always, implies, some, \.}]
 pred fairness {
