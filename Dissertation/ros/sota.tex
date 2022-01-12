@@ -215,9 +215,11 @@ Upon considering a secure environment over the DDS \textit{Global Data Space}, d
 
 The Authentication plugin confers the most valued plugin to the entire SPI architecture, as it provides means to validate the identity of the application, later regarded as a domain participant \cite{dds-s, ros-dds-integration}. 
 
-Each participant must be authenticated prior to entering the data space \cite{white2019network}. Therefore, participants are presented to the secured environment regarding the Public Key Infrastructure (PKI). This latter is in charge of issuing a public certificate, accountable and signed by a trusted certificate authority (CA) \cite{white2019network, white2016sros, ros-dds-integration}. 
+Each participant must be authenticated prior to entering the data space \cite{white2019network}. Therefore, participants are presented to the secured environment regarding the \textit{Public Key Infrastructure} (PKI). This latter is in charge of issuing asymmetric keys to each participant, a \textit{public} and \textit{private} key respectively, that are used for both authentication and encryption procedures \cite{diluoffo2018robot, ros-dds-integration}. 
 
-The communication establishment over different participants must be preceded by a mutual handshake, where certificates are exchanged to guarantee their authenticity \cite{white2019network, kim2018security}. Additionally, the DDS permissions of a domain peer are also concerned within this handshake. The control over permission distribution is respectively handled by the Access Control plugin.
+Moreover, regarding the issuer identity, the PKI provides an \textit{X.509 certificate}, that maps a distinguished domain name (DN) to the participant's public key \cite{diluoffo2018robot, white2016sros}. This certificate is accountable and signed by a trusted certificate authority (CA) \cite{white2019network, white2016sros, ros-dds-integration}. It ensures authenticity between asymmetric key pairs (both \textit{public} and \textit{private}) \cite{diluoffo2018robot}. 
+
+The communication establishment over different participants must be preceded by a mutual handshake, where keys and certificates are exchanged to guarantee their authenticity \cite{white2019network, kim2018security}. Additionally, the DDS permissions of a domain peer are also concerned within this handshake. The control over permission distribution is respectively handled by the Access Control plugin.
 
 \subsubsection{Access Control}
 
@@ -225,7 +227,7 @@ As aforementioned, the defined DDS specification handles policy control over the
 
 Authenticated participants must be granted access to certain domains, where their roles on data transportation must be accordingly accounted by access permissions. If a participant is perceived as a domain data publisher, the domain restrictions must provide publishing privileges to its data topic \cite{white2019network}. 
 
-Following the authentication procedure, domain authorization is also concerned using the proven Public Key Infrastructure (PKI) \cite{ros-dds-integration}, by embedding policy definitions through certificate extensions \cite{white2016sros}. 
+Following the authentication procedure, domain authorization is also concerned using the proven PKI \cite{ros-dds-integration}, by embedding policy definitions through certificate extensions \cite{white2016sros}. 
 
 Furthermore, the Access Control plugin employs \textit{2} configuration documents that are allocated to each participant \cite{white2019network}. This provides significant security capability, which is given as a supplement to the authentication procedure.
 
@@ -245,7 +247,10 @@ The DDS-Security specification ensures encryption and authentication using \text
 
 Accordingly, it implements a handshake-based standard, concerning the \textit{OpenSSL} protocols, \textit{Secure Sockets Layer} (SSL) and \textit{Transport Layer Security} (TLS), which are used respectively used to ensure encryption over the network communication \cite{white2016sros, kim2018security}. The handshake is used to achieve mutual authentication within participants over the DDS domain \cite{white2019network}.
 
-Following the public key assignment, the \textit{Diffie-Hellman} key exchange protocol properly accounts the mentioned handshake, allowing both participants to exchange data over a shared secret key, while accounting their own public certificate information \cite{kim2018security}. The \textit{rcl} is capable of handling this DDS security requirement, levering ROS-based applications to support SROS2, accounting nodes as authenticated participants \cite{white2016sros}. 
+Following the participant key assignment, the \textit{Diffie-Hellman} key exchange protocol properly accounts the mentioned handshake, allowing both participants to exchange data over a shared secret key \cite{kim2018security}. % while accounting their own public certificate information \cite{kim2018security}. 
+It enjoys the inter-exchange of both asymmetric keys, issued to each domain participant during the domain authentication procedure, in order to perform sign (using the private key) and verify (using the public key) operations \cite{kim2018security, diluoffo2018robot}.
+
+The \textit{rcl} is capable of handling this DDS security requirement, levering ROS-based applications to support SROS2, accounting nodes as authenticated participants \cite{white2016sros}. 
 
 As communication establishment is duly achieved throughout this handshake process, the DDS-Security specification takes advantage of the \textit{AES-GCM} encryption standard concerning data encryption over the implicit channel \cite{kim2018security, takemoto2019performance}.
 
@@ -256,9 +261,11 @@ As communication establishment is duly achieved throughout this handshake proces
     \label{fig:ros_aes}
 \end{figure}
 
-The \textit{key cryptosystem} algorithm \cite{takemoto2019performance} presented in the \textit{Advanced Encryption Standard (AES)} considers the usage of functions towards achieving data encryption over the established communication. 
+The \textit{key cryptosystem} algorithm \cite{takemoto2019performance} presented in the \textit{Advanced Encryption Standard (AES)} considers the usage of functions towards achieving data encryption over the established communication. It enables configuration over data encryption, allowing both block and streaming transfer of ciphered data \cite{diluoffo2018robot}.
 
 Here, the algorithm combines the shared key established with the message passed over the secure channel. Moreover, it is desirable to implement the \textit{Galois MAC (AES-GMAC)} encryption algorithm, that is based on block cipher operations, consequently adding encryption functionality to the AES algorithm, through a \textit{Message Authentication Code (MAC)} encryption function \cite{takemoto2019performance, kim2018security}.
+
+Every cryptography-related operations are handled by the SPI's Cryptographic plugin. Naturally, these cryptographic capabilities, linked to the asymmetric key cryptography, are then used by both Authentication and Access Control plugins, ensuring authenticity support over their corresponding opeartions \cite{ros-dds-integration, diluoffo2018robot}.
 
 \subsection{Security Integration in ROS2}
 
@@ -266,9 +273,7 @@ As result of the \textit{Data Distribution Service} (DDS) implementation as a fl
 
 Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over ROS's application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset \cite{sros2-gh}, extending ROS2's functionality to make use of the DDS-Security functionality. 
 
-The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture \cite{kim2018security}. 
-
-SROS2 configuration is done over applying a set of security files to each ROS2 participant, with regard to how DDS handles certificate assignment to their participants \cite{white2016sros}. 
+The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture \cite{kim2018security}. SROS2 configuration is done over applying a set of security files to each ROS2 participant, with regard to how DDS handles certificate assignment to their participants \cite{white2016sros, ros-dds-integration}. 
 
 Consequently, the toolset allows certificate generation and allocation through a keyserver directory, where security enclaves and their respective authentication files are stored inside subfolders \cite{white2016sros, ros-dds-integration}. Moreover, SROS2 enables the keyserver configuration in a flexible way, allowing developers to restricit certificate and CA attributes to an arbitrary number of nodes, defined over the same namespace \cite{white2016sros}.
 
@@ -278,20 +283,18 @@ The variety of capabilities in SROS2 toolset attempts to aid with security confi
 
 \subsubsection{Security Enclaves}
 
-The authentication process within the ROS network relies on the notion of a network enclave. Conceptually, an enclave is a secure region in the application address space that maintains confidentiality and integrity, while computations are being carried out on data.
+As aforementioned, ROS2 relies on how handles DDS security over their \textit{Domain Participants}. DDS imposes the authentication of each participant prior to joining its \textit{Global Data Space}, where the Certificate Authority and an established PKI comes in hand \cite{white2019network, white2016sros}.
 
-As aforementioned, ROS2 relies on how handles DDS security over their \textit{Domain Participants}. DDS imposes the authentication of each participant prior to joining its \textit{Global Data Space} \cite{white2019network}.
-
-Accordingly, ROS2 ensures authentication over nodes by conceiving the idea of security enclaves, where security artifacts are stored to properly achieve security over the network data space \cite{ros-security-enclaves}. Recall that, these artifacts are implicitly concerned by DDS-Security specification, where the Certificate Authority and an established Public Key Infrastructure (PKI) comes in hand \cite{white2019network, white2016sros}. 
+Accordingly, the authentication process within the ROS2 network relies on the notion of a network enclave, where authentication and control artifacts are stored to properly achieve security over the network data space \cite{ros-security-enclaves}. Conceptually, an enclave is a secure region in the application address space that maintains confidentiality and integrity, while computations are being carried out on data.
 
 Previously, a node was perceived as a separated DDS participant. However, by considering node composition as a reliable way of matching multiple nodes simultaneously to the same security domain, this node perception as participants can not be taken into account, due to causing non-negligible overhead, as memory space becomes rather difficult to handle \cite{ros-security-enclaves, ros-access-control}.
 
-Concerning the enclave authentication procedure, its security artifacts must be addressable by a DDS participant, where the latter matches to a node sharing context \cite{ros-security-enclaves}.
+Concerning the enclave authentication procedure, its security artifacts must be addressable by a DDS participant, where the latter is associated to a node sharing context, instead of being perceived as a single node \cite{ros-security-enclaves}. Thus, when it comes to apply different policies over different nodes, that are matched in the same node context, a set of node \textit{profiles} can be specified under the enclave notation. 
  
 \vspace{0.5cm}
 \textbf{Access Control within Enclaves}
 
-Following the \textit{ConArmor} policy language \cite{white2018procedurally}, the SROS2 toolset offers a \textit{XML schema}, where security policies bind profiles to access permissions for network objects, granting privileges back to a certain profile. \textit{Profiles} are implemented under the \textit{enclave} declaration, to duly support the node composition into a single process, enabling the possibility of combining multiple profiles, respectively addressing its corresponding node. Typically, each \textit{enclave} declaration is linked to a corresponding ROS node, naturally perceived as a DDS participant.
+Following the \textit{ConArmor} policy language \cite{white2018procedurally}, the SROS2 toolset offers an \textit{XML schema}, where security policies bind profiles to access permissions for network objects, granting privileges back to a certain profile. \textit{Profiles} are implemented under the \textit{enclave} declaration, to duly support the node composition into a single process, enabling the possibility of combining multiple profiles, respectively addressing its corresponding node. % Typically, each \textit{enclave} declaration is linked to a corresponding ROS node, naturally perceived as a DDS participant.
 
 \textit{Objects} are classified over a subsystem type, structurally characterized by permissions tags. Then \textit{object privileges} are controlled over access values, either \textit{allow} or \textit{deny}, attributed to their corresponding permissions tags \cite{ros-access-control, white2018procedurally}. Briefly, each node profile is assigned to policies that concern some object identifier (OID). Each OID maps to a specific action, that is identified over a access value, allow or deny respectively \cite{white2016sros}.
 
@@ -302,8 +305,7 @@ Depicted in the Figure \ref{fig:ros-access-file}, it is presented a policy file 
 \begin{figure}[H]
 \begin{lstlisting}[otherkeywords = {xml, version, encoding, policy, version, enclave, enclaves, profile, profiles, topic, topics, xmlns:xi, path, ns, node, publish, subscribe, reply, request, call, execute, xi:include, href, xpointer}]
 <?xml version="1.0" encoding="UTF-8"?>
-<policy version="0.2.0"
-  xmlns:xi="http://www.w3.org/2001/XInclude">
+<policy version="0.2.0" xmlns:xi="http://www.w3.org/2001/XInclude">
   <enclaves>
     <enclave path="/multiplexer">
       <profiles>
