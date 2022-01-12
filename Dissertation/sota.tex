@@ -1,19 +1,25 @@
-\chapter{State of the Art}\label{c:currWork}
+\chapter{State of the Art}\label{c:stateofArt}
 
-\section{Related work}\label{s:relWork}
-
-This section intends to present previous developed work regarding the main concepts on what this dissertation rests. The subsection \ref{s:relWork-sec} aims to provide a comprehensive overview over works that attended to prevent security issues related to the deployment of robotic systems, using Robot Operating System as its application enhancer. It is then followed by the subsection % \ref{s:relWork-sa} regarding some of the current static analysis approaches on ROS applications. The latter subsection 
+This chapter aims to present previous developed work regarding the main concepts on what this dissertation rests (Section \ref{c:relWork}), which is then divided into different subsections. The subsection \ref{s:relWork-sec} aims to provide a comprehensive overview over works that attended to prevent security issues related to the ROS architecture. %deployment of robotic systems, using Robot Operating System as its application enhancer. 
+It is then followed by the subsection % \ref{s:relWork-sa} regarding some of the current static analysis approaches on ROS applications. The latter subsection 
 \ref{s:relWork-pv} that concerns about previous work addressing property verification and model checking techniques over ROS applications.
+
+Afterwards, the section \ref{c:currWork} provides a brief introduction over the problems that this dissertation aims to tackle, supported by a graphical dissertation schedule, in which the main development tasks are organized over time.
+
+\section{Related work}\label{c:relWork}
+
+%Quality Assurance
+%Security e Property Verification
 
 \subsection{Security Overview}\label{s:relWork-sec}
 
-% This section aims to present previous works that attended security matters related to the deployment of robotic systems using Robot Operating System as its application enhancer. When developing real-time systems, safety matters are often referred as critical, because of the overall integration with the real world. Security however, it is measured by evaluating different security issues by properly analysing the system model. However, due to the high nonlinearity and complexity of real-time systems, implementing such a thorough analysis method in near real-time remains a significant difficulty. \cite{diao2009design}
+The purpose of this section is to present previous works that attended security matters related to the deployment of robotic systems using both ROS and ROS2 as its application enhancer. When developing real-time systems, safety matters are often referred as critical, because of the overall integration with the real world. Security however, it is measured by evaluating different security issues by properly analysing the system model. However, due to the high nonlinearity and complexity of real-time systems, implementing such a thorough analysis method in near real-time remains a significant difficulty. \cite{diao2009design}
 
 % The deployment of real-time systems results in the importance of concerning about safety in a performance point of view, resulting of the demanding time-critical scenarios. Many studies were made regarding the performance in both ROS and ROS2 (also regarding DDS Quality of Service policies \cite{maruyama2016exploring}), by analysing using performance measurement approaches, providing a guided and supported review on how performance can directly affect time critical situations, where safety is envolved. \cite{maruyama2016exploring, casini2019response} 
 
 % System security concerning network exposure, often explored by unauthorized acess and data leaking, can be treacherous and it is considered a complex subject, due to the abundance of different network security technologies that do not cover every security aspect, since absolute security does not exist, as new vulnerabilites arise from the tecnology evolution.\cite{kaeo2004designing} The creation and deployment of security countermeasures are essential upon configurating the network towards achieving security. Within this vast topic, several different avenues of endeavor come to mind, each deserving of a substantial study. Network security means exploring the network beforehand by computer intrusion detection, traffic analysis, network monitoring, alongside many other practical networking security aspects. \cite{marin2005network}
 
-The literature concerning the network security enhancment that Robot Operating System 2 furnishes, by offering the SROS2 toolset, is quite limited. Most of the existing work is on the exploration of the former version of ROS in terms of port exposure, contextualized in the approach considered to protect the system network.  
+The literature concerning the network security enhancement that Robot Operating System 2 furnishes, by offering the SROS2 toolset, is quite limited. Most of the existing work is on the exploration of the former version of ROS in terms of port exposure, contextualized in the approach considered to protect the system network.  
 
 Many researches were made regarding this issue that ROS faces, one in particular that explored the IPv4 address space of the Internet for instances of ROS, named \textit{Scanning the Internet for ROS: A View of Security in Robotics Research} \cite{8794451}, with the goal of identifying ROS vulnerable hosts, mostly master nodes since they provide information about their related topics and node's parameters, mainly by port scanning, so that developers could be aware of the possibility of exposure of their robots. % The performed scans furnished information about hosts that could either be a sensor, an actuator or even a simulator. Topics were also identified since they provide evidence of what is likely to be available to an attacker. This study is rather relevant because of how easily can attackers gather information about potential robots, and control them further on, through the public Internet, making it unavoidable to develop mechanisms concerning security.
 
@@ -21,9 +27,10 @@ Following the need of supplying security assurance over ROS applications, severa
 
 The present works addressing ROS security methods tend to concern solutions to prevent vulnerabilites and issues that might compromise robotic applications deployed, while considering performance as priority. In terms of applying formal methods to verify properties regarding the domain of ROS2 and ROS2 security as models, there are minimal existent works. Despite this, the following section consists of several articles proposed to validate robotic systems, using formal methods as core.
 
-% \subsection{Static Analysis}\label{s:relWork-sa}
-
 \subsection{Analysis and Verification}\label{s:relWork-pv}
+
+%Destacar Haros
+%Restantes
 
 Static analysis over ROS represents a major contribution to this domain, in which researchers aim to tackle issues arised from miss configurations or code inconsistencies. The noteworthy \textit{HAROS} framework \cite{santos2016framework} holds great value thanks to its contribution on improving ROS's software quality. \textit{HAROS} makes use of several analysis techniques to exert quality evaluation of ROS software, followed by ways of feedbacking inconsistencies using predefined code metrics. As this framework seeks to be flexible when it comes to adding functionality, further static analysis works improvements have been proposed as plugins. In both \citenum{santos2019static} and \citenum{santos2018property}, it is presented additional functionality to the framework, through applying architectural considerations over metamodel designing, where the latter supports the former by supplying property-based specifications. These techniques confers great help back to developers, since static analysis offers advantageable usage over raw review of software code. 
 
@@ -33,4 +40,4 @@ As ROS2 domain regards the use of DDS communication protocol, a few works on DDS
 
 A few studies on robotics should be recognized in which techniques such as model-checking were performed. Despite the fact that they do not address the domain of ROS, they nonetheless give helpful background for the robotics research over formal approaches. A case study, mentioned in \citenum{near2011lightweight}, presents a novel approach over systems that require static analysis based on software assumptions and proper analysis within its environment usage, where user-interaction comes in hand. Concerning this novel idea, a medical system is concerned as a case study, where multiple safety-based considerations are expected, as well as, an end-to-end critical property that must be satisfied over the entire analysis course. Another notable work regarding former analysis using Alloy specification language is presented in \citenum{mansoor2018modeling}, where a safety-critical scenario is proposed under the domain of surgical robots. The formal techniques used allows overview over a surgical robot arm, taking into consideration possible violations of important safety properties. Although these studies presents favorable outcomes, their focus lies on a particular area of study. As a result, they lack on providing solutions to a vast majority of situations.
 
-\section{Current Work}\label{s:currWork}
+\section{Current Work}\label{c:currWork}
