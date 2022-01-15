@@ -43,11 +43,21 @@ Regarding the SROS \cite{white2016sros} initial proposal, \citeauthor{white2018p
 
 In \citenum{white2018procedurally}, \citeauthor*{white2018procedurally} addresses robotics security through a proposed framework that focuses on handling access control policies for robotic software, with the intention of adding functionality to SROS \cite{white2016sros}. The latter offers an interesting perspective on leveraging access-control through a well-typed markup language schema, the \textit{ComArmor} configuration language, where privileges of objects is explicitly defined over policies. Then, profiles are used to arrange these policies in a hierarchical manner, binding namespaces to objects privileges, utilizing attachment expressions with predefined permissions denoted as rules. Rules are defined as a set of permissions for a given object, where each permission has a corresponding value that could either be allow or deny. The evaluation of this policy schema as a proof of concept was done by implementing it in a cryptographic framework called \textit{Keymint}. The latter follows similar authentication and cryptographic patterns as the initial SROS \cite{white2016sros}, where security artifacts and document keys are stored in respective keystores. The incorporation of the ComArmor language into Keymint adds significant value to the framework since it allows for reasoning about how to manage policy control prior to implementing any authentication mechanism, such as generating permission and governance files. The framework is then tested using a standard ROS example of a basic publisher and simple subscriber interacting over a topic. Thus, this approach provides a methodical testing procedure where both application satisfiability and access control policies implementation are overviewed, adding significant value back to the framework as it is possible to define higher level policies to allow for transport-independent access control definitions.
 
+Following the deployment of DDS in Robot Operating System 2, the majority of security problems were alleviated. As a result, the literature on the network security enhancements provided by ROS2 is largely concerned with providing an overview of the trade-off between performance and security. 
 
-The literature concerning the network security enhancement that Robot Operating System 2 furnishes are primarily concerned with ways to prevent vulnerabilities and issues that may jeopardize deployed robotic applications, while keeping performance as main priority. 
+A notable work is presented in \citenum{kim2018security}, where the security definition of DDS was explored using current security standards. Also, the implementation of the DDS protocol was evaluated using techniques of static analysis. It provides a framework for doing benchmark evaluations in various network and security configurations to reflect on the needs of real-time applications.
 
-There are few works that use formal methods to verify properties regarding the domain of ROS2 and its security.
-Despite this, the section that follows contains a number of publications that advocate utilizing formal approaches to assess robotic systems. 
+Furthermore, various inquiry studies evaluate ROS2 performance in terms of response time and safety important circumstances. \citeauthor*{maruyama2016exploring} performs a proof-of-concept for the DDS approach to ROS and organize DDS characteristics and recommendations based on multiple assessments, in which DDS capabilities are highly emphasized to properly evaluate differences between the former ROS and ROS2. 
+
+Moreover, in \citenum{diluoffo2018robot}. Another performance study is regarded in \citenum{casini2019response}
+
+
+The \textit{ComArmor} configuration language, presented above in \citenum{white2018procedurally}, confers a great alternative to the SROS2 default policy schema. During the framework's evaluation process, \citeauthor{white2018procedurally} presents a set of gratuitous permissions within SROS2 template through a simple comparative study between both configuration languages. Thus, it discusses possible SROS2 vulnerabilities discovered during the development and experimentation the \textit{Keymint} framework, emphasizing the importance of continuous security evaluation throughout design development cycle.
+
+A noteworthy study is supplemented by \citeauthor*{white2019network}, in \textit{Network Reconnaissance and Vulnerability Excavation of Secure DDS Systems} \cite{white2019network}. 
+
+% There are few works that use formal methods to verify properties regarding the domain of ROS2 and its security.
+% Despite this, the section that follows contains a number of publications that advocate utilizing formal approaches to assess robotic systems. 
 
 
 
