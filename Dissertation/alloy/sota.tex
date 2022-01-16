@@ -436,3 +436,40 @@ run example {
     eventually (adj in visited and Euler in Init)
 } for exactly 5 Node, 1.. steps
 \end{lstlisting}
+
+\section{Related Work}\label{s:relWork-pv}
+
+As reliance on robotic systems grows due to their expanding application across a wide range of domains, these systems concern critical scenarios, where human interaction comes in hand \cite{diluoffo2018robot}. Thus, security should be highly considered upon employing systems that might jeopardize the human's integrity, such as robotics. Additionally, ensuring analysis regarding the system's quality assurance is increasingly becoming a focus of attention. Consequently, it is critical to employ techniques that promote the increase of the system quality, without sacrificing its flexible nature.
+
+This section concerns the study of some relevant studies that introduces to some pertinent quality assurance procedures over the robotics domain. The latter's concentration will be on the following subjects: First, system analysis regarding static procedures will be contextualized, emphasizing a notable framework, called \textit{HAROS}, that performs static evaluation over ROS-based applications; After that, various state-of-art methodologies based on property verification are given as support to this dissertation analysis approach.
+
+Even though this dissertation was devoted to a detailed examination of ROS framework regarding its security deployment, there is no obvious line separating the ROS difficulties from those of other popular multi-configurable robotic software in terms of quality assurance and security overview. As result, a broader range of robotic systems will be explored to give contextualization of some relevant aspects that also fall under the ROS domain.
+
+Analysis through property verification in the ROS framework represents a major contribution to this dissertation domain, in which researchers aim to tackle issues arose from miss configurations or code inconsistencies. Although researchs and tools on analysis of ROS systems are scarce, there are some presented work that might be useful within the context of this dissertation.
+
+For instance, a natural way of performing analysis over a system is by observing the communication architecture. Here, ROS provides a framework for GUI development plugin called \textit{rqt\_graph} \footnote[2]{http://wiki.ros.org/rqt\_graph}, in which ROS developers usually rely on. It is used to depict the network architecture through a graph with run-time statistics. However, this approach lacks on providing trustworthy analysis over more complex networks, where features such as security control are implicit.
+
+A noteworthy study is supplemented by \citeauthor*{white2019network}, in \textit{Network Reconnaissance and Vulnerability Excavation of Secure DDS Systems} \cite{white2019network}.
+
+The noteworthy \textit{HAROS} framework, initially proposed by \citeauthor{santos2016framework} in \textit{A framework for quality assessment of ROS repositories} \cite{santos2016framework}, holds great value thanks to its contribution on improving ROS's software quality. \textit{HAROS} makes use of several analysis techniques to exert quality evaluation of ROS software, followed by ways of feedbacking inconsistencies using predefined code metrics. As this framework seeks to be flexible when it comes to adding functionality, further static analysis works improvements have been proposed as plugins.
+
+In both \citenum{santos2019static} and \citenum{santos2018property}, it is presented additional functionality to the framework, through applying architectural considerations over metamodel designing, where the latter supports the former by supplying property-based specifications. These techniques confers great help back to developers, since static analysis offers advantageable usage over raw review of software code. 
+
+Another relevant study regarding the software verification in robotics is presented by \citeauthor{cortesi2013static} in \textit{Static Analysis Techniques
+for Robotics Software Verification} \cite{cortesi2013static}. 
+
+The literature concerning property verification has already been explored through state-of-art model checkers, where safety properties regarding the robotics domain were studied and verified. Within the ROS context, certain techniques were proposed that primarily focused on modeling the ROS node-communication, while real-time properties were also considered as support to the target language.
+ 
+In \citenum{halder2017formal}, \textit{UPPAAL} model checker is used to model ROS applications, supported by a concrete robot example, that is followed by techniques to verify properties regarding its behaviour. 
+
+A remarkable work that duly fits under this dissertation domain of exploration is presented in \citenum{9341085}. Here, \citeauthor{9341085} presents a notable proposal, where \textit{Electrum} \cite{lwspecification}, the former version of the current Alloy Analyzer, is used as an additional plug-in to the already mentioned \textit{HAROS} framework. Through ROS launch configurations, the plugin automatically generated models using Electrum and performs verification over these models, to then feedback issues related to their ROS system behaviour.
+
+As ROS2 domain regards the use of DDS communication protocol, a few works on DDS modelling analysis deserve to be mentioned, as they might give important background for property verification over communications protocols. In \citenum{alaerjan2017modeling}, it is proposed a technique to model the DCPS architectural design that DDS makes use of, alongside with new approaches to the current DDS behaviour. Supported by several modelling techniques for publish-subscribe systems, in \citenum{liu2018formal}, DDS in ROS2 is formalized as a timed automata, consequently followed by model verification over property-checking. These works conceive value concepts and procedures useful for this dissertation contextualization.
+
+A few studies on robotics should be recognized in which techniques such as model-checking were performed. Despite the fact that they do not address the domain of ROS, they nonetheless give helpful background for the robotics research over formal approaches. 
+
+A case study, mentioned in \citenum{near2011lightweight}, presents a novel approach over systems that require static analysis based on software assumptions and proper analysis within its environment usage, where user-interaction comes in hand. Concerning this novel idea, a medical system is concerned as a case study, where multiple safety-based considerations are expected, as well as, an end-to-end critical property that must be satisfied over the entire analysis course. 
+
+Another notable work regarding former analysis using Alloy specification language is presented in \citenum{mansoor2018modeling}, where a safety-critical scenario is proposed under the domain of surgical robots. The formal techniques used allows overview over a surgical robot arm, taking into consideration possible violations of important safety properties. 
+
+Although these studies presents favorable outcomes, their focus lies on a particular area of study. As a result, they lack on providing solutions to a vast majority of situations.
