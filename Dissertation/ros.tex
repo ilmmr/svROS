@@ -2,13 +2,13 @@
 
 Robotic systems have emerged into several scenarios, where its usage ranges between basic processes automation, up to full performance over critical tasks, consequently causing the complexity increase in these domains. 
 
-Due to the wide variety of robotic hardware presented in multiple domains, concerning about software development is rather difficult \cite{cousins2011exponential}. The reuse of code is non-trivial, and therefore, large-scale development is rendered untenable. The Robotic Operating System (ROS) presents itself as a middleware system, created to facilitate robotic system development in large scale.
+Due to the wide variety of robotic hardware presented in multiple domains, concerning about software development is rather difficult \cite{cousins2011exponential}. The reuse of code is non-trivial, and therefore, large-scale development is rendered untenable. The \textit{Robotic Operating System} (ROS) presents itself as a middleware system, created to facilitate robotic system development in large scale.
 
 In ROS, software flexibility was prioritized above all else, meaning that values like security were disregarded. Thus, ROS-based applications tend to face increased security risks, related to the exposure of the whole robotic network. Due to the scale and scope of the robotics growth, security insurance must be addressed as a developing priority \cite{diluoffo2018robot, kim2018security}.
 
-The upgraded version of ROS, Robot Operating System 2 (ROS2), presents itself as a framework for developing robotic systems, supported by the Data Distribution Service (DDS) standard. Multiple middleware implementations are built over this standard, which provides numerous DDS-based specifications as well as valuable Quality of Service (QoS) transport parameters.
+The upgraded version of ROS, \textit{Robot Operating System 2} (ROS2), presents itself as a framework for developing robotic systems, supported by the \textit{Data Distribution Service} (DDS) standard. Multiple middleware implementations are built over this standard, which provides numerous DDS-based specifications as well as valuable \textit{Quality of Service} (QoS) transport parameters.
 
-The DDS-Security specification \cite{dds-s} aims to supply multiple plugins regarding the security domain. Consequently, ROS2 yields a wider command toolset compared to the former version of ROS, as they bring forth to a toolset, the Secure Robot Operating System 2 (SROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
+The \textit{DDS-Security} specification \footnote{https://www.omg.org/spec/DDS-SECURITY/1.1/} aims to supply multiple plugins regarding the security domain. Consequently, ROS2 yields a wider command toolset compared to the former version of ROS, as they bring forth to a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset, concerning the security functionality that DDS-Security plugins offer.
 
 This chapter introduces necessary background information over the major concepts on which this thesis rests. First, it is presented a detailed introduction to the concepts around Robot Operating System (ROS), as well as the evolution approach that ROS faced towards providing security to its deployed systems. Regarding this goal, Data Distribution Service (DDS) and its integration on Robot Operating System 2 (ROS2) must be contextualized beforehand.
 
@@ -39,15 +39,15 @@ Formerly, due to the sheer wide capabilities controlled by the master, this cent
 
 Many research communities tried to fix these real-time issues by proposing potential solutions, while supporting the same architecture design. Unfortunately, fell short of meeting the requirements of real-time applications. It became clear to the ROS community that the framework had architectural limitations that could not be rearranged using the same design approach \cite{maruyama2016exploring, dieber2020penetration}.
 
-The \textit{Robot Operating System 2} comes as a complete refactoring of ROS, with the aim of increase the framework's real-time capabilities, by allowing the development of time-critical control over ROS, as it moves away from the former architectural design towards the implementation of an external middleware that can support the production needs of the outgrowing robotic systems \cite{kim2018security, casini2019response}.
+The Robot Operating System 2 comes as a complete refactoring of ROS, with the aim of increase the framework's real-time capabilities, by allowing the development of time-critical control over ROS, as it moves away from the former architectural design towards the implementation of an external middleware that can support the production needs of the outgrowing robotic systems \cite{kim2018security, casini2019response}.
 
 \subsection{Data Distribution Service}
 
-The \textit{Data Distributed System} (DDS) \cite{3} is an \textit{Object Management Group} (OMG) middleware standard. The standard was developed to address the demand for enhanced interoperability across different vendors' middleware frameworks, directly addressing data communication between nodes that belong to a \textit{publish-subscribe} communication architecture, for real-time and embedded systems. 
+The Data Distributed System (DDS) \footnote{https://www.omg.org/omg-dds-portal/} is an \textit{Object Management Group} (OMG) middleware standard. The standard was developed to address the demand for enhanced interoperability across different vendors' middleware frameworks, directly addressing data communication between nodes that belong to a \textit{publish-subscribe} communication architecture, for real-time and embedded systems. 
 
 A communication middleware aims to ease the complexity behind creating and maintaining communication architectures. It is responsible for handling relevant aspects like network configuration, communication establishment, data sharing and low-level details. As a result, system developers can mainly focus on their applications purposes, rather than concerning about information moving across levels \cite{dds-what-is}. 
 
-DDS uses the \textit{Data-Centric Publish Subscribe} (DCPS) model as its communication model approach. DCPS is based on a publish-subscribe pattern, where the \textit{data-centric} messaging technique is implemented. It conceptually creates a virtual \textit{Global Data Space}, acessible by any DDS-based application, where data is properly delivered to the applications which quest for it, saving bandwith and processing power \cite{3, pardo2005introduction}. A \textit{domain participant} enables an application to participate in the \textit{Global Data Space}, either as a \textit{publisher} or as a \textit{subscriber}, according to their role on data exchange \cite{maruyama2016exploring, alaerjan2017modeling, dcps-rtps}. 
+DDS uses the \textit{Data-Centric Publish Subscribe} (DCPS) model as its communication model approach. DCPS is based on a publish-subscribe pattern, where the \textit{data-centric} messaging technique is implemented. It conceptually creates a virtual \textit{Global Data Space}, acessible by any DDS-based application, where data is properly delivered to the applications which quest for it, saving bandwith and processing power \cite{3, pardo2005introduction}. A \textit{domain participant} enables an application to participate in the Global Data Space, either as a \textit{publisher} or as a \textit{subscriber}, according to their role on data exchange \cite{maruyama2016exploring, alaerjan2017modeling, dcps-rtps}. 
 
 \begin{figure}[H]
     \centering
@@ -58,7 +58,7 @@ DDS uses the \textit{Data-Centric Publish Subscribe} (DCPS) model as its communi
 
 To properly address the data transportation through physical network, DDS offers a wire specification protocol called \textit{Real-Time Publish-Subscribe Wire Protocol} (RTPS) \cite{rtps}, providing automatic discovery between participants. This protocol also works under a publish-subscribe policy over best-effort transports, where data transmission between endpoints is handled \cite{yun2017data}. RTPS allows multiple applications, that could differ on their used DDS implementations, to interoperate with each other as network domain participants \cite{dcps-rtps, alaerjan2017modeling}.
 
-Furthermore, RTPS was designed to employ \textit{Quality of Service} (QoS) profiles, which allow for the specification of various transport policies, formerly not covered by DDS. This approach offers flexibility over communication configuration and development versatility, allowing the developer to specify whatever QoS satisfies its system's communication needs \cite{alaerjan2017modeling, diluoffo2018robot, maruyama2016exploring}. 
+Furthermore, RTPS was designed to employ Quality of Service (QoS) profiles, which allow for the specification of various transport policies, formerly not covered by DDS. This approach offers flexibility over communication configuration and development versatility, allowing the developer to specify whatever QoS satisfies its system's communication needs \cite{alaerjan2017modeling, diluoffo2018robot, maruyama2016exploring}. 
 
 Briefly, DDS leverages the premise of a transport-independent virtualized \textit{Data Bus} to address network resources' distribution, in which stateful data is distributed through the network. The involved applications can access this data in motion, representing an architecture with no single point of failure, respectively enabling a realiable way of ensuring data integrity. Consequently, by adopting this approach, the load on the network is independent of the number of applications, making it easily scalable.
 
@@ -72,11 +72,11 @@ Briefly, DDS leverages the premise of a transport-independent virtualized \texti
 
 \subsection{ROS2-DDS Architecture}
 
-As previously stated, the \textit{Robot Operating System 2} was developed to address the former architecture lack of support for real-time systems, mainly due to its architecture design that relied on their own middleware specification. To address this, ROS2 middleware approach is built upon the DDS framework \cite{maruyama2016exploring}, leveraging DDS for its messaging architecture, where communication and transport configuration are handled. 
+As previously stated, the Robot Operating System 2 was developed to address the former architecture lack of support for real-time systems, mainly due to its architecture design that relied on their own middleware specification. To address this, ROS2 middleware approach is built upon the DDS framework \cite{maruyama2016exploring}, leveraging DDS for its messaging architecture, where communication and transport configuration are handled. 
 
 As far as dependencies are concerned, DDS implementations have light sized dependencies, often related to language implementation libraries, easing the complexity behind installing and running dependencies \cite{ros-on-dds}.
 
-The middleware's on-top layer regards the ROS client library (\textit{rcl}), already implemented in the former ROS architecture. This layer accounts the availability of ROS concepts to the Application layer, as it provides APIs to ease the software implementation by ROS developers \cite{ros2documentation}. As ROS aims to support different programming languages over the same computing context, each language-specficic API must have its corresponding client library (\textit{rclcpp} regarding \textit{C++} and \textit{rclpy} regarding \textit{Python}). The \textit{rcl} accounts these client libraries by abstracting their specification, consequently reducing code duplication \cite{rcl, casini2019response}.
+The middleware's on-top layer regards the ROS client library (\textit{rcl}) \footnote{http://wiki.ros.org/Client\%20Libraries}, already implemented in the former ROS architecture. This layer accounts the availability of ROS concepts to the Application layer, as it provides APIs to ease the software implementation by ROS developers \cite{ros2documentation}. As ROS aims to support different programming languages over the same computing context, each language-specficic API must have its corresponding client library (\textit{rclcpp} regarding \textit{C++} and \textit{rclpy} regarding \textit{Python}). The \textit{rcl} accounts these client libraries by abstracting their specification, consequently reducing code duplication \cite{rcl, casini2019response}.
 
 \begin{figure}[H]
     \centering
@@ -91,7 +91,7 @@ In order to abstract \textit{rcl} from the specifications complexity of these im
 
 \subsection{Computation Graph}
 
-From a logical perspective \cite{casini2019response}, ROS applications are composed of many software modules that operate as computation nodes, allowing its participation into the ROS \textit{Global Data Space}. The use of publish-subscribe model approach as communication type, through \textit{message-passing} patterns, confers additional concept complexity to the application architecture, where the latter can be naturally represented as a \textit{computation graph} \cite{cousins2010welcome}.
+From a logical perspective \cite{casini2019response}, ROS applications are composed of many software modules that operate as computation nodes, allowing its participation into the ROS Global Data Space. The use of publish-subscribe model approach as communication type, through message-passing patterns, confers additional concept complexity to the application architecture, where the latter can be naturally represented as a computation graph \cite{cousins2010welcome}.
 
 The application's computation graph presents itself as a graphical network, where runtime named entities have their unique role when it comes to data distribution.
 
@@ -109,8 +109,7 @@ Message-passing is the primary means by which nodes communicate with one another
 
 ROS computation graph provides \textit{3} different ways of establish node communication, those being \textit{Topics}, \textit{Actions} and \textit{Services}. These communication mechanisms have different interfaces, specified in different folders with unique namespaces \cite{ros2documentation}.
 
-The concrete mechanisms
-\textit{Topics} are perhaps the most common method, naturally perceived as middle-communication buses, over which messages are passed through. As semantic approach, communication through topics is handled by the publishing-subscribing pattern. A node publishes the message to any number of topics, that are then subscribed by nodes that want to get access to that message. Topics provide a multicast routing scheme, where publish data is casted into the multiple nodes that are subscribed to the topic \cite{casini2019response}.
+Topics are perhaps the most common method, naturally perceived as middle-communication buses, over which messages are passed through. As semantic approach, communication through topics is handled by the publishing-subscribing pattern. A node publishes the message to any number of topics, that are then subscribed by nodes that want to get access to that message. Topics provide a multicast routing scheme, where publish data is casted into the multiple nodes that are subscribed to the topic \cite{casini2019response}.
 
 \begin{figure}[H]
     \centering
@@ -123,18 +122,18 @@ A specific \textit{topic} is created upon specifying its entity name over either
 
 Even though topics are the most conventional way of communication, due to its multicast scheme, subscribers can not be identified by the publishers, so logging and synchronization becomes rather difficult \cite{intro-ros}.
 
-The use of \textit{services} enables a client node, that can also be seen as a topic subscriber, to request data from a server, that likewise a topic publisher, furnish data through a service. This is a bidirectional synchronous form of communication based on a request-response pattern.
+The use of services enables a client node, that can also be seen as a topic subscriber, to request data from a server, that likewise a topic publisher, furnish data through a service. This is a bidirectional synchronous form of communication based on a request-response pattern.
 
-Other notable way of exchanging data is by setting goals through \textit{Actions}. Actions are intended to process long-running tasks, where the client sends a goal request to the server node, that confirms the receiving of this goal. The server might provide feedback to the client before providing a response to the client. 
+Other notable way of exchanging data is by setting goals through Actions. Actions are intended to process long-running tasks, where the client sends a goal request to the server node, that confirms the receiving of this goal. The server might provide feedback to the client before providing a response to the client. 
 
 
 \subsubsection{Launch Files}
 
-A conventional way of deploying a ROS application is through the use of \textit{launch files}, enabling the multi-configuration over entire robotic applications, where network nodes can be individually pre-configurated. Therefore, ROS makes use of the \textit{roslaunch} to automatically initialize the whole network, simultaneously launching each node \cite{intro-ros}. This provides a simpler way of monitoring the system nodes. 
+A conventional way of deploying a ROS application is through the use of launch files, enabling the multi-configuration over entire robotic applications, where network nodes can be individually pre-configurated. Therefore, ROS makes use of the \textit{roslaunch} to automatically initialize the whole network, simultaneously launching each node \cite{intro-ros}. This provides a simpler way of monitoring the system nodes. 
 
-The Figure \ref{fig:ts-rqt-graph} depicts the network architecture corresponding to an ROS application well-known example called the \textit{TurtleSim}. This application is mainly composed by \textit{two nodes}, that perform together towards moving a turtle. Additional nodes were implemented, in order to add complexity to the current network, as to later support security as a proper example. Briefly, the \textit{multiplexer} node acts as a topic selector between two different subscribed topics, where each of them was respectively associated with a priority value. Based on the priority valued, the \textit{multiplexer} node forwards the commands, related to the selected topic, into the \textit{turtlesim} node, triggering the turtle's movement. 
+The Figure \ref{fig:ts-rqt-graph} depicts the network architecture corresponding to an ROS application well-known example called the \textit{TurtleSim}. This application is mainly composed by \textit{2} nodes, that perform together towards moving a turtle. Additional nodes were implemented, in order to add complexity to the current network, as to later support security as a proper example. Briefly, the \textit{multiplexer} node acts as a topic selector between two different subscribed topics, where each of them was respectively associated with a priority value. Based on the priority valued, the \textit{multiplexer} node forwards the commands, related to the selected topic, into the \textit{turtlesim} node, triggering the turtle's movement. 
 
-The \textit{rqt} \footnote[1]{ROS provides a GUI tool called \textit{rqt}, that assists developers in manipulating the network elements, in a more user-friendly manner.} visualizer, \textit{rqt\_graph}, allows the developer to perform analysis over a graphical visualization of the network computation graph.
+The \textit{rqt} \footnote{ROS provides a GUI tool called \textit{rqt}, that assists developers in manipulating the network elements, in a more user-friendly manner.} visualizer, \textit{rqt\_graph}, allows the developer to perform analysis over a graphical visualization of the network computation graph.
 
 \begin{figure}[H]
     \centering
@@ -164,13 +163,13 @@ Distinctive namespaces allow the system to start the nodes, without any name nor
 
 \subsubsection{Parameters}   
 
-Another relevant concept behind ROS is the existence of nodes \textit{parameters}, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a global \textit{parameter server}, managed by its corresponding ROS Master \cite{intro-ros}. However, in ROS2 each node declares and manages its own parameters, by using the predefined commands \textit{get} and \textit{set}. Additionally, using a parameter function callback, the node's parameters can easily be edited \cite{ros2documentation}.
+Another relevant concept behind ROS is the existence of nodes parameters, that allows individual configuration of the network nodes. In the former version of ROS, the node parameters were controlled by a global \textit{Parameter Server}, managed by its corresponding ROS Master \cite{intro-ros}. However, in ROS2 each node declares and manages its own parameters, by using the predefined commands \textit{get} and \textit{set}. Additionally, using a parameter function callback, the node's parameters can easily be edited \cite{ros2documentation}.
         
 \subsubsection{Node Composition}  
 
 Usually a node is attached to a single process, but it is possible to combine multiple nodes into a single process, structurally abstracting some network parts, while improving the network's performance \cite{ros2documentation}. However, there is a slight difference about how ROS and ROS2 approaches node composition. 
 
-In the former version of ROS, node composition was done over the combination of \textit{nodelets}, intentionally designed to ease the cost of overusing TCP for message-passing between nodes \cite{ros-nodelets}.  Supported by the former idea of \textit{nodelets}, ROS2 introduces the \textit{components} as software code compiled into shared libraries, that can be loaded into a \textit{component container} process at runtime in the network, ensuring node composition \cite{ros2documentation}. 
+In the former version of ROS, node composition was done over the combination of \textit{nodelets}, intentionally designed to ease the cost of overusing TCP for message-passing between nodes \cite{ros-nodelets}.  Supported by the former idea of nodelets, ROS2 introduces the \textit{components} as software code compiled into shared libraries, that can be loaded into a \textit{component container} process at runtime in the network, ensuring node composition \cite{ros2documentation}. 
 
 %Node composition could also be applied for security matters. Suppose a scenario where multiple nodes respect the same security policies. By combining them into a single process, the mapping into this set of rules would be direct, easing the usage of security enclaves.
            
@@ -198,7 +197,7 @@ However, due to the high non-linearity and complexity of real-time systems, impl
 
 \subsection{DDS-Security Specification}
 
-The \textit{Object Management Group} (OMG) \cite{3} accounts security integration by supplying an in-depth specification, consequently adding features to the already developed DDS standard. The \textit{DDS-Security} is a specification that serves as a security extension to the DDS protocol, defined by a set of plugins (Authentication, Access Control, Cryptographic, Logging, Data Tagging), combined in a \textit{Service Plugin Interface (SPI)} architecture \cite{8442103, ros-dds-integration}.
+The Object Management Group accounts security integration by supplying an in-depth specification, consequently adding features to the already developed DDS standard. The DDS-Security is a specification that serves as a security extension to the DDS protocol, defined by a set of plugins (Authentication, Access Control, Cryptographic, Logging, Data Tagging), combined in a \textit{Service Plugin Interface (SPI)} architecture \cite{8442103, ros-dds-integration}.
 
 \begin{figure}[H]
     \centering
@@ -211,19 +210,19 @@ This specification enables its integration by furnishing a \textit{Security Mode
 
 \subsubsection{Authentication}
 
-Upon considering a secure environment over the DDS \textit{Global Data Space}, data integrity can not be prone to unauthorized usage. Therefore, data exchange requires verification procedures to properly identity the authenticity each DDS domain participant.
+Upon considering a secure environment over the DDS Global Data Space, data integrity can not be prone to unauthorized usage. Therefore, data exchange requires verification procedures to properly identity the authenticity each DDS domain participant.
 
 The Authentication plugin confers the most valued plugin to the entire SPI architecture, as it provides means to validate the identity of the application, later regarded as a domain participant \cite{dds-s, ros-dds-integration}. 
 
 Each participant must be authenticated prior to entering the data space \cite{white2019network}. Therefore, participants are presented to the secured environment regarding the \textit{Public Key Infrastructure} (PKI). This latter is in charge of issuing asymmetric keys to each participant, a \textit{public} and \textit{private} key respectively, that are used for both authentication and encryption procedures \cite{diluoffo2018robot, ros-dds-integration}. 
 
-Moreover, regarding the issuer identity, the PKI provides an \textit{X.509 certificate}, that maps a distinguished domain name (DN) to the participant's public key \cite{diluoffo2018robot, white2016sros}. This certificate is accountable and signed by a trusted certificate authority (CA) \cite{white2019network, white2016sros, ros-dds-integration}. It ensures authenticity between asymmetric key pairs (both \textit{public} and \textit{private}) \cite{diluoffo2018robot}. 
+Moreover, regarding the issuer identity, the PKI provides an \textit{X.509 certificate}, that maps a distinguished domain name (DN) to the participant's public key \cite{diluoffo2018robot, white2016sros}. This certificate is accountable and signed by a trusted certificate authority (CA) \cite{white2019network, white2016sros, ros-dds-integration}. It ensures authenticity between asymmetric key pairs (both public and private) \cite{diluoffo2018robot}. 
 
 The communication establishment over different participants must be preceded by a mutual handshake, where keys and certificates are exchanged to guarantee their authenticity \cite{white2019network, kim2018security}. Additionally, the DDS permissions of a domain peer are also concerned within this handshake. The control over permission distribution is respectively handled by the Access Control plugin.
 
 \subsubsection{Access Control}
 
-As aforementioned, the defined DDS specification handles policy control over the DDS domain through the Access Control plugin, where authenticated parties respective operations are imposed by policy restrictions \cite{dds-s, white2019network}. Domains within the \textit{Global Data Space} are controlled over a set of DDS-related capabilities, that are either assigned or restricted to the authenticated participants \cite{ros-dds-integration}. 
+As aforementioned, the defined DDS specification handles policy control over the DDS domain through the Access Control plugin, where authenticated parties respective operations are imposed by policy restrictions \cite{dds-s, white2019network}. Domains within the Global Data Space are controlled over a set of DDS-related capabilities, that are either assigned or restricted to the authenticated participants \cite{ros-dds-integration}. 
 
 Authenticated participants must be granted access to certain domains, where their roles on data transportation must be accordingly accounted by access permissions. If a participant is perceived as a domain data publisher, the domain restrictions must provide publishing privileges to its data topic \cite{white2019network}. 
 
@@ -245,7 +244,7 @@ Notably, these configuration files are signed by a trusting Certificate Authorit
 
 The DDS-Security specification ensures encryption and authentication using \textit{OpenSSL}, while accounting security functions based on encryption standards \cite{takemoto2019performance}. 
 
-Accordingly, it implements a handshake-based standard, concerning the \textit{OpenSSL} protocols, \textit{Secure Sockets Layer} (SSL) and \textit{Transport Layer Security} (TLS), which are used respectively used to ensure encryption over the network communication \cite{white2016sros, kim2018security}. The handshake is used to achieve mutual authentication within participants over the DDS domain \cite{white2019network}.
+Accordingly, it implements a handshake-based standard, concerning the OpenSSL protocols, \textit{Secure Sockets Layer} (SSL) and \textit{Transport Layer Security} (TLS), which are used respectively used to ensure encryption over the network communication \cite{white2016sros, kim2018security}. The handshake is used to achieve mutual authentication within participants over the DDS domain \cite{white2019network}.
 
 Following the participant key assignment, the \textit{Diffie-Hellman} key exchange protocol properly accounts the mentioned handshake, allowing both participants to exchange data over a shared secret key \cite{kim2018security}. % while accounting their own public certificate information \cite{kim2018security}. 
 It enjoys the inter-exchange of both asymmetric keys, issued to each domain participant during the domain authentication procedure, in order to perform sign (using the private key) and verify (using the public key) operations \cite{kim2018security, diluoffo2018robot}.
@@ -261,17 +260,17 @@ As communication establishment is duly achieved throughout this handshake proces
     \label{fig:ros_aes}
 \end{figure}
 
-The \textit{key cryptosystem} algorithm \cite{takemoto2019performance} presented in the \textit{Advanced Encryption Standard (AES)} considers the usage of functions towards achieving data encryption over the established communication. It enables configuration over data encryption, allowing both block and streaming transfer of ciphered data \cite{diluoffo2018robot}.
+The key cryptosystem algorithm \cite{takemoto2019performance} presented in the \textit{Advanced Encryption Standard} (AES) considers the usage of functions towards achieving data encryption over the established communication. It enables configuration over data encryption, allowing both block and streaming transfer of ciphered data \cite{diluoffo2018robot}.
 
 Here, the algorithm combines the shared key established with the message passed over the secure channel. Moreover, it is desirable to implement the \textit{Galois MAC (AES-GMAC)} encryption algorithm, that is based on block cipher operations, consequently adding encryption functionality to the AES algorithm, through a \textit{Message Authentication Code (MAC)} encryption function \cite{takemoto2019performance, kim2018security}.
 
-Every cryptography-related operations are handled by the SPI's Cryptographic plugin. Naturally, these cryptographic capabilities, linked to the asymmetric key cryptography, are then used by both Authentication and Access Control plugins, ensuring authenticity support over their corresponding opeartions \cite{ros-dds-integration, diluoffo2018robot}.
+Every cryptography-related operations are handled by the SPI's Cryptographic plugin. Naturally, these cryptographic capabilities, linked to the asymmetric key cryptography, are then used by both Authentication and Access Control plugins, ensuring authenticity support over their corresponding opearations \cite{ros-dds-integration, diluoffo2018robot}.
 
 \subsection{Security Integration in ROS2}
 
-As result of the \textit{Data Distribution Service} (DDS) implementation as a flexible middleware interface in the ROS2 architecture, issues regarding security is no longer mainly ROS-dependent. Thus, when it comes to addressing security over communication, and subsequently data protection enhancement, ROS2 is heavily reliant on how the DDS standard is able to manage security \cite{kim2018security, 8794451}.
+As result of the DDS implementation as a flexible middleware interface in the ROS2 architecture, issues regarding security is no longer mainly ROS-dependent. Thus, when it comes to addressing security over communication, and subsequently data protection enhancement, ROS2 is heavily reliant on how the DDS standard is able to manage security \cite{kim2018security, 8794451}.
 
-Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over ROS's application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the \textit{Secure Robot Operating System 2} (SROS2) toolset \cite{sros2-gh}, extending ROS2's functionality to make use of the DDS-Security functionality. 
+Every DDS implementation supported by ROS2 makes use of the DDS-Security specification, enabling security over ROS's application environment. Even though ROS2 is deployed without security mechanisms by default \cite{ros-dds-integration}, ROS2 provides a toolset, the Secure Robot Operating System 2 (SROS2) toolset \footnote{https://github.com/ros2/sros2}, extending ROS2's functionality to make use of the DDS-Security functionality. 
 
 The control over these tools are done by \textit{rcl}, providing security over the Application layer, while DDS is capable of providing security over the communication architecture \cite{kim2018security}. SROS2 configuration is done over applying a set of security files to each ROS2 participant, with regard to how DDS handles certificate assignment to their participants \cite{white2016sros, ros-dds-integration}. 
 
@@ -283,22 +282,22 @@ The variety of capabilities in SROS2 toolset attempts to aid with security confi
 
 \subsubsection{Security Enclaves}
 
-As aforementioned, ROS2 relies on how handles DDS security over their \textit{Domain Participants}. DDS imposes the authentication of each participant prior to joining its \textit{Global Data Space}, where the Certificate Authority and an established PKI comes in hand \cite{white2019network, white2016sros}.
+As aforementioned, ROS2 relies on how handles DDS security over their \textit{Domain Participants}. DDS imposes the authentication of each participant prior to joining its Global Data Space, where the Certificate Authority and an established PKI comes in hand \cite{white2019network, white2016sros}.
 
 Accordingly, the authentication process within the ROS2 network relies on the notion of a network enclave, where authentication and control artifacts are stored to properly achieve security over the network data space \cite{ros-security-enclaves}. Conceptually, an enclave is a secure region in the application address space that maintains confidentiality and integrity, while computations are being carried out on data.
 
 Previously, a node was perceived as a separated DDS participant. However, by considering node composition as a reliable way of matching multiple nodes simultaneously to the same security domain, this node perception as participants can not be taken into account, due to causing non-negligible overhead, as memory space becomes rather difficult to handle \cite{ros-security-enclaves, ros-access-control}.
 
-Concerning the enclave authentication procedure, its security artifacts must be addressable by a DDS participant, where the latter is associated to a node sharing context, instead of being perceived as a single node \cite{ros-security-enclaves}. Thus, when it comes to apply different policies over different nodes, that are matched in the same node context, a set of node \textit{profiles} can be specified under the enclave notation. 
+Concerning the enclave authentication procedure, its security artifacts must be addressable by a DDS participant, where the latter is associated to a node sharing context, instead of being perceived as a single node \cite{ros-security-enclaves}. Thus, when it comes to apply different policies over different nodes, that are matched in the same node context, a set of node profiles can be specified under the enclave notation. 
  
 \vspace{0.5cm}
 \textbf{Access Control within Enclaves}
 
 The SROS2 toolset offers a well-typed markup language \textit{XML schema} \cite{ros-access-control}, where security policies bind profiles to access permissions for network objects, granting privileges back to a certain profile. \textit{Profiles} are implemented under the \textit{enclave} declaration, to duly support the node composition into a single process, enabling the possibility of combining multiple profiles, respectively addressing its corresponding node. % Typically, each \textit{enclave} declaration is linked to a corresponding ROS node, naturally perceived as a DDS participant.
 
-\textit{Objects} are classified over a subsystem type, structurally characterized by permissions tags. Then \textit{object privileges} are controlled over access values, either \textit{allow} or \textit{deny}, attributed to their corresponding permissions tags \cite{ros-access-control, white2018procedurally}. Briefly, each node profile is assigned to policies that concern some object identifier (OID). Each OID maps to a specific action, that is identified over an access value, allow or deny respectively \cite{white2016sros}.
+\textit{Objects} are classified over a subsystem type, structurally characterized by permissions tags. Then object privileges are controlled over access values, either \textit{allow} or \textit{deny}, attributed to their corresponding permissions tags \cite{ros-access-control, white2018procedurally}. Briefly, each node profile is assigned to policies that concern some object identifier (OID). Each OID maps to a specific action, that is identified over an access value, allow or deny respectively \cite{white2016sros}.
 
-The policy design approach works under the \textit{Mandatory Access Control} (MAC), that denies any privilege by default. The only way of allowing access to any object, is by explicitly specifying the subject's privilege access \cite{ros-access-control, white2018procedurally, white2016sros}. Naturally, this policy approach confers great value towards security, since it denies any attempt of privilege gaining attack by ROS-based packages from non-trusted sources \cite{white2016sros}.
+The policy design approach works under the \textit{Mandatory Access Control}, that denies any privilege by default. The only way of allowing access to any object, is by explicitly specifying the subject's privilege access \cite{ros-access-control, white2018procedurally, white2016sros}. Naturally, this policy approach confers great value towards security, since it denies any attempt of privilege gaining attack by ROS-based packages from non-trusted sources \cite{white2016sros}.
 
 Depicted in the Figure \ref{fig:ros-access-file}, it is presented a policy file where access control privileges are distributed across enclaves, and their inherited profiles. Recall the \textit{TurtleSim} example, the following \textit{XML} policy file addresses the access to topics for each respective enclave. 
 
@@ -386,7 +385,7 @@ In \citenum{white2018procedurally}, \citeauthor*{white2018procedurally} address 
 
 The evaluation of this policy schema as a proof of concept was done by implementing it in a cryptographic framework called \textit{Keymint}. The latter follows similar authentication and cryptographic patterns as the initial SROS \cite{white2016sros}, where security artifacts and document keys are stored in respective keystores. The incorporation of the ComArmor language into Keymint adds significant value to the framework since it allows for reasoning about how to manage policy control prior to implementing any authentication mechanism, such as generating permission and governance files. The framework is then tested using a standard ROS example of a basic publisher and simple subscriber interacting over a topic. Thus, this approach provides a methodical testing procedure where both application satisfiability and access control policies implementation are overviewed, adding significant value back to the framework as it is possible to define higher level policies to allow for transport-independent access control definitions.
 
-The \textit{ComArmor} configuration language, presented above in \citenum{white2018procedurally}, confers a great alternative to the SROS2 default policy schema. During the framework's evaluation process, \citeauthor{white2018procedurally} presents a set of gratuitous permissions within SROS2 template through a simple comparative study between both configuration languages. Thus, it discusses possible SROS2 vulnerabilities discovered during the development and experimentation the \textit{Keymint} framework, emphasizing the importance of continuous security evaluation throughout design development cycle.
+The ComArmor configuration language, presented above in \citenum{white2018procedurally}, confers a great alternative to the SROS2 default policy schema. During the framework's evaluation process, \citeauthor{white2018procedurally} presents a set of gratuitous permissions within SROS2 template through a simple comparative study between both configuration languages. Thus, it discusses possible SROS2 vulnerabilities discovered during the development and experimentation the Keymint framework, emphasizing the importance of continuous security evaluation throughout design development cycle.
 
 Following the deployment of DDS in Robot Operating System 2, the majority of security problems were alleviated. As a result, the literature on the network security enhancements provided by ROS2 is largely concerned with providing an overview of the trade-off between performance and security. Furthermore, various inquiry studies evaluate ROS2 performance in terms of response time and safety important circumstances \cite{maruyama2016exploring, casini2019response}, in which DDS capabilities are highly emphasized to properly evaluate ROS2.
 
