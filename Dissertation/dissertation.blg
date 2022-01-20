@@ -1,0 +1,56 @@
+This is BibTeX, Version 0.99d (TeX Live 2021/Arch Linux)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: dissertation.aux
+The style file: plainnat.bst
+Database file #1: dissertation.bib
+Warning--empty journal in craig2005introduction
+Warning--empty journal in alloy-DJ
+Warning--there's a number but no volume in lamport1977proving
+Warning--empty booktitle in lwspecification
+Warning--empty year in 3
+Warning--empty year in 1
+Warning--empty journal in wahlfairness
+Warning--empty year in wahlfairness
+Warning--empty year in wahlfairness
+You've used 76 entries,
+            2773 wiz_defined-function locations,
+            974 strings with 17620 characters,
+and the built_in function-call counts, 37583 in all, are:
+= -- 3383
+> -- 2079
+< -- 74
++ -- 712
+- -- 636
+* -- 2749
+:= -- 5532
+add.period$ -- 256
+call.type$ -- 76
+change.case$ -- 432
+chr.to.int$ -- 76
+cite$ -- 161
+duplicate$ -- 1843
+empty$ -- 3178
+format.name$ -- 731
+if$ -- 8206
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 65
+newline$ -- 393
+num.names$ -- 304
+pop$ -- 1057
+preamble$ -- 1
+purify$ -- 361
+quote$ -- 0
+skip$ -- 1468
+stack$ -- 0
+substring$ -- 1244
+swap$ -- 374
+text.length$ -- 37
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 811
+warning$ -- 9
+while$ -- 338
+width$ -- 0
+write$ -- 995
+(There were 9 warnings)

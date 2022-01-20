@@ -1,0 +1,500 @@
+\begin{thebibliography}{76}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Alaerjan et~al.(2017)Alaerjan, Kim, and
+  Al~Kafaf]{alaerjan2017modeling}
+Alaa Alaerjan, Dae-Kyoo Kim, and Dhrgam Al~Kafaf.
+\newblock Modeling functional behaviors of dds.
+\newblock In \emph{2017 IEEE SmartWorld, Ubiquitous Intelligence \& Computing,
+  Advanced \& Trusted Computed, Scalable Computing \& Communications, Cloud \&
+  Big Data Computing, Internet of People and Smart City Innovation
+  (SmartWorld/SCALCOM/UIC/ATC/CBDCom/IOP/SCI)}, pages 1--7. IEEE, 2017.
+
+\bibitem[Alpern and Schneider(1987)]{alpern1987recognizing}
+Bowen Alpern and Fred~B Schneider.
+\newblock Recognizing safety and liveness.
+\newblock \emph{Distributed computing}, 2\penalty0 (3):\penalty0 117--126,
+  1987.
+
+\bibitem[Alspaugh(2010)]{alloy-qr}
+Thomas~A. Alspaugh.
+\newblock The alloy quick reference.
+\newblock \url{https://www.ics.uci.edu/~alspaugh/cls/shr/alloy.html}, 2010.
+
+\bibitem[Baier and Katoen(2008)]{baier2008principles}
+Christel Baier and Joost-Pieter Katoen.
+\newblock \emph{Principles of model checking}.
+\newblock MIT press, 2008.
+
+\bibitem[Beckman and Reininger(2018)]{8442103}
+Kai Beckman and Jonas Reininger.
+\newblock Adaptation of the dds security standard for resource-constrained
+  sensor networks.
+\newblock In \emph{2018 IEEE 13th International Symposium on Industrial
+  Embedded Systems (SIES)}, pages 1--4, 2018.
+\newblock \doi{10.1109/SIES.2018.8442103}.
+
+\bibitem[Beyer and Lemberger(2017)]{beyer2017software}
+Dirk Beyer and Thomas Lemberger.
+\newblock Software verification: Testing vs. model checking.
+\newblock In \emph{Haifa Verification Conference}, pages 99--114. Springer,
+  2017.
+
+\bibitem[Breiling et~al.(2017)Breiling, Dieber, and
+  Schartner]{breiling2017secure}
+Benjamin Breiling, Bernhard Dieber, and Peter Schartner.
+\newblock Secure communication for the robot operating system.
+\newblock In \emph{2017 annual IEEE international systems conference (SysCon)},
+  pages 1--6. IEEE, 2017.
+
+\bibitem[Briand and Labiche(2001)]{briand2001uml}
+Lionel Briand and Yvan Labiche.
+\newblock A uml-based approach to system testing.
+\newblock In \emph{International Conference on the Unified Modeling Language},
+  pages 194--208. Springer, 2001.
+
+\bibitem[Brunel et~al.(2021)Brunel, Chemouil, Cunha, and Macedo]{alloy-docs}
+Julien Brunel, David Chemouil, Alcino Cunha, and Nuno Macedo.
+\newblock Formal software design with alloy 6.
+\newblock
+  \url{https://haslab.github.io/formal-software-design/index.html#formal-software-design-with-alloy-6},
+  2021.
+
+\bibitem[Caiazza et~al.(2019)Caiazza, White, and Cortesi]{caiazza2019enhancing}
+Gianluca Caiazza, Ruffin White, and Agostino Cortesi.
+\newblock Enhancing security in ros.
+\newblock In \emph{Advanced Computing and Systems for Security}, pages 3--15.
+  Springer, 2019.
+
+\bibitem[Carvalho et~al.(2020)Carvalho, Cunha, Macedo, and Santos]{9341085}
+Renato Carvalho, Alcino Cunha, Nuno Macedo, and André Santos.
+\newblock Verification of system-wide safety properties of ros applications.
+\newblock In \emph{2020 IEEE/RSJ International Conference on Intelligent Robots
+  and Systems (IROS)}, pages 7249--7254, 2020.
+\newblock \doi{10.1109/IROS45743.2020.9341085}.
+
+\bibitem[Casini et~al.(2019)Casini, Bla{\ss}, L{\"u}tkebohle, and
+  Brandenburg]{casini2019response}
+Daniel Casini, Tobias Bla{\ss}, Ingo L{\"u}tkebohle, and Bj{\"o}rn~B
+  Brandenburg.
+\newblock Response-time analysis of ros 2 processing chains under
+  reservation-based scheduling.
+\newblock In \emph{31st Euromicro Conference on Real-Time Systems (ECRTS
+  2019)}. Schloss Dagstuhl-Leibniz-Zentrum fuer Informatik, 2019.
+
+\bibitem[Clarke(1997)]{clarke1997model}
+Edmund~M Clarke.
+\newblock Model checking.
+\newblock In \emph{International Conference on Foundations of Software
+  Technology and Theoretical Computer Science}, pages 54--56. Springer, 1997.
+
+\bibitem[Clarke et~al.(2011)Clarke, Klieber, Nov{\'a}{\v{c}}ek, and
+  Zuliani]{clarke2011model}
+Edmund~M Clarke, William Klieber, Milo{\v{s}} Nov{\'a}{\v{c}}ek, and Paolo
+  Zuliani.
+\newblock Model checking and the state explosion problem.
+\newblock In \emph{LASER Summer School on Software Engineering}, pages 1--30.
+  Springer, 2011.
+
+\bibitem[Clarke(1976)]{clarke1976program}
+Lori~A Clarke.
+\newblock A program testing system.
+\newblock In \emph{Proceedings of the 1976 annual conference}, pages 488--491,
+  1976.
+
+\bibitem[Cortesi et~al.(2013)Cortesi, Ferrara, and Chaki]{cortesi2013static}
+Agostino Cortesi, Pietro Ferrara, and Nabendu Chaki.
+\newblock Static analysis techniques for robotics software verification.
+\newblock In \emph{IEEE ISR 2013}, pages 1--6. IEEE, 2013.
+
+\bibitem[Cousins(2010)]{cousins2010welcome}
+Steve Cousins.
+\newblock Welcome to ros topics.
+\newblock \emph{IEEE Robotics \& Automation Magazine}, 17\penalty0
+  (1):\penalty0 13--14, 2010.
+
+\bibitem[Cousins(2011)]{cousins2011exponential}
+Steve Cousins.
+\newblock Exponential growth of ros.
+\newblock \emph{IEEE Robotics \& Automation Magazine}, 1\penalty0
+  (18):\penalty0 19--20, 2011.
+
+\bibitem[Craig(2005)]{craig2005introduction}
+John~J Craig.
+\newblock Introduction to robotics.
+\newblock 2005.
+
+\bibitem[DDS(2019)]{dcps-rtps}
+Fast DDS.
+\newblock Dds architecture.
+\newblock
+  \url{https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/definitions.html},
+  2019.
+
+\bibitem[DeMarinis et~al.(2019)DeMarinis, Tellex, Kemerlis, Konidaris, and
+  Fonseca]{8794451}
+Nicholas DeMarinis, Stefanie Tellex, Vasileios~P. Kemerlis, George Konidaris,
+  and Rodrigo Fonseca.
+\newblock Scanning the internet for ros: A view of security in robotics
+  research.
+\newblock In \emph{2019 International Conference on Robotics and Automation
+  (ICRA)}, pages 8514--8521, 2019.
+\newblock \doi{10.1109/ICRA.2019.8794451}.
+
+\bibitem[Diao et~al.(2009)Diao, Vittal, and Logic]{diao2009design}
+Ruisheng Diao, Vijay Vittal, and Naim Logic.
+\newblock Design of a real-time security assessment tool for situational
+  awareness enhancement in modern power systems.
+\newblock \emph{IEEE Transactions on Power systems}, 25\penalty0 (2):\penalty0
+  957--965, 2009.
+
+\bibitem[Dieber et~al.(2016)Dieber, Kacianka, Rass, and
+  Schartner]{application-security-ros}
+Bernhard Dieber, Severin Kacianka, Stefan Rass, and Peter Schartner.
+\newblock Application-level security for ros-based applications.
+\newblock In \emph{2016 IEEE/RSJ International Conference on Intelligent Robots
+  and Systems (IROS)}, pages 4477--4482, 2016.
+\newblock \doi{10.1109/IROS.2016.7759659}.
+
+\bibitem[Dieber et~al.(2017)Dieber, Breiling, Taurer, Kacianka, Rass, and
+  Schartner]{dieber2017security}
+Bernhard Dieber, Benjamin Breiling, Sebastian Taurer, Severin Kacianka, Stefan
+  Rass, and Peter Schartner.
+\newblock Security for the robot operating system.
+\newblock \emph{Robotics and Autonomous Systems}, 98:\penalty0 192--203, 2017.
+
+\bibitem[Dieber et~al.(2020)Dieber, White, Taurer, Breiling, Caiazza,
+  Christensen, and Cortesi]{dieber2020penetration}
+Bernhard Dieber, Ruffin White, Sebastian Taurer, Benjamin Breiling, Gianluca
+  Caiazza, Henrik Christensen, and Agostino Cortesi.
+\newblock Penetration testing ros.
+\newblock In \emph{Robot Operating System (ROS)}, pages 183--225. Springer,
+  2020.
+
+\bibitem[DiLuoffo et~al.(2018)DiLuoffo, Michalson, and
+  Sunar]{diluoffo2018robot}
+Vincenzo DiLuoffo, William~R Michalson, and Berk Sunar.
+\newblock Robot operating system 2: The need for a holistic security approach
+  to robotic architectures.
+\newblock \emph{International Journal of Advanced Robotic Systems}, 15\penalty0
+  (3):\penalty0 1729881418770011, 2018.
+
+\bibitem[euRobotics(2021)]{robots-importance}
+euRobotics.
+\newblock Why is robotics important.
+\newblock \url{https://www.onlynaturalenergy.com/why-is-robotics-important/},
+  2021.
+
+\bibitem[Fazzari(2020)]{ros-dds-integration}
+Kyle Fazzari.
+\newblock Ros 2 dds-security integration.
+\newblock \url{https://design.ros2.org/articles/ros2_dds_security.html}, 2020.
+
+\bibitem[Foundation(2021)]{dds-what-is}
+DDS Foundation.
+\newblock About dds.
+\newblock \url{https://www.dds-foundation.org/what-is-dds-3/}, 2021.
+
+\bibitem[Fraser et~al.(2009)Fraser, Wotawa, and Ammann]{fraser2009testing}
+Gordon Fraser, Franz Wotawa, and Paul~E Ammann.
+\newblock Testing with model checkers: a survey.
+\newblock \emph{Software Testing, Verification and Reliability}, 19\penalty0
+  (3):\penalty0 215--261, 2009.
+
+\bibitem[Gheyi et~al.(2007)Gheyi, Massoni, and Borba]{gheyi2007formally}
+Rohit Gheyi, Tiago Massoni, and Paulo Borba.
+\newblock Formally introducing alloy idioms.
+\newblock In \emph{Proceedings of the Brazilian Symposium on Formal Methods},
+  pages 22--37, 2007.
+
+\bibitem[Group(2021)]{alloy-6}
+Software~Design Group.
+\newblock Alloy 6.
+\newblock \url{https://alloytools.org/alloy6.html}, 2021.
+
+\bibitem[Halder et~al.(2017)Halder, Proença, Macedo, and
+  Santos]{halder2017formal}
+Raju Halder, José Proença, Nuno Macedo, and André Santos.
+\newblock Formal verification of ros-based robotic applications using
+  timed-automata.
+\newblock In \emph{2017 IEEE/ACM 5th International FME Workshop on Formal
+  Methods in Software Engineering (FormaliSE)}, pages 44--50. IEEE, 2017.
+
+\bibitem[Huth and Ryan(2004)]{huth2004logic}
+Michael Huth and Mark Ryan.
+\newblock \emph{Logic in Computer Science: Modelling and reasoning about
+  systems}.
+\newblock Cambridge university press, 2004.
+
+\bibitem[Jackson(2012)]{jackson2012software}
+Daniel Jackson.
+\newblock \emph{Software Abstractions: logic, language, and analysis}.
+\newblock MIT press, 2012.
+
+\bibitem[Jackson(2019)]{alloy-DJ}
+Daniel Jackson.
+\newblock Alloy: a language and tool for exploring software designs.
+\newblock 62:\penalty0 66–76, 2019.
+\newblock \doi{10.1145/3338843}.
+
+\bibitem[Kaeo(2004)]{kaeo2004designing}
+Merike Kaeo.
+\newblock \emph{Designing network security}.
+\newblock Cisco Press, 2004.
+
+\bibitem[Kim et~al.(2018)Kim, Smereka, Cheung, Nepal, and
+  Grobler]{kim2018security}
+Jongkil Kim, Jonathon~M Smereka, Calvin Cheung, Surya Nepal, and Marthie
+  Grobler.
+\newblock Security and performance considerations in ros 2: A balancing act.
+\newblock \emph{arXiv preprint arXiv:1809.09566}, 2018.
+
+\bibitem[Kindler(1994)]{kindler1994safety}
+Ekkart Kindler.
+\newblock Safety and liveness properties: A survey.
+\newblock \emph{Bulletin of the European Association for Theoretical Computer
+  Science}, 53\penalty0 (268-272):\penalty0 30, 1994.
+
+\bibitem[Konur(2010)]{konur2010survey}
+Savas Konur.
+\newblock A survey on temporal logics.
+\newblock \emph{arXiv preprint arXiv:1005.3199}, 2010.
+
+\bibitem[Lamport(1977)]{lamport1977proving}
+Leslie Lamport.
+\newblock Proving the correctness of multiprocess programs.
+\newblock \emph{IEEE transactions on software engineering}, \penalty0
+  (2):\penalty0 125--143, 1977.
+
+\bibitem[Lin et~al.(2009)Lin, Xu, Yang, Qin, Zheng, Wu, and Qiu]{lin2009static}
+Man Lin, Li~Xu, Laurence~T Yang, Xiao Qin, Nenggan Zheng, Zhaohui Wu, and
+  Meikang Qiu.
+\newblock Static security optimization for real-time systems.
+\newblock \emph{IEEE Transactions on Industrial Informatics}, 5\penalty0
+  (1):\penalty0 22--37, 2009.
+
+\bibitem[Liu et~al.(2018)Liu, Guan, Li, Wang, and Zhang]{liu2018formal}
+Yanan Liu, Yong Guan, Xiaojuan Li, Rui Wang, and Jie Zhang.
+\newblock Formal analysis and verification of dds in ros2.
+\newblock In \emph{2018 16th ACM/IEEE International Conference on Formal
+  Methods and Models for System Design (MEMOCODE)}, pages 1--5. IEEE, 2018.
+
+\bibitem[Macedo et~al.(2016)Macedo, Brunel, Chemouil, Cunha, and
+  Kuperberg]{lwspecification}
+Nuno Macedo, Julien Brunel, David Chemouil, Alcino Cunha, and Denis Kuperberg.
+\newblock Lightweight specification and analysis of dynamic systems with rich
+  configurations.
+\newblock page 373–383, 2016.
+\newblock \doi{10.1145/2950290.2950318}.
+
+\bibitem[Mansoor et~al.(2018)Mansoor, Saddler, Silva, Bagheri, Cohen, and
+  Farritor]{mansoor2018modeling}
+Niloofar Mansoor, Jonathan~A Saddler, Bruno Silva, Hamid Bagheri, Myra~B Cohen,
+  and Shane Farritor.
+\newblock Modeling and testing a family of surgical robots: an experience
+  report.
+\newblock In \emph{Proceedings of the 2018 26th ACM Joint Meeting on European
+  Software Engineering Conference and Symposium on the Foundations of Software
+  Engineering}, pages 785--790, 2018.
+
+\bibitem[Mansoor(2018)]{ros-nodelets}
+Waleed Mansoor.
+\newblock Understanding ros nodelets.
+\newblock
+  \url{https://medium.com/@waleedmansoor/understanding-ros-nodelets-c43a11c8169e},
+  2018.
+
+\bibitem[Marin(2005)]{marin2005network}
+Gerald~A Marin.
+\newblock Network security basics.
+\newblock \emph{IEEE security \& privacy}, 3\penalty0 (6):\penalty0 68--72,
+  2005.
+
+\bibitem[Maruyama et~al.(2016)Maruyama, Kato, and Azumi]{maruyama2016exploring}
+Yuya Maruyama, Shinpei Kato, and Takuya Azumi.
+\newblock Exploring the performance of ros2.
+\newblock In \emph{Proceedings of the 13th International Conference on Embedded
+  Software}, pages 1--10, 2016.
+
+\bibitem[McClean et~al.(2013)McClean, Stull, Farrar, and
+  Mascarenas]{mcclean2013preliminary}
+Jarrod McClean, Christopher Stull, Charles Farrar, and David Mascarenas.
+\newblock A preliminary cyber-physical security assessment of the robot
+  operating system (ros).
+\newblock In \emph{Unmanned Systems Technology XV}, volume 8741, page 874110.
+  International Society for Optics and Photonics, 2013.
+
+\bibitem[Mohamed et~al.(2008)Mohamed, Al-Jaroodi, and
+  Jawhar]{mohamed2008middleware}
+Nader Mohamed, Jameela Al-Jaroodi, and Imad Jawhar.
+\newblock Middleware for robotics: A survey.
+\newblock In \emph{2008 IEEE Conference on Robotics, Automation and
+  Mechatronics}, pages 736--742. Ieee, 2008.
+
+\bibitem[M{\"u}ller-Olm et~al.(1999)M{\"u}ller-Olm, Schmidt, and
+  Steffen]{muller1999model}
+Markus M{\"u}ller-Olm, David Schmidt, and Bernhard Steffen.
+\newblock Model-checking.
+\newblock In \emph{International Static Analysis Symposium}, pages 330--354.
+  Springer, 1999.
+
+\bibitem[Near et~al.(2011)Near, Milicevic, Kang, and
+  Jackson]{near2011lightweight}
+Joseph~P Near, Aleksandar Milicevic, Eunsuk Kang, and Daniel Jackson.
+\newblock A lightweight code analysis and its role in evaluation of a
+  dependability case.
+\newblock In \emph{Proceedings of the 33rd International Conference on Software
+  Engineering}, pages 31--40, 2011.
+
+\bibitem[(OMG)()]{3}
+Object Management~Group (OMG).
+\newblock Data distribution service (dds).
+\newblock \url{https://www.omg.org/omg-dds-portal/}.
+
+\bibitem[(OMG)(2018)]{dds-s}
+Object Management~Group (OMG).
+\newblock Dds security.
+\newblock \url{https://www.omg.org/spec/DDS-SECURITY/1.1/}, 2018.
+
+\bibitem[Pardo-Castellote et~al.(2005)Pardo-Castellote, Farabaugh, and
+  Warren]{pardo2005introduction}
+Gerardo Pardo-Castellote, Bert Farabaugh, and Rick Warren.
+\newblock An introduction to dds and data-centric communications.
+\newblock \emph{Real-Time Innovations}, 2005.
+
+\bibitem[Quigley et~al.(2009)Quigley, Conley, Gerkey, Faust, Foote, Leibs,
+  Wheeler, Ng, et~al.]{intro-ros}
+Morgan Quigley, Ken Conley, Brian Gerkey, Josh Faust, Tully Foote, Jeremy
+  Leibs, Rob Wheeler, Andrew~Y Ng, et~al.
+\newblock Ros: an open-source robot operating system.
+\newblock In \emph{ICRA workshop on open source software}, volume~3, page~5.
+  Kobe, Japan, 2009.
+
+\bibitem[Robotics()]{1}
+Open Robotics.
+\newblock The robot operating system.
+\newblock \url{https://www.ros.org}.
+
+\bibitem[Robotics(2021)]{ros2documentation}
+Open Robotics.
+\newblock Ros 2 documentation.
+\newblock \url{http://docs.ros.org/}, 2021.
+
+\bibitem[Santos et~al.(2016)Santos, Cunha, Macedo, and
+  Louren{\c{c}}o]{santos2016framework}
+Andr{\'e} Santos, Alcino Cunha, Nuno Macedo, and Cl{\'a}udio Louren{\c{c}}o.
+\newblock A framework for quality assessment of ros repositories.
+\newblock In \emph{2016 IEEE/RSJ International Conference on Intelligent Robots
+  and Systems (IROS)}, pages 4491--4496. IEEE, 2016.
+
+\bibitem[Santos et~al.(2018)Santos, Cunha, and Macedo]{santos2018property}
+Andr{\'e} Santos, Alcino Cunha, and Nuno Macedo.
+\newblock Property-based testing for the robot operating system.
+\newblock In \emph{Proceedings of the 9th ACM SIGSOFT International Workshop on
+  Automating TEST Case Design, Selection, and Evaluation}, pages 56--62, 2018.
+
+\bibitem[Santos et~al.(2019)Santos, Cunha, and Macedo]{santos2019static}
+Andr{\'e} Santos, Alcino Cunha, and Nuno Macedo.
+\newblock Static-time extraction and analysis of the ros computation graph.
+\newblock In \emph{2019 Third IEEE International Conference on Robotic
+  Computing (IRC)}, pages 62--69. IEEE, 2019.
+
+\bibitem[Santos et~al.(2021)Santos, Cunha, and Macedo]{santos2021high}
+Andr{\'e} Santos, Alcino Cunha, and Nuno Macedo.
+\newblock The high-assurance ros framework.
+\newblock \emph{arXiv preprint arXiv:2103.01603}, 2021.
+
+\bibitem[Specification(2007)]{rtps}
+OMG Specification.
+\newblock The real-time publish-subscribe protocol (rtps) dds interoperability
+  wire protocol specification.
+\newblock \emph{Object Manag Group Pct07-08-04}, 2007.
+
+\bibitem[Stavrinos(2020)]{rcl}
+George Stavrinos.
+\newblock Client libraries.
+\newblock \url{http://wiki.ros.org/Client%20Libraries}, 2020.
+
+\bibitem[Takemoto et~al.(2019)Takemoto, Nishida, Nozaki, Yoshikawa, Honda, and
+  Kurachi]{takemoto2019performance}
+Shu Takemoto, Kanata Nishida, Yusuke Nozaki, Masaya Yoshikawa, Shinya Honda,
+  and Ryo Kurachi.
+\newblock Performance evaluation of caesar authenticated encryption on sros2.
+\newblock In \emph{Proceedings of the 2019 2nd Artificial Intelligence and
+  Cloud Computing Conference}, pages 168--172, 2019.
+
+\bibitem[Vakili and Day(2012)]{vakili2012temporal}
+Amirhossein Vakili and Nancy~A Day.
+\newblock Temporal logic model checking in alloy.
+\newblock In \emph{International Conference on Abstract State Machines, Alloy,
+  B, VDM, and Z}, pages 150--163. Springer, 2012.
+
+\bibitem[Wahl()]{wahlfairness}
+Thomas Wahl.
+\newblock Fairness and liveness.
+
+\bibitem[West et~al.(2001)]{west2001introduction}
+Douglas~Brent West et~al.
+\newblock \emph{Introduction to graph theory}, volume~2.
+\newblock Prentice hall Upper Saddle River, 2001.
+
+\bibitem[White and Arguedas(2020)]{ros-security-enclaves}
+Ruffin White and Mikael Arguedas.
+\newblock Ros 2 security enclaves.
+\newblock \url{https://design.ros2.org/articles/ros2_security_enclaves.html},
+  2020.
+
+\bibitem[White and Fazzari(2021)]{ros-access-control}
+Ruffin White and Kyle Fazzari.
+\newblock Ros 2 access control policies.
+\newblock
+  \url{https://design.ros2.org/articles/ros2_access_control_policies.html},
+  2021.
+
+\bibitem[White et~al.(2016)White, Christensen, Henrik, Quigley,
+  et~al.]{white2016sros}
+Ruffin White, Dr~Christensen, I~Henrik, Dr~Quigley, et~al.
+\newblock Sros: Securing ros over the wire, in the graph, and through the
+  kernel.
+\newblock \emph{arXiv preprint arXiv:1611.07060}, 2016.
+
+\bibitem[White et~al.(2018)White, Christensen, Caiazza, and
+  Cortesi]{white2018procedurally}
+Ruffin White, Henrik~I Christensen, Gianluca Caiazza, and Agostino Cortesi.
+\newblock Procedurally provisioned access control for robotic systems.
+\newblock In \emph{2018 IEEE/RSJ International Conference on Intelligent Robots
+  and Systems (IROS)}, pages 1--9. IEEE, 2018.
+
+\bibitem[White et~al.(2019)White, Caiazza, Jiang, Ou, Yang, Cortesi, and
+  Christensen]{white2019network}
+Ruffin White, Gianluca Caiazza, Chenxu Jiang, Xinyue Ou, Zhiyue Yang, Agostino
+  Cortesi, and Henrik Christensen.
+\newblock Network reconnaissance and vulnerability excavation of secure dds
+  systems.
+\newblock In \emph{2019 IEEE European Symposium on Security and Privacy
+  Workshops (EuroS\&PW)}, pages 57--66. IEEE, 2019.
+
+\bibitem[Woodall(2019)]{ros-on-dds}
+William Woodall.
+\newblock Ros 2 on dds.
+\newblock \url{https://design.ros2.org/articles/ros_on_dds.html}, 2019.
+
+\bibitem[Wu et~al.(2017)Wu, Zeng, Wang, and Yu]{wu2017safety}
+Meng Wu, Haibo Zeng, Chao Wang, and Huafeng Yu.
+\newblock Safety guard: Runtime enforcement for safety-critical cyber-physical
+  systems.
+\newblock In \emph{2017 54th ACM/EDAC/IEEE Design Automation Conference (DAC)},
+  pages 1--6. IEEE, 2017.
+
+\bibitem[Yun et~al.(2017)Yun, Park, and Kim]{yun2017data}
+Seongjin Yun, Jun-Hong Park, and Won-Tae Kim.
+\newblock Data-centric middleware based digital twin platform for dependable
+  cyber-physical systems.
+\newblock In \emph{2017 Ninth International Conference on Ubiquitous and Future
+  Networks (ICUFN)}, pages 922--926. IEEE, 2017.
+
+\end{thebibliography}
