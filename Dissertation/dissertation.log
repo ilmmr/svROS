@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021/Arch Linux) (preloaded format=pdflatex 2021.12.8)  19 JAN 2022 03:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021/Arch Linux) (preloaded format=pdflatex 2021.12.8)  21 JAN 2022 23:18
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -823,6 +823,11 @@ Package: a4wide 1994/08/30
 (/usr/share/texmf-dist/tex/latex/ntgclass/a4.sty
 Package: a4 2020/02/18 v1.2g A4 based page layout
 ))
+(/usr/share/texmf-dist/tex/latex/forloop/forloop.sty
+Package: forloop 2006/09/18 v3.0 For Loops for LaTeX
+)
+\c@loopcntr=\count291
+
 (/usr/share/texmf-dist/tex/latex/base/makeidx.sty
 Package: makeidx 2014/09/29 v1.0m Standard LaTeX package
 )
@@ -885,14 +890,14 @@ Package: pgfsys 2020/12/27 v3.1.8b (3.1.8b)
 \pgf@yd=\dimen191
 \w@pgf@writea=\write3
 \r@pgf@reada=\read2
-\c@pgf@counta=\count291
-\c@pgf@countb=\count292
-\c@pgf@countc=\count293
-\c@pgf@countd=\count294
+\c@pgf@counta=\count292
+\c@pgf@countb=\count293
+\c@pgf@countc=\count294
+\c@pgf@countd=\count295
 \t@pgf@toka=\toks39
 \t@pgf@tokb=\toks40
 \t@pgf@tokc=\toks41
-\pgf@sys@id@count=\count295
+\pgf@sys@id@count=\count296
 
 (/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgf.cfg
 File: pgf.cfg 2020/12/27 v3.1.8b (3.1.8b)
@@ -907,8 +912,8 @@ File: pgfsys-common-pdf.def 2020/12/27 v3.1.8b (3.1.8b)
 )))
 (/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgfsyssoftpath.code.tex
 File: pgfsyssoftpath.code.tex 2020/12/27 v3.1.8b (3.1.8b)
-\pgfsyssoftpath@smallbuffer@items=\count296
-\pgfsyssoftpath@bigbuffer@items=\count297
+\pgfsyssoftpath@smallbuffer@items=\count297
+\pgfsyssoftpath@bigbuffer@items=\count298
 )
 (/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgfsysprotocol.code.tex
 File: pgfsysprotocol.code.tex 2020/12/27 v3.1.8b (3.1.8b)
@@ -921,7 +926,7 @@ Package: pgfcore 2020/12/27 v3.1.8b (3.1.8b)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathutil.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathparser.code.tex
 \pgfmath@dimen=\dimen192
-\pgfmath@count=\count298
+\pgfmath@count=\count299
 \pgfmath@box=\box54
 \pgfmath@toks=\toks42
 \pgfmath@stack@operand=\toks43
@@ -938,7 +943,7 @@ x) (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.base.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.misc.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.integerarithmetics
 .code.tex))) (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfloat.code.tex
-\c@pgfmathroundto@lastzeros=\count299
+\c@pgfmathroundto@lastzeros=\count300
 )) (/usr/share/texmf-dist/tex/generic/pgf/math/pgfint.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepoints.code.tex
 File: pgfcorepoints.code.tex 2020/12/27 v3.1.8b (3.1.8b)
@@ -971,7 +976,7 @@ File: pgfcorescopes.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 \pgfpic=\box55
 \pgf@hbox=\box56
 \pgf@layerbox@main=\box57
-\pgf@picture@serial@count=\count300
+\pgf@picture@serial@count=\count301
 )
 (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoregraphicstate.code.tex
 File: pgfcoregraphicstate.code.tex 2020/12/27 v3.1.8b (3.1.8b)
@@ -999,8 +1004,8 @@ File: pgfcorearrows.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreshade.code.tex
 File: pgfcoreshade.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 \pgf@max=\dimen272
-\pgf@sys@shading@range@num=\count301
-\pgf@shadingcount=\count302
+\pgf@sys@shading@range@num=\count302
+\pgf@shadingcount=\count303
 )
 (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreimage.code.tex
 File: pgfcoreimage.code.tex 2020/12/27 v3.1.8b (3.1.8b)
@@ -1055,7 +1060,7 @@ Package: tikz 2020/12/27 v3.1.8b (3.1.8b)
 (/usr/share/texmf-dist/tex/generic/pgf/libraries/pgflibraryplothandlers.code.te
 x
 File: pgflibraryplothandlers.code.tex 2020/12/27 v3.1.8b (3.1.8b)
-\pgf@plot@mark@count=\count303
+\pgf@plot@mark@count=\count304
 \pgfplotmarksize=\dimen277
 )
 \tikz@lastx=\dimen278
@@ -1070,17 +1075,17 @@ File: pgflibraryplothandlers.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 \tikz@figbox@bg=\box61
 \tikz@tempbox=\box62
 \tikz@tempbox@bg=\box63
-\tikztreelevel=\count304
-\tikznumberofchildren=\count305
-\tikznumberofcurrentchild=\count306
-\tikz@fig@count=\count307
+\tikztreelevel=\count305
+\tikznumberofchildren=\count306
+\tikznumberofcurrentchild=\count307
+\tikz@fig@count=\count308
  (/usr/share/texmf-dist/tex/generic/pgf/modules/pgfmodulematrix.code.tex
 File: pgfmodulematrix.code.tex 2020/12/27 v3.1.8b (3.1.8b)
-\pgfmatrixcurrentrow=\count308
-\pgfmatrixcurrentcolumn=\count309
-\pgf@matrix@numberofcolumns=\count310
+\pgfmatrixcurrentrow=\count309
+\pgfmatrixcurrentcolumn=\count310
+\pgf@matrix@numberofcolumns=\count311
 )
-\tikz@expandcount=\count311
+\tikz@expandcount=\count312
 
 (/usr/share/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrary
 topaths.code.tex
@@ -1099,34 +1104,34 @@ Package: setspace 2011/12/19 v6.7a set line spacing
 (/usr/share/texmf-dist/tex/latex/wrapfig/wrapfig.sty
 \wrapoverhang=\dimen286
 \WF@size=\dimen287
-\c@WF@wrappedlines=\count312
+\c@WF@wrappedlines=\count313
 \WF@box=\box64
 \WF@everypar=\toks48
 Package: wrapfig 2003/01/31  v 3.6
 )
 (/usr/share/texmf-dist/tex/latex/caption/subcaption.sty
 Package: subcaption 2020/10/07 v1.3j Sub-captions (AR)
-\c@subfigure=\count313
-\c@subtable=\count314
+\c@subfigure=\count314
+\c@subtable=\count315
 )
 (/usr/share/texmf-dist/tex/latex/listings/listings.sty
-\lst@mode=\count315
+\lst@mode=\count316
 \lst@gtempboxa=\box65
 \lst@token=\toks49
-\lst@length=\count316
+\lst@length=\count317
 \lst@currlwidth=\dimen288
-\lst@column=\count317
-\lst@pos=\count318
+\lst@column=\count318
+\lst@pos=\count319
 \lst@lostspace=\dimen289
 \lst@width=\dimen290
-\lst@newlines=\count319
-\lst@lineno=\count320
+\lst@newlines=\count320
+\lst@lineno=\count321
 \lst@maxwidth=\dimen291
 
 (/usr/share/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
-\c@lstnumber=\count321
-\lst@skipnumbers=\count322
+\c@lstnumber=\count322
+\lst@skipnumbers=\count323
 \lst@framebox=\box66
 )
 (/usr/share/texmf-dist/tex/latex/listings/listings.cfg
@@ -1142,7 +1147,7 @@ Package: natbib 2010/09/13 8.31b (PWD, AO)
 \bibhang=\skip113
 \bibsep=\skip114
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count323
+\c@NAT@ctr=\count324
 )
 (/usr/share/texmf-dist/tex/latex/usebib/usebib.sty
 Package: usebib 2012/03/17 v1.0 Reusing bib files
@@ -1159,7 +1164,7 @@ Package: xkeyval 2020/11/20 v2.8 package option processing (HA)
 \XKV@toks=\toks50
 \XKV@tempa@toks=\toks51
 )
-\XKV@depth=\count324
+\XKV@depth=\count325
 File: xkeyval.tex 2014/12/03 v2.7a key=value parser (HA)
 ))
 (/usr/share/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrary
@@ -1179,18 +1184,18 @@ File: pgflibraryfadings.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 )))
 (/usr/share/texmf-dist/tex/latex/tools/calc.sty
 Package: calc 2017/05/25 v4.3 Infix arithmetic (KKT,FJ)
-\calc@Acount=\count325
-\calc@Bcount=\count326
+\calc@Acount=\count326
+\calc@Bcount=\count327
 \calc@Adimen=\dimen292
 \calc@Bdimen=\dimen293
 \calc@Askip=\skip115
 \calc@Bskip=\skip116
 LaTeX Info: Redefining \setlength on input line 80.
 LaTeX Info: Redefining \addtolength on input line 81.
-\calc@Ccount=\count327
+\calc@Ccount=\count328
 \calc@Cskip=\skip117
 )
-\c@@todonotes@numberoftodonotes=\count328
+\c@@todonotes@numberoftodonotes=\count329
 )
 (/usr/share/texmf-dist/tex/latex/enumitem/enumitem.sty
 Package: enumitem 2019/06/20 v3.9 Customized lists
@@ -1198,26 +1203,26 @@ Package: enumitem 2019/06/20 v3.9 Customized lists
 \enit@outerparindent=\dimen294
 \enit@toks=\toks52
 \enit@inbox=\box67
-\enit@count@id=\count329
-\enitdp@description=\count330
+\enit@count@id=\count330
+\enitdp@description=\count331
 )
 (/usr/share/texmf-dist/tex/latex/bookmark/bookmark.sty
 Package: bookmark 2020-11-06 v1.29 PDF bookmarks (HO)
 
 (/usr/share/texmf-dist/tex/latex/bookmark/bkm-pdftex.def
 File: bkm-pdftex.def 2020-11-06 v1.29 bookmark driver for pdfTeX (HO)
-\BKM@id=\count331
+\BKM@id=\count332
 ))
-Package hyperref Info: Option `bookmarksnumbered' set `true' on input line 193.
+Package hyperref Info: Option `bookmarksnumbered' set `true' on input line 215.
 
-Package hyperref Info: Option `plainpages' set `false' on input line 193.
-Package hyperref Info: Option `unicode' set `true' on input line 193.
-Package hyperref Info: Option `pdffitwindow' set `true' on input line 193.
+Package hyperref Info: Option `plainpages' set `false' on input line 215.
+Package hyperref Info: Option `unicode' set `true' on input line 215.
+Package hyperref Info: Option `pdffitwindow' set `true' on input line 215.
 
 (/usr/share/texmf-dist/tex/latex/ucs/data/uni-0.def
 File: uni-0.def 2013/05/13 UCS: Unicode data U+0000..U+00FF
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 193.
+Package hyperref Info: Option `colorlinks' set `true' on input line 215.
 
 (/usr/share/texmf-dist/tex/latex/cleveref/cleveref.sty
 Package: cleveref 2018/03/27 v0.21.4 Intelligent cross-referencing
@@ -1247,7 +1252,7 @@ Package: xfor 2009/02/05 v1.05 (NLCT)
 )
 (/usr/share/texmf-dist/tex/latex/substr/substr.sty
 Package: substr 2009/10/20 v1.2 Handle substrings
-\c@su@anzahl=\count332
+\c@su@anzahl=\count333
 )
 (/usr/share/texmf-dist/tex/latex/datatool/datatool-base.sty
 Package: datatool-base 2019/09/27 v2.32 (NLCT)
@@ -1261,19 +1266,19 @@ Package: fp 1995/04/02
 `Fixed Point Package', Version 0.8, April 2, 1995 (C) Michael Mehlich
 (/usr/share/texmf-dist/tex/latex/fp/defpattern.sty
 Package: defpattern 1994/10/12
-\actioncount=\count333
+\actioncount=\count334
 )
 (/usr/share/texmf-dist/tex/latex/fp/fp-basic.sty
 Package: fp-basic 1996/05/13
-\FP@xs=\count334
-\FP@xia=\count335
-\FP@xib=\count336
-\FP@xfa=\count337
-\FP@xfb=\count338
-\FP@rega=\count339
-\FP@regb=\count340
-\FP@regs=\count341
-\FP@times=\count342
+\FP@xs=\count335
+\FP@xia=\count336
+\FP@xib=\count337
+\FP@xfa=\count338
+\FP@xfb=\count339
+\FP@rega=\count340
+\FP@regb=\count341
+\FP@regs=\count342
+\FP@times=\count343
 )
 (/usr/share/texmf-dist/tex/latex/fp/fp-addons.sty
 Package: fp-addons 1995/03/15
@@ -1292,7 +1297,7 @@ Package: fp-pas 1994/08/29
 )
 (/usr/share/texmf-dist/tex/latex/fp/fp-random.sty
 Package: fp-random 1995/02/23
-\FPseed=\count343
+\FPseed=\count344
 )
 (/usr/share/texmf-dist/tex/latex/fp/fp-eqn.sty
 Package: fp-eqn 1995/04/03
@@ -1304,31 +1309,31 @@ Package: fp-upn 1996/10/21
 Package: fp-eval 1995/04/03
 )))
 \@dtl@toks=\toks53
-\@dtl@tmpcount=\count344
+\@dtl@tmpcount=\count345
 \dtl@tmplength=\skip119
-\dtl@sortresult=\count345
-\@dtl@numgrpsepcount=\count346
-\@dtl@datatype=\count347
-\dtl@codeA=\count348
-\dtl@codeB=\count349
-\@dtl@foreach@level=\count350
+\dtl@sortresult=\count346
+\@dtl@numgrpsepcount=\count347
+\@dtl@datatype=\count348
+\dtl@codeA=\count349
+\dtl@codeB=\count350
+\@dtl@foreach@level=\count351
 )
-\dtlcolumnnum=\count351
-\dtlrownum=\count352
+\dtlcolumnnum=\count352
+\dtlrownum=\count353
 \@dtl@before=\toks54
 \@dtl@after=\toks55
 \@dtl@colhead=\toks56
 \dtlcurrentrow=\toks57
 \dtlbeforerow=\toks58
 \dtlafterrow=\toks59
-\dtlforeachlevel=\count353
-\c@DTLrowi=\count354
-\c@DTLrowii=\count355
-\c@DTLrowiii=\count356
-\c@DTLrow=\count357
-\dtl@rowi=\count358
-\dtl@rowii=\count359
-\dtl@rowiii=\count360
+\dtlforeachlevel=\count354
+\c@DTLrowi=\count355
+\c@DTLrowii=\count356
+\c@DTLrowiii=\count357
+\c@DTLrow=\count358
+\dtl@rowi=\count359
+\dtl@rowii=\count360
+\dtl@rowiii=\count361
 \@dtl@curi=\toks60
 \@dtl@previ=\toks61
 \@dtl@nexti=\toks62
@@ -1338,7 +1343,7 @@ Package: fp-eval 1995/04/03
 \@dtl@curiii=\toks66
 \@dtl@previii=\toks67
 \@dtl@nextiii=\toks68
-\@dtl@elements=\count361
+\@dtl@elements=\count362
 \@dtl@list=\toks69
 \@dtl@rowa=\toks70
 \@dtl@rowb=\toks71
@@ -1346,8 +1351,8 @@ Package: fp-eval 1995/04/03
 \@dtl@toksB=\toks73
 \@dtl@write=\write5
 \@dtl@read=\read3
-\dtl@entrycr=\count362
-\dtl@omitlines=\count363
+\dtl@entrycr=\count363
+\dtl@omitlines=\count364
 )
 (/usr/share/texmf-dist/tex/latex/glossaries/base/glossaries.sty
 Package: glossaries 2020/03/19 v4.46 (NLCT)
@@ -1360,7 +1365,7 @@ Package: mfirstuc 2017/11/14 v2.06 (NLCT)
 (/usr/share/texmf-dist/tex/latex/glossaries/base/glossaries-compatible-307.sty
 Package: glossaries-compatible-307 2020/03/19 v4.46 (NLCT)
 )
-\gls@level=\count364
+\gls@level=\count365
 \@gls@tmpb=\toks76
 \gls@tmplen=\skip120
 \glskeylisttok=\toks77
@@ -1383,16 +1388,16 @@ Package: longtable 2020/01/07 v4.13 Multi-page Table package (DPC)
 \LTright=\skip123
 \LTpre=\skip124
 \LTpost=\skip125
-\LTchunksize=\count365
+\LTchunksize=\count366
 \LTcapwidth=\dimen295
 \LT@head=\box68
 \LT@firsthead=\box69
 \LT@foot=\box70
 \LT@lastfoot=\box71
-\LT@cols=\count366
-\LT@rows=\count367
-\c@LT@tables=\count368
-\c@LT@chunks=\count369
+\LT@cols=\count367
+\LT@rows=\count368
+\c@LT@tables=\count369
+\c@LT@chunks=\count370
 \LT@p@ftn=\toks81
 )
 Class scrbook Info: longtable captions redefined on input line 43.
@@ -1404,7 +1409,7 @@ Package: glossary-super 2020/03/19 v4.46 (NLCT)
 
 (/usr/share/texmf-dist/tex/latex/supertabular/supertabular.sty
 Package: supertabular 2020/02/02 v4.1g the supertabular environment
-\c@tracingst=\count370
+\c@tracingst=\count371
 \ST@wd=\dimen296
 \ST@rightskip=\skip128
 \ST@leftskip=\skip129
@@ -1453,7 +1458,7 @@ Package: xspace 2014/10/28 v1.13 Space after command names (DPC,MH)
 )))
 (/usr/share/texmf-dist/tex/latex/float/float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
-\c@float@type=\count371
+\c@float@type=\count372
 \float@exts=\toks82
 \float@box=\box73
 \@float@everytoks=\toks83
@@ -1505,14 +1510,14 @@ Loading kernel: messages; fonts; allocations: state,
  direction,
 \d@X=\dimen329
 \d@Y=\dimen330
-\K@=\count372
-\KK@=\count373
-\Direction=\count374
+\K@=\count373
+\KK@=\count374
+\Direction=\count375
 \K@dXdY=\dimen331
 \K@dYdX=\dimen332
 \xyread@=\read4
 \xywrite@=\write6
-\csp@=\count375
+\csp@=\count376
 \quotPTK@=\dimen333
 
 utility macros; pictures: \xy, positions,
@@ -1529,7 +1534,7 @@ Package: xy 2013/10/06 Xy-pic version 3.8.9
  Xy-pic option: All features v.3.8
 (/usr/share/texmf-dist/tex/generic/xypic/xycurve.tex
  Xy-pic option: Curve and Spline extension v.3.12 curve,
-\crv@cnt@=\count376
+\crv@cnt@=\count377
 \crvpts@=\toks88
 \splinebox@=\box78
 \splineval@=\dimen334
@@ -1555,13 +1560,13 @@ Package: xy 2013/10/06 Xy-pic version 3.8.9
  Xy-pic option: Colour extension v.3.11 loaded)
 (/usr/share/texmf-dist/tex/generic/xypic/xymatrix.tex
  Xy-pic option: Matrix feature v.3.14
-\Row=\count377
-\Col=\count378
+\Row=\count378
+\Col=\count379
 \queue@=\toks89
 \queue@@=\toks90
-\qcount@=\count379
-\qcount@@=\count380
-\matrixsize@=\count381
+\qcount@=\count380
+\qcount@@=\count381
+\matrixsize@=\count382
  loaded)
 (/usr/share/texmf-dist/tex/generic/xypic/xyarrow.tex
  Xy-pic option: Arrow and Path feature v.3.9 path, \ar, loaded)
@@ -1619,9 +1624,9 @@ File: pgflibrarycurvilinear.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 fpu.code.tex
 (/usr/share/texmf-dist/tex/generic/pgf/libraries/pgflibraryfpu.code.tex))
 (/usr/share/texmf-dist/tex/generic/circuitikz/pgfcirc.defines.tex
-\pgf@circ@count@a=\count382
-\pgf@circ@count@b=\count383
-\pgf@circ@count@c=\count384
+\pgf@circ@count@a=\count383
+\pgf@circ@count@b=\count384
+\pgf@circ@count@c=\count385
 \pgf@circ@res@up=\dimen351
 \pgf@circ@res@down=\dimen352
 \pgf@circ@res@zero=\dimen353
@@ -1640,7 +1645,7 @@ fpu.code.tex
 (/usr/share/texmf-dist/tex/generic/circuitikz/pgfcircmonopoles.tex)
 (/usr/share/texmf-dist/tex/generic/circuitikz/pgfcircbipoles.tex)
 (/usr/share/texmf-dist/tex/generic/circuitikz/pgfcirctripoles.tex
-\pgf@circ@res@count=\count385
+\pgf@circ@res@count=\count386
 )
 (/usr/share/texmf-dist/tex/generic/circuitikz/pgfcircquadpoles.tex)
 (/usr/share/texmf-dist/tex/generic/circuitikz/pgfcircmultipoles.tex)
@@ -1681,16 +1686,16 @@ Package scrbase Info: activating english \listfigurename on input line 75.
 Package scrbase Info: activating english \listtablename on input line 75.
  (/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count386
+\scratchcounter=\count387
 \scratchdimen=\dimen363
 \scratchbox=\box79
-\nofMPsegments=\count387
-\nofMParguments=\count388
+\nofMPsegments=\count388
+\nofMParguments=\count389
 \everyMPshowfont=\toks91
-\MPscratchCnt=\count389
+\MPscratchCnt=\count390
 \MPscratchDim=\dimen364
-\MPnumerator=\count390
-\makeMPintoPDFobject=\count391
+\MPnumerator=\count391
+\makeMPintoPDFobject=\count392
 \everyMPtoPDFconversion=\toks92
 ) (/usr/share/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -1750,7 +1755,7 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 (/usr/share/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count392
+\c@section@level=\count393
 )
 LaTeX Info: Redefining \ref on input line 75.
 LaTeX Info: Redefining \pageref on input line 75.
@@ -1759,7 +1764,7 @@ LaTeX Info: Redefining \nameref on input line 75.
 (/usr/share/texmf-dist/tex/latex/ucs/ucsencs.def
 File: ucsencs.def 2011/01/21 Fixes to fontencodings LGR, T3
 )
-\c@lstlisting=\count393
+\c@lstlisting=\count394
 
 
 Package todonotes Warning: The length marginparwidth is less than 2cm and will 
@@ -2009,44 +2014,44 @@ Chapter 2.
 
 
 ]
-<img/former-ros1-architecture.png, id=276, 817.0525pt x 512.91624pt>
+<img/former-ros1-architecture.png, id=278, 817.0525pt x 512.91624pt>
 File: img/former-ros1-architecture.png Graphic file (type png)
 <use img/former-ros1-architecture.png>
 Package pdftex.def Info: img/former-ros1-architecture.png  used on input line 3
 3.
 (pdftex.def)             Requested size: 265.59494pt x 166.72711pt.
  [8 <./img/former-ros1-architecture.png>]
-<img/dcps-model.png, id=294, 319.1925pt x 255.95625pt>
+<img/dcps-model.png, id=296, 319.1925pt x 255.95625pt>
 File: img/dcps-model.png Graphic file (type png)
 <use img/dcps-model.png>
 Package pdftex.def Info: img/dcps-model.png  used on input line 54.
 (pdftex.def)             Requested size: 177.05879pt x 141.97928pt.
  [9]
-<img/dds-architecture.png, id=312, 1113.15875pt x 370.38374pt>
+<img/dds-architecture.png, id=314, 1113.15875pt x 370.38374pt>
 File: img/dds-architecture.png Graphic file (type png)
 <use img/dds-architecture.png>
 Package pdftex.def Info: img/dds-architecture.png  used on input line 67.
 (pdftex.def)             Requested size: 265.59494pt x 88.37396pt.
  [10 <./img/dcps-model.png (PNG copy)> <./img/dds-architecture.png>]
-<img/ros2-architecture.png, id=324, 677.53125pt x 171.64125pt>
+<img/ros2-architecture.png, id=326, 677.53125pt x 171.64125pt>
 File: img/ros2-architecture.png Graphic file (type png)
 <use img/ros2-architecture.png>
 Package pdftex.def Info: img/ros2-architecture.png  used on input line 83.
 (pdftex.def)             Requested size: 442.65375pt x 112.14166pt.
  [11 <./img/ros2-architecture.png (PNG copy)>]
-<img/ros2-topics.png, id=343, 947.54pt x 581.17125pt>
+<img/ros2-topics.png, id=345, 947.54pt x 581.17125pt>
 File: img/ros2-topics.png Graphic file (type png)
 <use img/ros2-topics.png>
 Package pdftex.def Info: img/ros2-topics.png  used on input line 116.
 (pdftex.def)             Requested size: 221.32687pt x 135.75053pt.
  [12]
-<img/ts_rqt_graph.png, id=356, 1904.11375pt x 284.06125pt>
+<img/ts_rqt_graph.png, id=358, 1904.11375pt x 284.06125pt>
 File: img/ts_rqt_graph.png Graphic file (type png)
 <use img/ts_rqt_graph.png>
 Package pdftex.def Info: img/ts_rqt_graph.png  used on input line 140.
 (pdftex.def)             Requested size: 354.12434pt x 52.8279pt.
  [13 <./img/ros2-topics.png>] [14 <./img/ts_rqt_graph.png (PNG copy)>] [15]
-<img/dds-security-architecture.png, id=408, 868.24374pt x 576.1525pt>
+<img/dds-security-architecture.png, id=410, 868.24374pt x 576.1525pt>
 File: img/dds-security-architecture.png Graphic file (type png)
 <use img/dds-security-architecture.png>
 Package pdftex.def Info: img/dds-security-architecture.png  used on input line 
@@ -2064,7 +2069,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
  [17]
-<img/ros_aes.png, id=458, 232.87pt x 133.49875pt>
+<img/ros_aes.png, id=460, 232.87pt x 133.49875pt>
 File: img/ros_aes.png Graphic file (type png)
 <use img/ros_aes.png>
 Package pdftex.def Info: img/ros_aes.png  used on input line 258.
@@ -2106,7 +2111,7 @@ LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 (Font)              using `T1/pcr/b/n' instead on input line 85.
 
 [29]
-<img/alloy_multiplicity.png, id=685, 337.26pt x 205.76875pt>
+<img/alloy_multiplicity.png, id=687, 337.26pt x 205.76875pt>
 File: img/alloy_multiplicity.png Graphic file (type png)
 <use img/alloy_multiplicity.png>
 Package pdftex.def Info: img/alloy_multiplicity.png  used on input line 97.
@@ -2176,7 +2181,7 @@ LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 (Font)              using `T1/pcr/b/n' instead on input line 111.
 
-<img/alloy_always.png, id=689, 448.67625pt x 97.36375pt>
+<img/alloy_always.png, id=691, 448.67625pt x 97.36375pt>
 File: img/alloy_always.png Graphic file (type png)
 <use img/alloy_always.png>
 Package pdftex.def Info: img/alloy_always.png  used on input line 119.
@@ -2268,31 +2273,31 @@ LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 (Font)              using `T1/pcr/b/n' instead on input line 149.
 
 [31]
-<img/alloy_relational_logic.jpg, id=717, 385.44pt x 329.23pt>
+<img/alloy_relational_logic.jpg, id=719, 385.44pt x 329.23pt>
 File: img/alloy_relational_logic.jpg Graphic file (type jpg)
 <use img/alloy_relational_logic.jpg>
 Package pdftex.def Info: img/alloy_relational_logic.jpg  used on input line 157
 .
 (pdftex.def)             Requested size: 221.32687pt x 189.04956pt.
-<img/alloy_evaluator1.png, id=724, 469.755pt x 327.2225pt>
+<img/alloy_evaluator1.png, id=726, 469.755pt x 327.2225pt>
 File: img/alloy_evaluator1.png Graphic file (type png)
 <use img/alloy_evaluator1.png>
 Package pdftex.def Info: img/alloy_evaluator1.png  used on input line 179.
 (pdftex.def)             Requested size: 221.32687pt x 154.16907pt.
  [32 <./img/alloy_relational_logic.jpg>]
-<img/alloy_evaluator2.png, id=731, 266.9975pt x 103.38625pt>
+<img/alloy_evaluator2.png, id=733, 266.9975pt x 103.38625pt>
 File: img/alloy_evaluator2.png Graphic file (type png)
 <use img/alloy_evaluator2.png>
 Package pdftex.def Info: img/alloy_evaluator2.png  used on input line 188.
 (pdftex.def)             Requested size: 177.05879pt x 68.56325pt.
-<img/alloy_eulerian_1.png, id=733, 316.18124pt x 289.08pt>
+<img/alloy_eulerian_1.png, id=735, 316.18124pt x 289.08pt>
 File: img/alloy_eulerian_1.png Graphic file (type png)
 <use img/alloy_eulerian_1.png>
 Package pdftex.def Info: img/alloy_eulerian_1.png  used on input line 198.
 (pdftex.def)             Requested size: 221.32687pt x 202.35902pt.
  [33 <./img/alloy_evaluator1.png (PNG copy)> <./img/alloy_evaluator2.png (PNG c
 opy)> <./img/alloy_eulerian_1.png (PNG copy)>]
-<img/alloy_after.png, id=741, 403.5075pt x 94.3525pt>
+<img/alloy_after.png, id=743, 403.5075pt x 94.3525pt>
 File: img/alloy_after.png Graphic file (type png)
 <use img/alloy_after.png>
 Package pdftex.def Info: img/alloy_after.png  used on input line 217.
@@ -2416,13 +2421,13 @@ LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 (Font)              using `T1/pcr/b/n' instead on input line 263.
 
 [35]
-<img/check_alloy_1.png, id=781, 245.91875pt x 30.1125pt>
+<img/check_alloy_1.png, id=783, 245.91875pt x 30.1125pt>
 File: img/check_alloy_1.png Graphic file (type png)
 <use img/check_alloy_1.png>
 Package pdftex.def Info: img/check_alloy_1.png  used on input line 294.
 (pdftex.def)             Requested size: 177.05879pt x 21.68143pt.
  [36]
-<img/check_alloy_2.png, id=789, 335.2525pt x 91.34125pt>
+<img/check_alloy_2.png, id=791, 335.2525pt x 91.34125pt>
 File: img/check_alloy_2.png Graphic file (type png)
 <use img/check_alloy_2.png>
 Package pdftex.def Info: img/check_alloy_2.png  used on input line 303.
@@ -2537,7 +2542,7 @@ LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 (Font)              using `T1/pcr/b/n' instead on input line 339.
 
-<img/alloy_once.png, id=809, 395.4775pt x 123.46124pt>
+<img/alloy_once.png, id=811, 395.4775pt x 123.46124pt>
 File: img/alloy_once.png Graphic file (type png)
 <use img/alloy_once.png>
 Package pdftex.def Info: img/alloy_once.png  used on input line 345.
@@ -2566,7 +2571,7 @@ LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 (Font)              using `T1/pcr/b/n' instead on input line 354.
 
-<img/alloy_eventually.png, id=811, 396.48125pt x 128.48pt>
+<img/alloy_eventually.png, id=813, 396.48125pt x 128.48pt>
 File: img/alloy_eventually.png Graphic file (type png)
 <use img/alloy_eventually.png>
 Package pdftex.def Info: img/alloy_eventually.png  used on input line 360.
@@ -2665,18 +2670,18 @@ LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 (Font)              using `T1/pcr/b/n' instead on input line 396.
 
-<img/alloy_run.png, id=849, 1667.22874pt x 403.5075pt>
+<img/alloy_run.png, id=851, 1667.22874pt x 403.5075pt>
 File: img/alloy_run.png Graphic file (type png)
 <use img/alloy_run.png>
 Package pdftex.def Info: img/alloy_run.png  used on input line 403.
 (pdftex.def)             Requested size: 442.65375pt x 107.13216pt.
-<img/alloy_buttons.png, id=851, 334.24875pt x 57.21375pt>
+<img/alloy_buttons.png, id=853, 334.24875pt x 57.21375pt>
 File: img/alloy_buttons.png Graphic file (type png)
 <use img/alloy_buttons.png>
 Package pdftex.def Info: img/alloy_buttons.png  used on input line 412.
 (pdftex.def)             Requested size: 309.85626pt x 53.04234pt.
 [40 <./img/alloy_run.png (PNG copy)> <./img/alloy_buttons.png (PNG copy)>]
-<img/alloy_infinite_trace.png, id=862, 450.68375pt x 81.30376pt>
+<img/alloy_infinite_trace.png, id=864, 450.68375pt x 81.30376pt>
 File: img/alloy_infinite_trace.png Graphic file (type png)
 <use img/alloy_infinite_trace.png>
 Package pdftex.def Info: img/alloy_infinite_trace.png  used on input line 425.
@@ -2723,13 +2728,13 @@ LaTeX Font Warning: Font shape `T1/pcr/bc/n' undefined
 (Font)              using `T1/pcr/b/n' instead on input line 437.
 
 [41 <./img/alloy_infinite_trace.png (PNG copy)>]
-<img/haros_framework.png, id=886, 616.3025pt x 588.1975pt>
+<img/haros_framework.png, id=888, 616.3025pt x 588.1975pt>
 File: img/haros_framework.png Graphic file (type png)
 <use img/haros_framework.png>
 Package pdftex.def Info: img/haros_framework.png  used on input line 463.
 (pdftex.def)             Requested size: 265.59494pt x 253.48543pt.
  [42] [43 <./img/haros_framework.png (PNG copy)>]
-<img/haros-electrum-plugin.png, id=912, 628.3475pt x 465.74pt>
+<img/haros-electrum-plugin.png, id=914, 628.3475pt x 465.74pt>
 File: img/haros-electrum-plugin.png Graphic file (type png)
 <use img/haros-electrum-plugin.png>
 Package pdftex.def Info: img/haros-electrum-plugin.png  used on input line 492.
@@ -2738,32 +2743,42 @@ Package pdftex.def Info: img/haros-electrum-plugin.png  used on input line 492.
  [44] [45 <./img/haros-electrum-plugin.png (PNG copy)>])
 (./currentW.tex
 Chapter 4.
-[46]) [47
+[46]
+<img/dissertation-schedule.png, id=940, 854.19125pt x 245.91875pt>
+File: img/dissertation-schedule.png Graphic file (type png)
+<use img/dissertation-schedule.png>
+Package pdftex.def Info: img/dissertation-schedule.png  used on input line 13.
+(pdftex.def)             Requested size: 442.65375pt x 127.43568pt.
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 2
+1.
+ (/usr/share/texmf-dist/tex/latex/psnfss/ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+) [47
 
 
-] (./dissertation.bbl
+ <./img/dissertation-schedule.png (PNG copy)>]) [48] (./dissertation.bbl
 
 LaTeX Font Warning: Font shape `T1/ptm/c/n' undefined
 (Font)              using `T1/ptm/m/n' instead on input line 39.
 
-[48
+[49
 
 
 
 
-] [49]
+] [50]
 Underfull \hbox (badness 1902) in paragraph at lines 187--191
 []\T1/phv/c/n/10.95 (+20) euRobotics.  Why is robotics im-por-tant.  [][]$\T1/p
 cr/c/n/10.95 https : / / www . onlynaturalenergy . com /
  []
 
-[50]
+[51]
 Underfull \hbox (badness 4229) in paragraph at lines 359--362
 []\T1/phv/c/n/10.95 (+20) Object Man-age-ment Group (OMG).  Dds se-cu-rity.  []
 []$\T1/pcr/c/n/10.95 https : / / www . omg . org / spec /
  []
 
-[51] [52]) (./dissertation.ind) [53] [54
+[52] [53]) (./dissertation.ind) [54] [55
 
 
 ] (./dissertation.aux)
@@ -2772,11 +2787,11 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 57531 strings out of 478994
- 1199697 string characters out of 5864751
- 2317309 words of memory out of 5000000
- 73143 multiletter control sequences out of 15000+600000
- 588251 words of font info for 532 fonts, out of 8000000 for 9000
+ 57603 strings out of 478994
+ 1200819 string characters out of 5864751
+ 2316838 words of memory out of 5000000
+ 73195 multiletter control sequences out of 15000+600000
+ 589854 words of font info for 538 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  128i,23n,130p,10607b,2164s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-dist/fon
@@ -2792,10 +2807,10 @@ hvro8ac.pfb></usr/share/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/sh
 are/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb></usr/share/texmf-dist/font
 s/type1/urw/times/utmb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmr8
 a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on dissertation.pdf (61 pages, 1254087 bytes).
+Output written on dissertation.pdf (62 pages, 1279954 bytes).
 PDF statistics:
- 1201 PDF objects out of 1440 (max. 8388607)
- 1062 compressed objects within 11 object streams
- 331 named destinations out of 1000 (max. 500000)
- 163762 words of extra memory for PDF output out of 184870 (max. 10000000)
+ 1209 PDF objects out of 1440 (max. 8388607)
+ 1068 compressed objects within 11 object streams
+ 333 named destinations out of 1000 (max. 500000)
+ 167863 words of extra memory for PDF output out of 184870 (max. 10000000)
 

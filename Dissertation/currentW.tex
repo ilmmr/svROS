@@ -6,4 +6,44 @@ Following the \textit{Literature review} period where background concepts were d
 
 Afterwards, the already discussed schedule and respective assigned timings can proceed its predefined order. Here, ROS2 applications architectures will be formalized in Alloy, where the above's considerations about security and SROS2 configuration specification will be taken into account upon the modelling process. Then, it is expected to propose  a technique to specify and verify information-flow security properties on top of the proposed Alloy formalization.
 
-Both \textit{Evaluation} and \textit{Implementation} periods will follow the latter's objectives. The whole timetable is displayed bellow in the form of a table, with the times evenly split among the several periods. 
+Both \textit{Evaluation} and \textit{Implementation} periods will follow the latter's objectives. The whole timetable is displayed bellow in the form of a table (Figure \ref{fig:dissertation-schedule}), with the times evenly split among the several periods. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{img/dissertation-schedule.png}
+    \caption{Dissertation's schedule.}
+    \label{fig:dissertation-schedule}
+\end{figure}
+
+A more thorough schedule with related sub-tasks is shown below to completely contextualize the whole work that is planned to occur.
+
+\begin{itemize}
+\item SROS2-related Security Properties:
+    \begin{itemize}
+        \item Discussion and Overview.
+    \end{itemize}
+
+\item Core Techniques Definition:
+    \begin{itemize}
+        \item Formalization of the architecture of ROS2 applications in Alloy.
+        \item Extend this formalization to cover the SROS2 security configuration.
+        \item Propose a technique to specify and verify information-flow security properties on top of the proposed Alloy formalization.
+    \end{itemize}
+
+\item Evaluation:
+    \begin{itemize}
+        \item Selection of relevant case studies in the \textit{Autoware} platform.
+        \item Identify and formalize relevant information-flow security properties for that case study.
+        \item Evaluate the effectiveness of the proposed formalization and verification technique on the identified case studies and security properties.
+    \end{itemize}
+
+\item Implementation:
+    \begin{itemize}
+        \item Implement a prototype tool that can automatically infer an Alloy formalization of a ROS2 architecture and SROS2 security configuration.
+    \end{itemize}
+
+\item Writing:
+    \begin{itemize}
+        \item Thesis writing.
+    \end{itemize}
+\end{itemize}

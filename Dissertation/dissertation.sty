@@ -9,6 +9,27 @@
 \usepackage{etex}
 \usepackage{a4wide} % Setup for fullpage
 %----------------- Using makeidx ----------------------------------------------%
+
+% -- tabular
+\usepackage{forloop}
+\newcounter{loopcntr}
+\newcommand{\rpt}[2][1]{%
+  \forloop{loopcntr}{0}{\value{loopcntr}<#1}{#2}%
+}
+\newcommand{\on}[1][1]{
+  \forloop{loopcntr}{0}{\value{loopcntr}<#1}{&\cellcolor{gray}}
+}
+\newcommand{\onx}[1][1]{
+  \forloop{loopcntr}{0}{\value{loopcntr}<#1}{&\cellcolor{orange}}
+}
+\newcommand{\off}[1][1]{
+  \forloop{loopcntr}{0}{\value{loopcntr}<#1}{&}
+}
+
+\definecolor{orange}{HTML}{FF7F00}
+% --
+
+
 \usepackage{makeidx}
 \newcommand{\uminho}[1]{
      \href{http://www.uminho.pt}{#1}
@@ -81,6 +102,7 @@
 % Color setup
 \usepackage{color}
 \usepackage{xcolor}
+\PassOptionsToPackage{table,xcdraw}{xcolor}
 
 % GraphicX package
 \usepackage{graphicx}
