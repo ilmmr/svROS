@@ -29,9 +29,3 @@ configure ROS2 to run with security guarantees using the SROS2 toolset [4].
 ROS2 continues to provide a simple, uniform message passing interface to allow components to
 communicate with each other, meaning it’s relatively straightforward for a developer to add and
 integrate a new component into an existing system.
-
----
-
-## Thesis Writting
-
-The thesis writting is being developed in this link: https://www.overleaf.com/project/61781cf318c4211d93e2d264
