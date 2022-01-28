@@ -8,6 +8,13 @@ This dissertation reports on academic work that can be used by third parties as 
 
 ---
 
+### Content
+
+* [Dissertation's Pre-Thesis](./dissertation.pdf)
+* [Dissertation's Work Plan](./workplan.pdf)
+
+---
+
 ### Dissertation Contextualization
 
 Industrial manufacturing is becoming highly reliant on automation developments, as they bring more efficient and accurate processes with less associated cost. Consequently, robots are increasingly being deployed in a wide range of scenarios, especially where safety is demanded. In such cases, it is critical to employ appropriate procedures to verify both the system's quality and safety.
