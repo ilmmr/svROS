@@ -1,31 +1,21 @@
-# Formalizing ROS2 security configuration with Alloy
+## Formalizing ROS2 security configuration with Alloy
 
 <p align="center">
    <img width="200" height="182" src="https://upload.wikimedia.org/wikipedia/commons/9/93/EEUMLOGO.png">
 </p>
 
+This dissertation reports on academic work that can be used by third parties as long as the internationally accepted standards and good practices are respected concerning copyright and related rights. This work can thereafter be used under the terms established in the license below. Readers needing authorization conditions not provided for in the indicated licensing should contact the author through the RepositóriUM of the University of Minho.
+
 ---
 
-## Thesis Contextualization
+### Dissertation Contextualization
 
-One of the most popular open-source software platforms for building robotic systems is the Robot
-Operating System (ROS) [1]. A major factor behind its popularity and widespread adoption is its
-flexibility and interoperability.
+Industrial manufacturing is becoming highly reliant on automation developments, as they bring more efficient and accurate processes with less associated cost. Consequently, robots are increasingly being deployed in a wide range of scenarios, especially where safety is demanded. In such cases, it is critical to employ appropriate procedures to verify both the system's quality and safety.
 
-One drawback of this flexibility, however, lies in the increased security risks that ROS applications
-face. The low barrier to entry and open nature of the ROS ecosystem means a malicious actor could
-potentially inject code or vulnerabilities into a library, which could then be reused by another
-unsuspecting developer.
+Following the current growth of cyber-physical system, as well as their usage in various technology domains, the development of software applications is becoming more demanding due to the complexity behind the integration of needed services, beyond those provided by the operating system. Therefore, software middleware is increasingly used, since it offers services that support application development and delivery.
 
-The main reason to this lack of security that ROS faces is the fact that they originally provided their
-own specified middleware, which also didn’t scale well, making it unsuitable for safety-critical and
-real-time systems, and that lead to the creation of ROS2.
+One of the most popular open-source software platforms for building robotic systems is the Robot Operating System (ROS) middleware, where highly configurable robots are usually built by composing third-party modules. A major factor behind its popularity and widespread adoption is its flexibility and interoperability. One drawback of this flexibility, however, lies in the increased security risks that ROS applications face. The emergence of performance and scalability challenges connected to the ROS middleware standard, in addition to security concerns, prompted the creation of ROS2.
 
-ROS2 is deployed without security mechanisms by default, but it uses the Data Distribution Service
-(DDS) [3] communication protocol, which can provide security guarantees such as authentication
-and access control with a variant called DDS-Security. Using DDS-Security it is possible to
-configure ROS2 to run with security guarantees using the SROS2 toolset [4].
+Robot Operating System 2 (ROS2), which continues to provide a simple, uniform message passing interface, to allow components to communicate with each other, is implemented using the Data Distribution Service (DDS) communication protocol, where security guarantees are ensured by the DDS-Security specification. Using DDS-Security, it is possible to configure ROS2 to run with security guarantees using the SROS2 toolset.
 
-ROS2 continues to provide a simple, uniform message passing interface to allow components to
-communicate with each other, meaning it’s relatively straightforward for a developer to add and
-integrate a new component into an existing system.
+This dissertation will propose a technique, based on the software verification perspective, to automatically verify system-wide properties related to the security configuration of ROS2-based applications. To that purpose it will model the ROS architecture, as well as the network communication behaviour, in Alloy, a formal specification language and analysis tool supported by a model-finder, with which system-wide properties will subsequently model-checked.

@@ -1,0 +1,21 @@
+latex
+*.toc
+*.acn
+*.aux
+*.glo
+*.idx
+*.lof
+*.log
+*.lol
+*.lot
+*.ist
+*.bbl
+*.blg
+*.ilg
+*.ind
+*.sty
+*.pl
+lixo/
+
+# vscode
+.vscode
