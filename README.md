@@ -12,6 +12,7 @@ This dissertation reports on academic work that can be used by third parties as 
 
 * [Dissertation's Pre-Thesis](./dissertation.pdf)
 * [Dissertation's Work Plan](./workplan.pdf)
+* [RPD's checkpoint](./rpd-checkpoint.pdf)
 
 ---
 
