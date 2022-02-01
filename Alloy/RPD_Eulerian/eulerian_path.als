@@ -25,7 +25,7 @@ fact eulerian_assumptions {
 
 	adj = ~adj /* The graph is undirected. */
 	no iden & adj /* The graph contains no loops.  */
-	Node ->Node in *(adj + ~adj)  /* The graph is connected. */
+	all x : Node | x->Node in ^adj
 }
 
 pred assumptions {

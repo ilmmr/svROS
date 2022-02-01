@@ -4,5 +4,7 @@ Alloy 6 is a new major version. It features new keywords and symbols that allow 
 
 ## Folder Description
 
-This folder relates to the Alloy introduction with a corresponding example to introduce the reader to each alloy scructure.
-* **Alloy Example:** This folder provides a Alloy example that features every single alloy structure.
+This folder relates to the Alloy introduction with a corresponding example to introduce the reader to each alloy structure.
+* **[Eulerian RPD example](https://github.com/luis1ribeiro/Thesis/tree/main/Alloy/RPD_Eulerian):** This folder provides an Alloy example that features every single alloy structure with an Eulerian circuit as example.
+
+Additionally, this folder contains useful content to this dissertation domain of exploration.
