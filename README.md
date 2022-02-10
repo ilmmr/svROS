@@ -14,7 +14,6 @@ This dissertation reports on academic work that can be used by third parties as 
 * **January's Checkpoint:**
    * [RPD - Dissertation Checkpoint](./rpd-checkpoint.pdf)
    * [RPD - Presentation](./rpd-presentation.pdf)
-* [Dissertation](./dissertation.pdf)
 
 ---
 
