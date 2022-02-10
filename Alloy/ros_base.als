@@ -1,7 +1,7 @@
 /* open util/natural */
 
 /* module for ros-based topic */
-module ros_abstract
+module ros_base
 
 /* --- Abstract Notations of the ROS elements --- */
 abstract sig Node {
@@ -21,9 +21,7 @@ abstract sig Interface {
 	fields: set Var
 }
 
-abstract sig Topic {
-	type : set Interface
-}
+abstract sig Topic {}
 /* --- Abstract Notations of the ROS elements --- */
 
 /* --- Some basic assumptions --- */
@@ -32,7 +30,7 @@ fact ros_assumptions {
 	Topic = Node.advertises + Node.subscribes
 	/* Inbox and Outbox messages must consider its Topic message type */
 	inbox.topic in subscribes and outbox.topic in advertises
-	/* Message interface must be the same as its topic interface */
-	topic.type = Message<:type
+	/* Message fields must be preserved */
+	content.Value in type.fields
 }
 /* --- Some basic assumptions --- */
