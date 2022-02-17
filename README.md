@@ -1,4 +1,4 @@
-## Formalizing ROS2 security configuration with Alloy
+## Formalizing ROS2 security configuration with Alloy - svROS
 
 <p align="center">
    <img width="200" height="182" src="https://upload.wikimedia.org/wikipedia/commons/9/93/EEUMLOGO.png">
