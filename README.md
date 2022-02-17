@@ -8,23 +8,6 @@ This dissertation reports on academic work that can be used by third parties as 
 
 ---
 
-### Introduction
-
-The intended goal of this work is to propose a technique based on the software verification perspective, to automatically verify system-wide properties related to the security configuration of ROS2-based applications. This tool is later regarded as *Security Verification in ROS* (**[svROS](https://luis1ribeiro.github.io/svROS/)**).
-
-To that purpose it will model the ROS architecture, as well as the network communication behaviour, in Alloy, a formal specification language and analysis tool supported by a model-finder, with which system-wide properties will subsequently model-checked.
-
----
-
-### Content
-
-* [Dissertation's Work Plan](./workplan.pdf)
-* **January's Checkpoint:**
-   * [RPD - Dissertation Checkpoint](./rpd-checkpoint.pdf)
-   * [RPD - Presentation](./rpd-presentation.pdf)
-
----
-
 ### Contextualization
 
 Industrial manufacturing is becoming highly reliant on automation developments, as they bring more efficient and accurate processes with less associated cost. Consequently, robots are increasingly being deployed in a wide range of scenarios, especially where safety is demanded. In such cases, it is critical to employ appropriate procedures to verify both the system's quality and safety.
@@ -35,5 +18,22 @@ One of the most popular open-source software platforms for building robotic syst
 
 Robot Operating System 2 (ROS2), which continues to provide a simple, uniform message passing interface, to allow components to communicate with each other, is implemented using the Data Distribution Service (DDS) communication protocol, where security guarantees are ensured by the DDS-Security specification. Using DDS-Security, it is possible to configure ROS2 to run with security guarantees using the SROS2 toolset.
 
-This dissertation will propose a technique, based on the software verification perspective, to automatically verify system-wide properties related to the security configuration of ROS2-based applications. To that purpose it will model the ROS architecture, as well as the network communication behaviour, in Alloy, a formal specification language and analysis tool supported by a model-finder, with which system-wide properties will subsequently model-checked.
+---
+
+### Contributions
+
+The intended goal of this work is to propose a technique based on the software verification perspective, to automatically verify system-wide properties related to the security configuration of ROS2-based applications.
+
+To that purpose it will model the ROS architecture, as well as the network communication behaviour, in Alloy, a formal specification language and analysis tool supported by a model-finder, with which system-wide properties will subsequently model-checked.
+
+This tool is later regarded as *Security Verification in ROS* (**[svROS](https://luis1ribeiro.github.io/svROS/)**).
+
+---
+
+### Developed Content
+
+* [Dissertation's Work Plan](./workplan.pdf)
+* **January's Checkpoint:**
+   * [RPD - Dissertation Checkpoint](./rpd-checkpoint.pdf)
+   * [RPD - Presentation](./rpd-presentation.pdf)
 
