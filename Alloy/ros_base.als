@@ -13,6 +13,8 @@ abstract sig Message {
 	type: one Interface,
 	content: Var -> lone Value
 }
+/* content auxiliar: Message->Value */
+let c_aux = {m:Message, v:Value | some c:Var | m->c->v in content}
 abstract sig Interface {
 	fields: set Var
 }
@@ -33,14 +35,14 @@ fact ros_assumptions {
 	~advertises.advertises in iden
 	advertises.~advertises in iden
 	/* Messages have some content */
-	(Message->Message & iden) in content.~content
+	(Message->Message & iden) in c_aux.~c_aux
 }
 /* --- Some basic assumptions --- */
 
 /* --- Functionality assumptions --- */
 fact ros_functionality {
-	always (some m: Node.outbox | (all n: subscribes.(m.topic) | eventually (m in n.inbox))
-	always (some m: Node.outbox | (all n: subscribes.(m.topic) | eventually (m in n.inbox))
+	always (some m: Node.outbox | (all n: subscribes.(m.topic) | eventually (m in n.inbox)))
+	always (some m: Node.outbox | (all n: subscribes.(m.topic) | eventually (m in n.inbox)))
 	always (all m: Node.outbox      |  eventually m not in Node.outbox)
 }
 /* --- Functionality assumptions --- */
