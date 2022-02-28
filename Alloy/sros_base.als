@@ -1,5 +1,4 @@
 /* open util/natural */
-
 /* module for sros-based */
 module sros_base
 
@@ -7,17 +6,14 @@ module sros_base
 abstract sig Enclave {
 	profiles: set Profile
 } { some profiles }
-
 abstract sig Profile {
 	privileges: set Privilege
 }
-
 abstract sig Privilege {
 	role : one Role,
 	object: one Object,
 	value: one Value
 }
-
 enum Role {Publish, Subscribe}
 enum Value {Alloy, Deny}
 abstract sig Object {}

@@ -1,4 +1,5 @@
 open ros_base
+open sros_base
 
 /* --- Node Declaration --- */
 sig Random extends Node {} {
@@ -35,5 +36,5 @@ one sig Pose extends Interface {} {
 one sig Light extends Interface {} {
 	fields in Bool
 }
-
+sig _int, bool extends Value {}
 enum Var {Bool, Direction, PosX}
