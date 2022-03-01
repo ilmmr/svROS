@@ -49,7 +49,7 @@ one sig true, false extends _bool {}
 fact functionality {
 	Turtle.pos = first
 	LightBubble.light = false
-	always (nop or multiplexer or (some m: Message | random[m] or safety[m]) or (some n: (Node-LightBubble) | some n.outbox implies send[n]) or turtlePos)
+	always (nop or multiplexer or (some m: Message | random[m] or safety[m]) or (some n: (Node-LightBubble) | some n.outbox implies send[n]) or turtlePos or light)
 }
 pred nop {
 	outbox' = outbox
@@ -68,6 +68,7 @@ pred random[m : Message] { /* --- random --- */
 	pos' = pos
 }
 pred safety[m : Message] { /* --- safety node --- */
+	some Safety.inbox
 	m.topic = Topic_Safety and m.type = Twist
 	outbox' = outbox + Safety->m
 	inbox' = inbox
@@ -81,14 +82,13 @@ pred multiplexer { /* --- multiplexer computation --- */
 		some m : Multiplexer.inbox {
 			m.topic = Topic_Safety
 			outbox' = outbox + Multiplexer->m
-			inbox' = inbox - Multiplexer->m
 			
 			-- Light
 			Vel.(m.content) = high implies {
-				light' = LightBubble->true
+				some mn: Message | mn.topic = Light_Topic and inbox' = inbox - Multiplexer->m + LightBubble->mn
 			}
 			else {
-				light' = LightBubble->false
+				inbox' = inbox - Multiplexer->m
 			}	
 		}
 	}
@@ -97,19 +97,20 @@ pred multiplexer { /* --- multiplexer computation --- */
 			some m : Multiplexer.inbox {
 				m.topic = Topic_Random
 				outbox' = outbox + Multiplexer->m
-				inbox' = inbox - Multiplexer->m
+
 				
 				-- Light
 				Vel.(m.content) = high implies {
-					light' = LightBubble->true
+					some mn: Message | mn.topic = Light_Topic and inbox' = inbox - Multiplexer->m + LightBubble->mn
 				}
 				else {
-					light' = LightBubble->false
+					inbox' = inbox - Multiplexer->m
 				}
 			}
 		}
 	}
 	pos' = pos
+	light' = LightBubble->false
 }
 pred turtlePos {
 	some m : Turtle.inbox {
@@ -157,3 +158,6 @@ pred light {
 }
 /* --- Predicates --- */
 
+run main {
+	eventually LightBubble.light = true
+}
