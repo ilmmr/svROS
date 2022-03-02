@@ -47,7 +47,7 @@ one sig true, false extends _bool {}
 
 /* --- Network Functionality --- */
 fact functionality {
-	Turtle.pos = first
+	Turtle.pos = next[next[first]] and Turtle.pos = prev[prev[last]]
 	LightBubble.light = false
 	always (nop or multiplexer or (some m: Message | random[m] or safety[m]) or (some n: (Node-LightBubble) | some n.outbox implies send[n]) or turtlePos or light)
 }
@@ -158,6 +158,13 @@ pred light {
 }
 /* --- Predicates --- */
 
+/* --- Test cases --- */
 run main {
-	eventually LightBubble.light = true
+	some m: Message | random[m];
+	some n: Node | some n.outbox implies send[n];
+	multiplexer;
+	some n: Node | some n.outbox implies send[n];
+	turtlePos
+	/* ... */
 }
+/* --- Test cases --- */
