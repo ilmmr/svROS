@@ -14,7 +14,11 @@ abstract sig Message {
 	content: Var -> lone Value
 }
 /* content auxiliar: Message->Value */
-let c_aux = {m:Message, v:Value | some c:Var | m->c->v in content}
+let message_value = {m: Message, v: Value | some c: Var | m->c->v in content}
+/* content auxiliar_2: Message->Var */
+let message_var = {m: Message, v: Var | lone c: Value | m->v->c in content}
+/* topic to interface */
+let topic_interface = {t: Topic, i: Interface | some m: Message {m.topic = t and m.type = i}}
 abstract sig Interface {
 	fields: set Var
 }
@@ -28,14 +32,17 @@ fact ros_assumptions {
 	/* A topic must have been advertised or subscribed */
 	Topic = Node.advertises + Node.subscribes
 	/* Inbox and Outbox messages must consider its Topic message type */
-	inbox.topic in subscribes and outbox.topic in advertises
+		-- Later we can check as a dynamic property --
+	always (inbox.topic in subscribes and outbox.topic in advertises)
 	/* Message fields must be preserved */
 	content.Value in type.fields
-	/* Each node has its corresponding topic */
-	~advertises.advertises in iden
-	advertises.~advertises in iden
 	/* Messages have some content */
-	(Message->Message & iden) in c_aux.~c_aux
+	(Message->Message & iden) in message_value.~message_value
+	/* 
+		Each node has its corresponding topic
+		~advertises.advertises in iden
+		advertises.~advertises in iden
+	*/
 }
 /* --- Some basic assumptions --- */
 

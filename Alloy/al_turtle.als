@@ -36,7 +36,7 @@ one sig Twist extends Interface {} {
 one sig Pose extends Interface {} {
 	fields = PosX
 }
-
+one sig Light_Info extends Interface {} {no fields}
 sig _int, _bool, high, slow, fw, bw extends Value {}
 one sig Direction, Vel, PosX extends Var {}
 -- one sig Fw, Bw extends Direction {}
@@ -49,7 +49,7 @@ one sig true, false extends _bool {}
 fact functionality {
 	Turtle.pos = next[next[first]] and Turtle.pos = prev[prev[last]]
 	LightBubble.light = false
-	always (nop or multiplexer or (some m: Message | random[m] or safety[m]) or (some n: (Node-LightBubble) | some n.outbox implies send[n]) or turtlePos or light)
+	always (nop or multiplexer or random or safety or send or turtlePos or light)
 }
 pred nop {
 	outbox' = outbox
@@ -57,25 +57,48 @@ pred nop {
 	light' = LightBubble->false
 	pos' = pos
 }
+/* isto está muito mal... */
+fact messages_assumptions {
+	/* Topic assingnments to Interface */
+	Topic_Random.topic_interface = Twist and Topic_Safety.topic_interface = Twist and MainTopic.topic_interface = Twist and TurtlePosition.topic_interface = Pose and Light_Topic.topic_interface = Light_Info
+	/* Interface Values specification */
+	type.Twist in (message_var.Direction & message_var.Vel) and type.Pose in message_var.PosX
+	/* Var to Value */
+	Message.content in (Direction->fw + Direction->bw + Vel->high + Vel->slow + PosX->_int) 
+}
 /* --- Network Functionality --- */
 
 /* --- Predicates --- */
-pred random[m : Message] { /* --- random --- */
-	m.topic = Topic_Random and m.type = Twist
-	outbox' = outbox + Random->m
-	inbox' = inbox
-	light' = LightBubble->false
-	pos' = pos
+
+pred random { /* --- random --- */
+	some m : Message {
+		m.topic = Topic_Random /* and m.type = Twist */
+		outbox' = outbox + Random->m
+		inbox' = inbox
+		light' = LightBubble->false
+		pos' = pos
+	}
 }
-pred safety[m : Message] { /* --- safety node --- */
-	some Safety.inbox
-	m.topic = Topic_Safety and m.type = Twist
-	outbox' = outbox + Safety->m
-	inbox' = inbox
-	light' = LightBubble->false
-	pos' = pos
+pred safety { /* --- safety node --- */
+	some m : Message {
+		m.topic = Topic_Safety /* and m.type = Twist */
+		/* specify the message direction */
+		some mn : Safety.inbox {
+			PosX.(mn.content) = first implies {
+				Direction.(m.content) = fw
+			}
+			else {
+				Direction.(m.content) = bw
+			}
+		}
+		outbox' = outbox + Safety->m
+		inbox' = inbox
+		light' = LightBubble->false
+		pos' = pos
+	}
 }
 pred multiplexer { /* --- multiplexer computation --- */
+	
 	some Multiplexer.inbox
 
 	Topic_Safety in (Multiplexer.inbox).topic implies {
@@ -128,25 +151,33 @@ pred turtlePos {
 		}
 		inbox'  = inbox - Turtle->m
 	}
-	outbox' = outbox
-	light' = LightBubble->false
-	processPos
-}
-pred processPos {
-	Turtle.pos = first or Turtle.pos = last
-	inbox'  = inbox
-	some m: Message | m.type = Pose and m.topic = TurtlePosition and m.content = PosX->Turtle.pos and outbox' = outbox + Turtle->m
 	light' = LightBubble->false
 	pos' = pos
-}
-pred send[n : Node] {
-	/* the outbox must have something */
-	some m : n.outbox {
-		outbox' = outbox - n->m
-		inbox' = inbox + subscribes.(m.topic)->m
+	/* change turtle pos */
+	Turtle.pos = first or Turtle.pos = last implies {
+		/* instead of passing the pos of the turtle, its either return true (first) or false (last) */
+		Turtle.pos = first implies { 
+			some m: Message | m.type = Pose and m.topic = TurtlePosition and m.content = PosX->first and outbox' = outbox + Turtle->m
+		}
+		else {
+			some m: Message | m.type = Pose and m.topic = TurtlePosition and m.content = PosX->last and outbox' = outbox + Turtle->m
+		}
 	}
-	pos' = pos
-	light' = LightBubble->false
+	else {
+		outbox' = outbox
+	}
+}
+pred send {
+	/* must advertise something */
+	some n : advertises.Topic | some n.outbox implies {
+		/* the outbox must have something */
+		some m : n.outbox {
+			outbox' = outbox - n->m
+			inbox' = inbox + subscribes.(m.topic)->m
+		}
+		pos' = pos
+		light' = LightBubble->false
+	}
 }
 pred light {
 	some m : LightBubble.inbox {
@@ -160,11 +191,6 @@ pred light {
 
 /* --- Test cases --- */
 run main {
-	some m: Message | random[m];
-	some n: Node | some n.outbox implies send[n];
-	multiplexer;
-	some n: Node | some n.outbox implies send[n];
-	turtlePos
 	/* ... */
 }
 /* --- Test cases --- */
