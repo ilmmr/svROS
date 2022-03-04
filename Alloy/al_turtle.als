@@ -49,7 +49,7 @@ one sig true, false extends _bool {}
 fact functionality {
 	Turtle.pos = next[next[first]] and Turtle.pos = prev[prev[last]]
 	LightBubble.light = false
-	always (nop or multiplexer or random or safety or send or turtlePos or light)
+	always (nop or multiplexer or (some m: Message | random[m] or safety[m]) or (some n: advertises.Topic | some n.outbox implies send[n]) or turtlePos or light)
 }
 pred nop {
 	outbox' = outbox
@@ -70,17 +70,17 @@ fact messages_assumptions {
 
 /* --- Predicates --- */
 
-pred random { /* --- random --- */
-	some m : Message {
+pred random [m : Message] { /* --- random --- */
+	-- some m : Message {
 		m.topic = Topic_Random /* and m.type = Twist */
 		outbox' = outbox + Random->m
 		inbox' = inbox
 		light' = LightBubble->false
 		pos' = pos
-	}
+	-- }
 }
-pred safety { /* --- safety node --- */
-	some m : Message {
+pred safety [m : Message] { /* --- safety node --- */
+	-- some m : Message {
 		m.topic = Topic_Safety /* and m.type = Twist */
 		/* specify the message direction */
 		some mn : Safety.inbox {
@@ -95,7 +95,7 @@ pred safety { /* --- safety node --- */
 		inbox' = inbox
 		light' = LightBubble->false
 		pos' = pos
-	}
+	-- }
 }
 pred multiplexer { /* --- multiplexer computation --- */
 	
@@ -104,7 +104,12 @@ pred multiplexer { /* --- multiplexer computation --- */
 	Topic_Safety in (Multiplexer.inbox).topic implies {
 		some m : Multiplexer.inbox {
 			m.topic = Topic_Safety
-			outbox' = outbox + Multiplexer->m
+			/* the topic must change */
+			some new_m : Message {
+				new_m.topic = MainTopic
+				new_m.content = m.content 
+				outbox' = outbox + Multiplexer->new_m
+			}
 			
 			-- Light
 			Vel.(m.content) = high implies {
@@ -119,8 +124,12 @@ pred multiplexer { /* --- multiplexer computation --- */
 		Topic_Random in (Multiplexer.inbox).topic implies {
 			some m : Multiplexer.inbox {
 				m.topic = Topic_Random
-				outbox' = outbox + Multiplexer->m
-
+				/* the topic must change */
+				some new_m : Message {
+					new_m.topic = MainTopic
+					new_m.content = m.content 
+					outbox' = outbox + Multiplexer->new_m
+				}
 				
 				-- Light
 				Vel.(m.content) = high implies {
@@ -167,9 +176,9 @@ pred turtlePos {
 		outbox' = outbox
 	}
 }
-pred send {
+pred send [n : Node] {
 	/* must advertise something */
-	some n : advertises.Topic | some n.outbox implies {
+	 -- some n : advertises.Topic | some n.outbox implies {
 		/* the outbox must have something */
 		some m : n.outbox {
 			outbox' = outbox - n->m
@@ -177,7 +186,7 @@ pred send {
 		}
 		pos' = pos
 		light' = LightBubble->false
-	}
+	-- }
 }
 pred light {
 	some m : LightBubble.inbox {
@@ -190,7 +199,14 @@ pred light {
 /* --- Predicates --- */
 
 /* --- Test cases --- */
-run main {
-	/* ... */
+run test_case {
+	some m : Message | Vel.(m.content) = slow and Direction.(m.content) = fw and random[m];
+	send[Random];
+	multiplexer;
+	send[Multiplexer];
+	turtlePos;
+	(send[Turtle] iff some Turtle.outbox) implies {
+		/* ... */
+	}
 }
 /* --- Test cases --- */
