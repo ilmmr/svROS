@@ -62,30 +62,8 @@ fact ros_assumptions {
 pred ros_functionality [inbox : Node -> Message, outbox : Node -> Message] {
 	-- behaviour duplication
 	no inbox + outbox
-	-- always (inbox.topic in subscribes and outbox.topic in advertises)
-	-- always (some m: Node.outbox  | (all n: subscribes.(m.topic) | eventually (m in n.inbox)))
-	-- always (some m: Node.outbox  | (all n: subscribes.(m.topic) | eventually (m in n.inbox)))
-	-- always (all  m: Node.outbox  |  eventually m not in Node.outbox)
-	/*
-	-- behaviour duplication
-	always (some m: Node.outbox1  | (all n: subscribes.(m.topic) | eventually (m in n.inbox1)))
-	always (some m: Node.outbox1  | (all n: subscribes.(m.topic) | eventually (m in n.inbox1)))
-	always (all  m: Node.outbox1  | eventually m not in Node.outbox1)
-	*/
-	all n : Node | always {
-		n.inbox.topic in n.subscribes
-		n.outbox.topic in n.advertises
-	}
-	all m : Message | always {
-		m in Node.outbox implies (all n : subscribes.(m.topic) | 
-			eventually (m in n.inbox))
-	}
-	always {
-		all m : Node.outbox | eventually m not in Node.outbox
-	}
-	all m : Message | always{
-		m in Node.inbox implies (some n : advertises.(m.topic) | 
-			before once (m in n.outbox))
-	}
+	always (inbox.topic in subscribes and outbox.topic in advertises)
+	always (all m: Node.outbox, n: subscribes.(m.topic) | eventually (m in n.inbox)))
+	always (all m: Message | m in Node.inbox implies (some n: advertises.(m.topic) | before once (m in n.outbox)))
 }
 /* --- Functionality assumptions --- */
