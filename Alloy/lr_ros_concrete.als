@@ -1,35 +1,43 @@
-zopen ros_base
-open util/ordering[_int]
+open ros_base
+open util/ordering[pos]
 
+/* --- self compose --- */
+-- abstract sig NodeSC extends Node {var inbox0, inbox1, outbox0, outbox1: set Message} {always ((inbox0 + inbox1 = inbox) and (outbox0 + outbox1 = outbox))}
+sig pos in numeric {}
+var one sig position0 in pos {}
+var one sig position1 in pos {}
+/* --- self compose --- */
 
 /* --- Node Declaration --- */
-sig Random extends Node {} {
+one sig Random extends Node {} {
 	no subscribes
-	advertises in Topic_Random
+	advertises in NotSafe
 }
-sig Multiplexer extends Node  {} {
-	subscribes = Topic_Random + Topic_Safety
-	advertises = MainTopic + Light_Topic
+one sig Multiplexer extends Node  {} {
+	subscribes = NotSafe + Safe
+	advertises = MainTopic + Alarm
 }
-sig Turtle extends Node {var pos : one _int} {
+one sig Turtle extends Node {} {
 	subscribes = MainTopic
 	advertises = TurtlePosition 
 }
-sig Safety extends Node {} {
+one sig Safety extends Node {} {
 	subscribes = TurtlePosition 
-	advertises = Topic_Safety
+	advertises = Safe
 }
-sig LightBubble extends Node {var light: one _bool} {
-	subscribes = Light_Topic
+one sig Light extends Node {} {
+	subscribes = Alarm
 	no advertises
 }
+-- Behaviour relacionado com nós internos: Do tipo valor da pos, se luz está acesa ou não, deverá estar relacionado com um tópico.
 /* --- Node Declaration --- */
 
 /* --- Topic Declaration --- */
-one sig MainTopic, Topic_Random, Topic_Safety, TurtlePosition, Light_Topic extends Topic {}
+one sig MainTopic, NotSafe, Safe, TurtlePosition, Alarm extends Topic {}
 /* --- Topic Declaration --- */
 
-/* --- Interface Declaration --- */
+/* 
+--- Interface Declaration --- 
 one sig Twist extends Interface {} {
 	fields = Direction + Vel
 }
@@ -37,176 +45,134 @@ one sig Pose extends Interface {} {
 	fields = PosX
 }
 one sig Light_Info extends Interface {} {no fields}
-sig _int, _bool, high, slow, fw, bw extends Value {}
-one sig Direction, Vel, PosX extends Var {}
+sig _pos, _bool, high, slow, fw, bw extends Value {}
+*/
+-- NOTA: Para já vou abstrair o vel e a direction como true ou false
+one sig data_direction, data_vel, data_position, data_alarm extends Field {}
 -- one sig Fw, Bw extends Direction {}
 -- one sig High, Slow extends Vel {}
 -- one sig neg_3, neg_2, neg_1, neutro, pos_1, pos_2, pos_3 extends _int {}
-one sig true, false extends _bool {}
 /* --- Interface Declaration --- */
 
 /* --- Network Functionality --- */
+fact type_coherency {
+	((topic.(MainTopic + Safe + NotSafe)).content).Value in data_direction and ((topic.(MainTopic + Safe + NotSafe)).content).Value in data_vel
+	((topic.TurtlePosition).content).Value in data_position
+	((topic.Alarm).content).Value in data_alarm
+}
+fact field_types {
+	Message.content in (data_direction->bool + data_vel->bool + data_position->pos + data_alarm->bool) 
+}
+
 fact functionality {
-	Turtle.pos = next[next[first]] and Turtle.pos = prev[prev[last]]
-	LightBubble.light = false
-	always (nop or multiplexer or (some m: Message | random[m] or safety[m]) or (some n: advertises.Topic | some n.outbox implies send[n]) or turtlePos or light)
-}
-pred nop {
-	outbox' = outbox
-	inbox' = inbox
-	light' = LightBubble->false
-	pos' = pos
-}
-/* isto está muito mal... */
-fact messages_assumptions {
-	/* Topic assingnments to Interface */
-	Topic_Random.topic_interface = Twist and Topic_Safety.topic_interface = Twist and MainTopic.topic_interface = Twist and TurtlePosition.topic_interface = Pose and Light_Topic.topic_interface = Light_Info
-	/* Interface Values specification */
-	type.Twist in (message_var.Direction & message_var.Vel) and type.Pose in message_var.PosX
-	/* Var to Value */
-	Message.content in (Direction->fw + Direction->bw + Vel->high + Vel->slow + PosX->_int) 
+	always (nop[inbox0,outbox0,position0] or random[inbox0,outbox0,position0] or safety[inbox0,outbox0,position0] or multiplexer[inbox0,outbox0,position0] or turtle[inbox0,outbox0,position0] or send[inbox0,outbox0,position0])	
+	-- Turtle.pos = next[next[first]] and Turtle.pos = prev[prev[last]] Será importante saber onde ela começa?
+	always (nop[inbox1,outbox1,position1] or random[inbox1,outbox1,position1] or safety[inbox1,outbox1,position1] or multiplexer[inbox1,outbox1,position1] or turtle[inbox1,outbox1,position1] or send[inbox1,outbox1,position1])
 }
 /* --- Network Functionality --- */
 
 /* --- Predicates --- */
+pred nop [inbox : Node->Message, outbox : Node->Message, position : pos] {
+	inbox' = inbox
+	outbox' = outbox
+	position' = position
+}
 
-pred random [m : Message] { /* --- random --- */
-	-- some m : Message {
-		m.topic = Topic_Random /* and m.type = Twist */
-		outbox' = outbox + Random->m
-		inbox' = inbox
-		light' = LightBubble->false
-		pos' = pos
-	-- }
+pred random [inbox : Node -> Message, outbox : Node -> Message, position : pos] { /* --- random --- */
+	some m : Message | m.topic = NotSafe and inbox' = inbox ++ Random->m
+	outbox' = outbox
+	position' = position
 }
-pred safety [m : Message] { /* --- safety node --- */
-	-- some m : Message {
-		m.topic = Topic_Safety /* and m.type = Twist */
+
+pred safety [inbox : Node -> Message, outbox : Node -> Message, position : pos] { /* --- safety node --- */
 		/* specify the message direction */
-		some mn : Safety.inbox {
-			PosX.(mn.content) = first implies {
-				Direction.(m.content) = fw
-			}
-			else {
-				Direction.(m.content) = bw
-			}
+		some m : Safety.inbox {
+			data_position.(m.content) = first implies (some t: Message | (t.topic = Safe and data_direction.(t.content) = true)  implies outbox' = outbox ++ Safety->t)
+			data_position.(m.content) = last  implies (some t: Message | (t.topic = Safe and data_direction.(t.content) = false) implies outbox' = outbox ++ Safety->t)
+			data_position.(m.content) != first and data_position.(m.content) != last implies outbox' = outbox
+			inbox' = inbox - Safety->m
 		}
-		outbox' = outbox + Safety->m
-		inbox' = inbox
-		light' = LightBubble->false
-		pos' = pos
-	-- }
+		position' = position
 }
-pred multiplexer { /* --- multiplexer computation --- */
+
+pred turtle [inbox : Node -> Message, outbox : Node -> Message, position : pos] {
+	some m : Turtle.inbox {
+		data_direction.(m.content) = true  implies {position' = max[position + position.next + (data_vel.(m.content) = true implies position.next.next else none)]}
+		data_direction.(m.content) = false implies {position' = min[position + position.prev + (data_vel.(m.content) = true implies position.prev.prev else none)]}
+		inbox'  = inbox - Turtle->m
+	}
+	/* instead of passing the pos of the turtle, its either return true (first) or false (last) */
+	some mn : Message | mn.topic = TurtlePosition and mn.content = data_position->position' and outbox' = outbox ++ Turtle->mn
+}
+
+pred send [inbox : Node -> Message, outbox : Node -> Message, position : pos] {
+	some n : Node {
+		some m : n.outbox {
+			no outbox'
+			inbox' = inbox ++ subscribes.(m.topic)->m
+		}
+		position' = position
+	}
+}
+
+pred multiplexer [inbox : Node -> Message, outbox : Node -> Message, position : pos] { /* --- multiplexer computation --- */
 	
 	some Multiplexer.inbox
 
-	Topic_Safety in (Multiplexer.inbox).topic implies {
+	Safe in (Multiplexer.inbox).topic implies {
 		some m : Multiplexer.inbox {
-			m.topic = Topic_Safety
+			m.topic = Safe
 			/* the topic must change */
 			some new_m : Message {
 				new_m.topic = MainTopic
 				new_m.content = m.content 
-				outbox' = outbox + Multiplexer->new_m
+				outbox' = outbox ++ Multiplexer->new_m
 			}
-			
-			-- Light
-			Vel.(m.content) = high implies {
-				some mn: Message | mn.topic = Light_Topic and inbox' = inbox - Multiplexer->m + LightBubble->mn
-			}
-			else {
-				inbox' = inbox - Multiplexer->m
-			}	
+			some mn: Message | mn.topic = Alarm and data_alarm.(mn.content) = data_vel.(m.content) and inbox' = (inbox - Multiplexer->m) ++ Light->mn	
 		}
 	}
 	else {
-		Topic_Random in (Multiplexer.inbox).topic implies {
+		NotSafe in (Multiplexer.inbox).topic implies {
 			some m : Multiplexer.inbox {
-				m.topic = Topic_Random
+				m.topic = NotSafe
 				/* the topic must change */
 				some new_m : Message {
 					new_m.topic = MainTopic
 					new_m.content = m.content 
-					outbox' = outbox + Multiplexer->new_m
+					outbox' = outbox ++ Multiplexer->new_m
 				}
-				
-				-- Light
-				Vel.(m.content) = high implies {
-					some mn: Message | mn.topic = Light_Topic and inbox' = inbox - Multiplexer->m + LightBubble->mn
-				}
-				else {
-					inbox' = inbox - Multiplexer->m
-				}
+				some mn: Message | mn.topic = Alarm and data_alarm.(mn.content) = data_vel.(m.content) and inbox' = (inbox - Multiplexer->m) ++ Light->mn
 			}
 		}
 	}
-	pos' = pos
-	light' = LightBubble->false
+	position' = position
 }
-pred turtlePos {
-	some m : Turtle.inbox {
-		Direction.(m.content) = fw and Vel.(m.content) = high {
-			pos' = pos - Turtle->(Turtle.pos) + Turtle->(next[next[Turtle.pos]])
-		}
-		Direction.(m.content) = fw and Vel.(m.content) = slow {
-			pos' = pos - Turtle->(Turtle.pos) + Turtle->(next[Turtle.pos])
-		}
-		Direction.(m.content) = bw and Vel.(m.content) = high {
-			pos' = pos - Turtle->(Turtle.pos) + Turtle->(prev[Turtle.pos])
-		}
-		Direction.(m.content) = bw and Vel.(m.content) = slow {
-			pos' = pos - Turtle->(Turtle.pos) + Turtle->(prev[prev[Turtle.pos]])
-		}
-		inbox'  = inbox - Turtle->m
-	}
-	light' = LightBubble->false
-	pos' = pos
-	/* change turtle pos */
-	Turtle.pos = first or Turtle.pos = last implies {
-		/* instead of passing the pos of the turtle, its either return true (first) or false (last) */
-		Turtle.pos = first implies { 
-			some m: Message | m.type = Pose and m.topic = TurtlePosition and m.content = PosX->first and outbox' = outbox + Turtle->m
-		}
-		else {
-			some m: Message | m.type = Pose and m.topic = TurtlePosition and m.content = PosX->last and outbox' = outbox + Turtle->m
-		}
-	}
-	else {
-		outbox' = outbox
-	}
-}
-pred send [n : Node] {
-	/* must advertise something */
-	 -- some n : advertises.Topic | some n.outbox implies {
-		/* the outbox must have something */
-		some m : n.outbox {
-			outbox' = outbox - n->m
-			inbox' = inbox + subscribes.(m.topic)->m
-		}
-		pos' = pos
-		light' = LightBubble->false
-	-- }
-}
-pred light {
-	some m : LightBubble.inbox {
-		outbox' = outbox
-		inbox' = inbox - LightBubble->m
-		pos' = pos
-		light' = LightBubble->true
-	}
-}
+
 /* --- Predicates --- */
 
-/* --- Test cases --- */
-run test_case {
-	some m : Message | Vel.(m.content) = slow and Direction.(m.content) = fw and random[m];
-	send[Random];
-	multiplexer;
-	send[Multiplexer];
-	turtlePos;
-	(send[Turtle] iff some Turtle.outbox) implies {
-		/* ... */
-	}
+pred RandomLow {
+	always (no data_vel.(Random.inbox0.content) & true) 
+	always (no data_vel.(Random.inbox1.content) & true) 
 }
-/* --- Test cases --- */
+
+pred SafetyLow {
+	always (no data_vel.(Safety.inbox0.content) & true) 
+	always (no data_vel.(Safety.inbox1.content) & true) 
+}
+
+pred publish0 [n : Node, m : Message] {
+	m not in n.inbox0 and m in n.inbox0'
+}
+pred publish1 [n : Node, m : Message] {
+	m not in n.inbox1 and m in n.inbox1'
+}
+
+/* --- Synchronize --- */
+pred LowSync {
+	historically (all m : Message | (publish0[Random,m] iff publish1[Random,m]) and (publish0[Light,m] iff publish1[Light,m]))
+}
+
+check Dependence {
+	/* Safety Low -> o Safety never activates the alarm --> No possible private information leaked! */ 
+	SafetyLow /* and SystemSync */ implies always (before LowSync implies all m0,m1 : Message | publish0[Light,m0] and publish1[Light,m1] implies data_alarm.(m0.content) =  data_alarm.(m1.content))
+} for 3 but 3 numeric, 8 Message, 1..30 steps

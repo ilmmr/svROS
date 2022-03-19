@@ -132,5 +132,5 @@ pred SystemSync {
 
 check Dependence {
 	/* Safety Low -> o Safety never activates the alarm --> No possible private information leaked! */ 
-	SafetyLow /* and SystemSync */ and StutterSync implies always (before LowSync implies all m0,m1 : Switch | publish0[Alarm,m0] and publish1[Alarm,m1] implies m0.val = m1.val)
+	SafetyLow /* and SystemSync */ implies always (before LowSync implies all m0,m1 : Switch | publish0[Alarm,m0] and publish1[Alarm,m1] implies m0.val = m1.val)
 } for 0 but 3 Pos, 8 Message, 1..20 steps

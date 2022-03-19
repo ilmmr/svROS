@@ -1,41 +1,53 @@
 /* open util/natural */
 /* module for ros-based topic */
 module ros_base
+-- open util/ordering[Id]
+
+/* Noção de ordem em Id */
+-- sig Id {}
 
 /* --- Abstract Notations of the ROS elements --- */
 abstract sig Node {
 	subscribes, advertises : set Topic,
-	var inbox, outbox : set Message
+	var inbox0, outbox0 : set Message,
+	var inbox1, outbox1 : set Message
 }
-abstract sig Var, Value {}
+abstract sig Field, Value {}
+abstract sig numeric, string, bool extends Value {}
+one sig true, false extends bool {}
 abstract sig Message {
+	// id: one Id, -- Later for ordering?
 	topic : one Topic,
-	type: one Interface,
-	content: Var -> lone Value
+	-- interface: one Interface,
+	content: Field -> lone Value
 }
+-- sig Box in Message {}
 /* content auxiliar: Message->Value */
-let message_value = {m: Message, v: Value | some c: Var | m->c->v in content}
+let message_value = {m: Message, v: Value | some f: Field | m->f->v in content}
 /* content auxiliar_2: Message->Var */
-let message_var = {m: Message, v: Var | lone c: Value | m->v->c in content}
+let message_var = {m: Message, f: Field | lone v: Value | m->f->v in content}
 /* topic to interface */
-let topic_interface = {t: Topic, i: Interface | some m: Message {m.topic = t and m.type = i}}
-abstract sig Interface {
-	fields: set Var
-}
+-- let topic_interface = {t: Topic, i: Interface | some m: Message {m.topic = t and m.type = i}}
+/* 
+	-- Para já vou ignorar a Interface #i
+	abstract sig Interface {
+		fields: set Field
+	} 
+*/
 abstract sig Topic {}
 /* --- Abstract Notations of the ROS elements --- */
 
 /* --- Some basic assumptions --- */
 fact ros_assumptions {
+	bool = true + false
 	/* Each node can not have corresponding messages at the beggining */
-	no inbox + outbox
+	ros_functionality[inbox0, outbox0]
 	/* A topic must have been advertised or subscribed */
 	Topic = Node.advertises + Node.subscribes
 	/* Inbox and Outbox messages must consider its Topic message type */
 		-- Later we can check as a dynamic property --
-	always (inbox.topic in subscribes and outbox.topic in advertises)
-	/* Message fields must be preserved */
-	content.Value in type.fields
+	/* #i - Message fields must be preserved */
+	-- content.Value in interface.fields
 	/* Messages have some content */
 	(Message->Message & iden) in message_value.~message_value
 	/* 
@@ -47,9 +59,33 @@ fact ros_assumptions {
 /* --- Some basic assumptions --- */
 
 /* --- Functionality assumptions --- */
-fact ros_functionality {
-	always (some m: Node.outbox | (all n: subscribes.(m.topic) | eventually (m in n.inbox)))
-	always (some m: Node.outbox | (all n: subscribes.(m.topic) | eventually (m in n.inbox)))
-	always (all m: Node.outbox      |  eventually m not in Node.outbox)
+pred ros_functionality [inbox : Node -> Message, outbox : Node -> Message] {
+	-- behaviour duplication
+	no inbox + outbox
+	-- always (inbox.topic in subscribes and outbox.topic in advertises)
+	-- always (some m: Node.outbox  | (all n: subscribes.(m.topic) | eventually (m in n.inbox)))
+	-- always (some m: Node.outbox  | (all n: subscribes.(m.topic) | eventually (m in n.inbox)))
+	-- always (all  m: Node.outbox  |  eventually m not in Node.outbox)
+	/*
+	-- behaviour duplication
+	always (some m: Node.outbox1  | (all n: subscribes.(m.topic) | eventually (m in n.inbox1)))
+	always (some m: Node.outbox1  | (all n: subscribes.(m.topic) | eventually (m in n.inbox1)))
+	always (all  m: Node.outbox1  | eventually m not in Node.outbox1)
+	*/
+	all n : Node | always {
+		n.inbox.topic in n.subscribes
+		n.outbox.topic in n.advertises
+	}
+	all m : Message | always {
+		m in Node.outbox implies (all n : subscribes.(m.topic) | 
+			eventually (m in n.inbox))
+	}
+	always {
+		all m : Node.outbox | eventually m not in Node.outbox
+	}
+	all m : Message | always{
+		m in Node.inbox implies (some n : advertises.(m.topic) | 
+			before once (m in n.outbox))
+	}
 }
 /* --- Functionality assumptions --- */
