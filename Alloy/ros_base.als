@@ -7,11 +7,13 @@ module ros_base
 -- sig Id {}
 
 /* --- Abstract Notations of the ROS elements --- */
-abstract sig Node {
+abstract sig Executable {
 	subscribes, advertises : set Topic,
 	var inbox0, outbox0 : set Message,
 	var inbox1, outbox1 : set Message
 }
+abstract sig Node extends Executable {}
+abstract sig Warner extends Executable {}
 abstract sig Field, Value {}
 abstract sig numeric, string, bool extends Value {}
 one sig true, false extends bool {}
@@ -42,8 +44,9 @@ fact ros_assumptions {
 	bool = true + false
 	/* Each node can not have corresponding messages at the beggining */
 	ros_functionality[inbox0, outbox0]
+	ros_functionality[inbox1, outbox1]
 	/* A topic must have been advertised or subscribed */
-	Topic = Node.advertises + Node.subscribes
+	Topic = Executable.advertises + Executable.subscribes
 	/* Inbox and Outbox messages must consider its Topic message type */
 		-- Later we can check as a dynamic property --
 	/* #i - Message fields must be preserved */
@@ -59,11 +62,11 @@ fact ros_assumptions {
 /* --- Some basic assumptions --- */
 
 /* --- Functionality assumptions --- */
-pred ros_functionality [inbox : Node -> Message, outbox : Node -> Message] {
+pred ros_functionality [inbox : Executable -> Message, outbox : Executable -> Message] {
 	-- behaviour duplication
 	no inbox + outbox
 	always (inbox.topic in subscribes and outbox.topic in advertises)
-	always (all m: Node.outbox, n: subscribes.(m.topic) | eventually (m in n.inbox)))
+	always (all m: Node.outbox, n: subscribes.(m.topic) | eventually (m in n.inbox))
 	always (all m: Message | m in Node.inbox implies (some n: advertises.(m.topic) | before once (m in n.outbox)))
 }
 /* --- Functionality assumptions --- */

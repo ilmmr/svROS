@@ -1,9 +1,9 @@
 open ros_base
-open util/ordering[pos]
+open util/ordering[pos] -- o ordering implicitly makes the order signature exact!
 
 /* --- self compose --- */
 -- abstract sig NodeSC extends Node {var inbox0, inbox1, outbox0, outbox1: set Message} {always ((inbox0 + inbox1 = inbox) and (outbox0 + outbox1 = outbox))}
-sig pos in numeric {}
+sig pos extends Value {} -- se usar o in tenho q especificar o scope do pos 
 var one sig position0 in pos {}
 var one sig position1 in pos {}
 /* --- self compose --- */
@@ -25,7 +25,7 @@ one sig Safety extends Node {} {
 	subscribes = TurtlePosition 
 	advertises = Safe
 }
-one sig Light extends Node {} {
+one sig Light extends Warner {} {
 	subscribes = Alarm
 	no advertises
 }
@@ -56,7 +56,7 @@ one sig data_direction, data_vel, data_position, data_alarm extends Field {}
 
 /* --- Network Functionality --- */
 fact type_coherency {
-	((topic.(MainTopic + Safe + NotSafe)).content).Value in data_direction and ((topic.(MainTopic + Safe + NotSafe)).content).Value in data_vel
+	(data_direction + data_vel) in ((topic.(MainTopic + Safe + NotSafe)).content).Value
 	((topic.TurtlePosition).content).Value in data_position
 	((topic.Alarm).content).Value in data_alarm
 }
@@ -72,19 +72,19 @@ fact functionality {
 /* --- Network Functionality --- */
 
 /* --- Predicates --- */
-pred nop [inbox : Node->Message, outbox : Node->Message, position : pos] {
+pred nop [inbox : Executable -> Message, outbox : Executable -> Message, position : pos] {
 	inbox' = inbox
 	outbox' = outbox
 	position' = position
 }
 
 pred random [inbox : Node -> Message, outbox : Node -> Message, position : pos] { /* --- random --- */
-	some m : Message | m.topic = NotSafe and inbox' = inbox ++ Random->m
-	outbox' = outbox
+	some m : Message | m.topic = NotSafe and outbox' = outbox ++ Random->m
+	inbox' = inbox
 	position' = position
 }
 
-pred safety [inbox : Node -> Message, outbox : Node -> Message, position : pos] { /* --- safety node --- */
+pred safety [inbox : Executable -> Message, outbox : Executable -> Message, position : pos] { /* --- safety node --- */
 		/* specify the message direction */
 		some m : Safety.inbox {
 			data_position.(m.content) = first implies (some t: Message | (t.topic = Safe and data_direction.(t.content) = true)  implies outbox' = outbox ++ Safety->t)
@@ -95,7 +95,7 @@ pred safety [inbox : Node -> Message, outbox : Node -> Message, position : pos] 
 		position' = position
 }
 
-pred turtle [inbox : Node -> Message, outbox : Node -> Message, position : pos] {
+pred turtle [inbox : Executable -> Message, outbox : Executable -> Message, position : pos] {
 	some m : Turtle.inbox {
 		data_direction.(m.content) = true  implies {position' = max[position + position.next + (data_vel.(m.content) = true implies position.next.next else none)]}
 		data_direction.(m.content) = false implies {position' = min[position + position.prev + (data_vel.(m.content) = true implies position.prev.prev else none)]}
@@ -105,17 +105,17 @@ pred turtle [inbox : Node -> Message, outbox : Node -> Message, position : pos] 
 	some mn : Message | mn.topic = TurtlePosition and mn.content = data_position->position' and outbox' = outbox ++ Turtle->mn
 }
 
-pred send [inbox : Node -> Message, outbox : Node -> Message, position : pos] {
+pred send [inbox : Executable -> Message, outbox : Executable -> Message, position : pos] {
 	some n : Node {
 		some m : n.outbox {
-			no outbox'
-			inbox' = inbox ++ subscribes.(m.topic)->m
+			outbox' = outbox - n->m
+			inbox' = inbox + (subscribes.(m.topic))->m
 		}
 		position' = position
 	}
 }
 
-pred multiplexer [inbox : Node -> Message, outbox : Node -> Message, position : pos] { /* --- multiplexer computation --- */
+pred multiplexer [inbox : Executable -> Message, outbox : Executable -> Message, position : pos] { /* --- multiplexer computation --- */
 	
 	some Multiplexer.inbox
 
@@ -151,28 +151,37 @@ pred multiplexer [inbox : Node -> Message, outbox : Node -> Message, position : 
 /* --- Predicates --- */
 
 pred RandomLow {
-	always (no data_vel.(Random.inbox0.content) & true) 
-	always (no data_vel.(Random.inbox1.content) & true) 
+	always (no data_vel.(Random.outbox0.content) & true) 
+	always (no data_vel.(Random.outbox1.content) & true) 
 }
 
 pred SafetyLow {
-	always (no data_vel.(Safety.inbox0.content) & true) 
-	always (no data_vel.(Safety.inbox1.content) & true) 
+	always (no data_vel.(Safety.outbox0.content) & true) 
+	always (no data_vel.(Safety.outbox1.content) & true) 
 }
 
+pred receive0 [t : Topic, m : Message] {
+	m not in (subscribes.t).inbox0 and m in (subscribes.t).inbox0'
+}
+pred receive1 [t : Topic, m : Message] {
+	m not in (subscribes.t).inbox1 and m in (subscribes.t).inbox1'
+}
 pred publish0 [n : Node, m : Message] {
-	m not in n.inbox0 and m in n.inbox0'
+	m not in n.outbox0 and m in n.outbox0'
 }
 pred publish1 [n : Node, m : Message] {
-	m not in n.inbox1 and m in n.inbox1'
+	m not in n.outbox1 and m in n.outbox1'
 }
 
 /* --- Synchronize --- */
 pred LowSync {
-	historically (all m : Message | (publish0[Random,m] iff publish1[Random,m]) and (publish0[Light,m] iff publish1[Light,m]))
+	historically (all m, m1 : Message | (receive0[NotSafe,m] iff receive1[NotSafe,m]) and (receive0[Alarm,m1] iff receive1[Alarm,m1]))
 }
 
 check Dependence {
 	/* Safety Low -> o Safety never activates the alarm --> No possible private information leaked! */ 
-	SafetyLow /* and SystemSync */ implies always (before LowSync implies all m0,m1 : Message | publish0[Light,m0] and publish1[Light,m1] implies data_alarm.(m0.content) =  data_alarm.(m1.content))
-} for 3 but 3 numeric, 8 Message, 1..30 steps
+	SafetyLow /* and SystemSync */ implies always (before LowSync implies all m0,m1 : Message | receive0[Alarm,m0] and receive1[Alarm,m1] implies data_alarm.(m0.content) =  data_alarm.(m1.content))
+} for 0 but 3 pos, 20 Message, 1..20 steps
+
+run {eventually some Light.(inbox0 + inbox1)} for 0 but 3 pos, 20 Message, 1..20 steps
+
