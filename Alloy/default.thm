@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<alloy>
+
+<view>
+
+<defaultnode/>
+
+<defaultedge/>
+
+<node>
+   <type name="Alarm"/>
+   <type name="data_alarm"/>
+   <type name="data_direction"/>
+   <type name="data_position"/>
+   <type name="data_vel"/>
+   <type name="Int"/>
+   <type name="Light"/>
+   <type name="MainTopic"/>
+   <type name="Multiplexer"/>
+   <type name="NotSafe"/>
+   <type name="Random"/>
+   <type name="Safe"/>
+   <type name="Safety"/>
+   <type name="String"/>
+   <type name="Turtle"/>
+   <type name="TurtlePosition"/>
+   <type name="univ"/>
+   <type name="ordering/Ord"/>
+   <type name="ros_base/bool"/>
+   <type name="ros_base/false"/>
+   <type name="ros_base/numeric"/>
+   <type name="ros_base/string"/>
+   <type name="ros_base/true"/>
+   <type name="seq/Int"/>
+   <set name="this/position0" type="pos"/>
+   <set name="this/position1" type="pos"/>
+</node>
+
+<node color="Green">
+   <type name="ros_base/Node"/>
+</node>
+
+<node color="Red">
+   <type name="ros_base/Warner"/>
+</node>
+
+<node shape="Ellipse">
+   <type name="ros_base/Executable"/>
+</node>
+
+<node shape="Hexagon" color="Gray">
+   <type name="ros_base/Message"/>
+</node>
+
+<node visible="no" numberatoms="no">
+   <type name="ros_base/Field"/>
+   <type name="ros_base/Topic"/>
+   <type name="ros_base/Value"/>
+</node>
+
+<node visible="yes">
+   <type name="pos"/>
+</node>
+
+<edge attribute="yes">
+   <relation name="inbox0"> <type name="ros_base/Executable"/> <type name="ros_base/Message"/> </relation>
+   <relation name="inbox1"> <type name="ros_base/Executable"/> <type name="ros_base/Message"/> </relation>
+   <relation name="outbox0"> <type name="ros_base/Executable"/> <type name="ros_base/Message"/> </relation>
+   <relation name="outbox1"> <type name="ros_base/Executable"/> <type name="ros_base/Message"/> </relation>
+</edge>
+
+<edge visible="no" attribute="yes" constraint="no">
+   <relation name="advertises"> <type name="ros_base/Executable"/> <type name="ros_base/Topic"/> </relation>
+   <relation name="content"> <type name="ros_base/Message"/> <type name="ros_base/Field"/> <type name="ros_base/Value"/> </relation>
+   <relation name="subscribes"> <type name="ros_base/Executable"/> <type name="ros_base/Topic"/> </relation>
+   <relation name="topic"> <type name="ros_base/Message"/> <type name="ros_base/Topic"/> </relation>
+</edge>
+
+</view>
+
+</alloy>

@@ -5,7 +5,7 @@ open util/ordering[Book]
 abstract sig Target {}
 sig Name extends Target {}
 sig Addr extends Target {}
-sig Book { addr: Name -> Target }
+sig Book { addr: Name -> lone Target }
 /* --- --- */
 pred init [b: Book] { no b.addr }
 pred inv [b: Book] {

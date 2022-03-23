@@ -1,7 +1,7 @@
 /* open util/natural */
 /* module for ros-based topic */
 module ros_base
--- open util/ordering[Id]
+-- open util/ordering[received] as ord
 
 /* Noção de ordem em Id */
 -- sig Id {}
@@ -66,7 +66,7 @@ pred ros_functionality [inbox : Executable -> Message, outbox : Executable -> Me
 	-- behaviour duplication
 	no inbox + outbox
 	always (inbox.topic in subscribes and outbox.topic in advertises)
-	always (all m: Node.outbox, n: subscribes.(m.topic) | eventually (m in n.inbox))
-	always (all m: Message | m in Node.inbox implies (some n: advertises.(m.topic) | before once (m in n.outbox)))
+	-- always (all m: Node.outbox, n: subscribes.(m.topic) | eventually (m in n.inbox))
+	-- always (all m: Message | m in Node.inbox implies (some n: advertises.(m.topic) | before once (m in n.outbox)))
 }
 /* --- Functionality assumptions --- */
