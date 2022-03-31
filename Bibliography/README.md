@@ -1,5 +1,11 @@
 ## Bibliography
 
+This folder contains relevant bibliography papers and notes used as study reference to the thesis writing.
+
+---
+
+### The Default Bibliography is presented bellow
+
 * [1] ROS Website - `https://www.ros.org`
 * [2] Nicholas DeMarinis, Stefanie Tellex, Vasileios P. Kemerlis, George Dimitri Konidaris, Rodrigo Fonseca: Scanning the Internet for ROS: A View of Security in Robotics Research.
 * [3] Object Management Group. Data Distribution Service (DDS) - `https://www.omg.org/omg-dds-portal/`
@@ -10,12 +16,9 @@
 * [8] Nuno Macedo, Julien Brunel, David Chemouil, Alcino Cunha, Denis Kuperberg: Lightweight specification and analysis of dynamic systems with rich configurations - `https://haslab.github.io/formal-software-design/`
 
 ---
-## Folder Description
 
-This folder contains relevant bibliography papers and notes used as study reference to the thesis writting. The bibliography was divided into sections dependind on its topic.
-The topics are the following:
-* **Alloy**
-* **ROS** - Robotic Operating System
+### Additional Bibliography
 
----
-**Additional notes were added to each directory.**
+* [ROS Bibliography](./ROS-Bibio)
+* [Study of HyperProperties](./HyperProperties)
+
