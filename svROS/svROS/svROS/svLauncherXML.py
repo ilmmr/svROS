@@ -18,19 +18,14 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 
 """ 
     This file contains the necessary classes and methods to export information from the launch file XML-based specified within the config file.
-
-    SCHEMA that ros2 provides is deprecated also... So we'll try to run ros2 launch -p instead:
-        => ros2 launch $file -p :: 
 """
 
-"Functions that every class inherits"
+"Functions that every class inherits."
 class BaseLaunchTag(object):
-    
     CONDITIONAL_ATTRIBUTES = {
         "if": bool,
         "unless": bool
     }
-
     """ LAUNCH TREE according to xsd...
             => node (can have if and unless)
                     \-> remap tag (can have arg/let values...)
@@ -38,14 +33,14 @@ class BaseLaunchTag(object):
             => let  (can have if and unless)
     """
 
-    # custom filtering function
+    """ === Static Methods === """
     @staticmethod
     def _filter(args: dict, tag: str):
         return list(map(lambda ob: args[ob], list(filter(lambda obj: obj[1] == tag, list(args.keys())))))
 
     @staticmethod
     def _arg_grammar(sentence='') -> (bool,str):
-        # parsing grammar...
+        # Parsing Grammar.
         grammar = """
             sentence: /\$/ LP ARG NAME RP
 
@@ -57,28 +52,21 @@ class BaseLaunchTag(object):
             %import common.WS
             %ignore WS
         """
-        # Larker parser
         parser = Lark(grammar, start='sentence', ambiguity='explicit')
         try:
                 tree   = parser.parse(f'{sentence}')
         except:
                 return '', ''
-        # get token...
         ARG = list(filter(lambda t: t.type == "ARG" , tree.children))[0].value
         token = list(filter(lambda t: t.type == "NAME" , tree.children))[0].value
-        # if is env
-        if str(ARG) == 'env':
-                return 'set_env', token
-
+        if str(ARG) == 'env': return 'set_env', token
         return 'arg', token
 
-    # get positional
     @staticmethod
     def decouple(structure):
         if structure is not None:
             return structure[0]
 
-    # Predefined control of topic remapping...
     @staticmethod
     def namespace(tag: str):
         return tag if tag.startswith('/') else f'/{tag}'
@@ -95,7 +83,7 @@ class BaseLaunchTag(object):
                     return ArgsTag.ARGS[(v,t)].isTrue
                 return ReferenceIf(name=v, tag=t, condition=bool(cond=='if'))
         return True
-
+    """ === Static Methods === """
 
 "Reference through call of LaunchConfiguration"
 class ReferenceVar(BaseLaunchTag):
@@ -104,7 +92,6 @@ class ReferenceVar(BaseLaunchTag):
     ...
         \_ $var or $env ==> ReferenceVar
     """
-
     def __init__(self, name, tag):
         # initial configuration
         self.name       = name
@@ -117,7 +104,6 @@ class ReferenceIf(BaseLaunchTag):
     ...
         \_ $var or $env in IF or UNLESS ==> ReferenceIf
     """
-
     def __init__(self, name, tag, condition=True):
         # initial configuration
         self.name       = name
@@ -125,16 +111,14 @@ class ReferenceIf(BaseLaunchTag):
         self.condition  = condition
 
 
-"Predefined Remap tag class"
+"Remaps that might come from the remappings tag or from node-arguments."
 class RemapTag(BaseLaunchTag):
-    # class variables
     REQUIRED = ("from", "to")
     REMAPS = set()
 
     def __init__(self, f, t):
         self.origin = f
         self.destin = t
-
         RemapTag.REMAPS.add(self)
         
     @classmethod
@@ -144,7 +128,6 @@ class RemapTag(BaseLaunchTag):
 
 "Predefined Node tag class"
 class NodeTag(BaseLaunchTag):
-    # class variables
     NODES          = {}
     PACKAGES_NODES = {}
     CHILDREN = ("remap", "param")
@@ -156,17 +139,13 @@ class NodeTag(BaseLaunchTag):
                 \_ attributes
             \__ remaps
     """
-
     def __init__(self, name, package, executable, remaps, namespace=None, enclave=None):
-        # initial configuration
         self.name       = name
         self.namespace  = namespace
         self.package    = package
         self.executable = executable
         self.remaps     = remaps
         self.enclave    = enclave
-
-        # Run @property decorator
         index = self.name
         NodeTag.NODES[index] = self
         if self.package in NodeTag.PACKAGES_NODES: NodeTag.PACKAGES_NODES[self.package].add(self)
@@ -174,7 +153,7 @@ class NodeTag(BaseLaunchTag):
 
     @classmethod
     def init_node(cls, **kwargs):
-        return cls(name=kwargs['name'], package=kwargs['pkg'], executable=kwargs['exec'], remaps=kwargs['remaps'], namespace=kwargs.get('ns'), enclave=kwargs.get('enclave'))
+        return cls(name=kwargs['name'], package=kwargs['pkg'], executable=kwargs['exec'], remaps=kwargs['remaps'], namespace=kwargs.get('namespace'), enclave=kwargs.get('enclave'))
     
     @staticmethod
     def process_node_argument(arg):
@@ -197,7 +176,7 @@ class NodeTag(BaseLaunchTag):
             \_ remaps and arguments
         """
         SIMPLE_NODE_ARGUMENTS = {
-            'name', 'pkg', 'exec', 'ns'
+            'name', 'pkg', 'exec', 'namespace'
         }
 
         valid = BaseLaunchTag.set_conditionals(arguments, node_mode=True)
@@ -236,9 +215,7 @@ class NodeTag(BaseLaunchTag):
             
     @staticmethod
     def process_node(node=None):
-        # in-line arguments
         arguments = node
-        
         node_arguments = NodeTag.process_node_arguments(arguments=arguments)
         if node_arguments is not None:
             NodeTag.init_node(**node_arguments)
@@ -248,7 +225,6 @@ class NodeTag(BaseLaunchTag):
     def process_remaps(node):
             tags = node.findall('./remap')
             remaps = []
-
             # For each remap tag run this snippet.
             for remap_tag in tags:
                 (origin, destin) = (remap_tag.get('from'), remap_tag.get('to'))
@@ -257,34 +233,27 @@ class NodeTag(BaseLaunchTag):
                 
                 object_remap = {'from': BaseLaunchTag.namespace(origin), 'to': BaseLaunchTag.namespace(destin)}
                 remaps.append(object_remap)
-            
             return remaps
 
     @staticmethod
     def process_cmd_arg(tree, info_data, tag, enclave=False):
-        # processing grammar...
         data = list(tree.find_data(info_data))
-        if data == []:
-            return {}
-
+        if data == []: return {}
         output = {}
         _data_ = data[len(data)-1]
         if _data_:
-            # get tokens
             output = list(map(lambda v: v.value , list(filter(lambda vv: vv.type == tag, (_data_.scan_values(lambda v: isinstance(v, Token)))))))
             if enclave == False:
                 output = list(zip(output[0::2], output[1::2]))
-            
         return output
     
-    # Using lark to parse some dependencies strings...
+    "Grammar to parse inline node arguments."
     @staticmethod
     def parse_cmd_args(args=''):
-        # returning dictionary
         output = {}
         output['remaps'] = list()
             
-        # Grammar to parse arguments...
+        # Grammar to parse arguments.
         grammar = """
             sentence: INIT complete?
             complete: REMAP /\s/ arg_remap
@@ -307,19 +276,15 @@ class NodeTag(BaseLaunchTag):
             %import common.WS
             %ignore WS
         """
-        # Larker parser
         parser = Lark(grammar, start='sentence', ambiguity='explicit')
         tree = parser.parse(f'{args}')
 
         remaps  = NodeTag.process_cmd_arg(tree=tree, info_data="arg_remap", tag='ARG_R')
         enclave = NodeTag.process_cmd_arg(tree=tree, info_data="arg_enclave", tag='ARG_E', enclave=True)
         enclave = next(iter(enclave or []), None)
-
         for pair in remaps:
             output['remaps'].append({'from': str(pair[0]), 'to': str(pair[1])})
-
         output['enclave'] = str(enclave) if enclave is not None else None
-
         return output.get('enclave'), output.get('remaps')
 
     @property
@@ -334,9 +299,8 @@ class NodeTag(BaseLaunchTag):
     def name(self, value):
         self._name = value
 
-"Predefined launch arguments tag class"
+"ROS2-based arguments that Nodes instances might use."
 class ArgsTag(BaseLaunchTag):
-    # class variables
     ARGS         = {}
     REQUIRED = ("name", r"(default|value)")
     """
@@ -349,7 +313,6 @@ class ArgsTag(BaseLaunchTag):
                 \_ conditionals n references
             
     """
-
     def __init__(self, name, tag, value, valid):
         self.name         = name
         self.tag          = tag
@@ -383,7 +346,6 @@ class ArgsTag(BaseLaunchTag):
         name  = argument.get('name')
         tag   = argument.tag
         value = ArgsTag.process_value(argument, tag)
-
         valid = ArgsTag.set_conditionals(argument)
         "elif isinstance(conditional, ReferenceIf)"
         if isinstance(valid, bool):
@@ -391,7 +353,6 @@ class ArgsTag(BaseLaunchTag):
                 return None
             else:
                 valid = True
-
         return ArgsTag.init_argument(name, tag, value, valid)
 
     @classmethod
@@ -457,13 +418,12 @@ class ArgsTag(BaseLaunchTag):
                     returning_boolean = True
         return returning_boolean
 
-
-
+""" 
+    SCHEMA that ros2 provides is deprecated also... So we'll try to run ros2 launch -p instead: => ros2 launch $file -p
+"""
 "Launcher parser in order to retrieve information about possible executables..."
 @dataclass
 class LauncherParserXML:
-
-    # XML-based tags
     TAGS = {
         "base": BaseLaunchTag,
         "node": NodeTag,
@@ -473,10 +433,9 @@ class LauncherParserXML:
     file      : str
 
     """ === Predifined Functions === """
-    # ROS2 launch xsd is depecrated... 
     @staticmethod
     def validate_schema(file, schema, execute_cmd=(False, '')):
-        # Due to the depecrated xml file, the user might opt to check syntax through execution commands
+        # Due to the depecrated xml file, the user might opt to check syntax through execution commands.
         if execute_cmd[0] == True:
             cmd = execute_cmd[1].split(' ')
             try:
@@ -484,7 +443,7 @@ class LauncherParserXML:
             except Exception as error:
                 return False
         else:
-            # Schema routines...
+            # Schema Routines.
             schema_root = etree.parse(schema)
             xml_schema = etree.XMLSchema(schema_root)
             xml_doc = etree.parse(filename)        
@@ -494,46 +453,39 @@ class LauncherParserXML:
                 return False
         return True
 
+    "Main Launch-Parser."
     def parse(self):
         # Warn the user first...
-        #print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING"))} XML-Launch file parser might be deprecated due to complexity analysis...')
-        #print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, Let, Arg, SetEnv, Remaps, If and Unless Conditionals.')
+        print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING"))} XML-Launch file parser might be deprecated due to complexity analysis...')
+        print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, Let, Arg, SetEnv, Remaps, If and Unless Conditionals.')
         time.sleep(0.5)
-
         filename = self.file
+
         if not LauncherParserXML.validate_schema(file=filename, schema=f'{SCHEMAS}/launch.xsd', execute_cmd=(True,f'ros2 launch {filename} -p')):
             return False
-
         tree = etree.parse(filename)
         root = tree.getroot()
-        #lconf = LauncherConfigXML()
         if not root.tag == "launch":
             return False
-        
         arguments = tree.xpath('(let|set_env|arg)')
         nodes     = root.findall('./node')
 
+        # Processing...
         for arg  in arguments: ArgsTag.process_argument(argument=arg)
         if not ArgsTag.process_valid_arguments():
-            # print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SOMETHING WENT WRONG"))} ups...')
             return False
         for node in nodes    : NodeTag.process_node(node=node)
-
         return True 
     
-    # get positional
     @staticmethod
     def decouple(structure):
         if structure is not None:
             return structure[0]
-
     """ === Predefined functions === """
 
-# Testing...
+### TESTING ###
 if __name__ == "__main__":
-    file = sys.argv[1]
-
-    l = LauncherParserXML(file=file)
-    conf = l.parse()
-    #print([ArgsTag.ARGS[arg].valid for arg in ArgsTag.ARGS])
+    file = '/home/luis/Desktop/example.xml'
+    l = LauncherParserXML(file=file).parse()
     print([NodeTag.NODES[n] for n in NodeTag.NODES])
+    print(NodeTag.NODES)

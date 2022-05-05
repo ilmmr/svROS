@@ -17,8 +17,8 @@ global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
 SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 
-from svLauncherXML import LauncherParserXML
-from svLauncherPY import LauncherParserPY
+from svLauncherXML import LauncherParserXML, NodeTag
+from svLauncherPY import LauncherParserPY, NodeCall
 
 """ 
     This file contains the necessary classes and methods to export information from the launch file specified within the config file.
@@ -31,11 +31,9 @@ from svLauncherPY import LauncherParserPY
     However, many of the current work explored here is thanks to haros and André's work!
     The ideia here was to take what previously worked by haros, to export the necessary data to this tool, while considering the notable changes on ROS2 launch schema...
 """
-
 "Launcher parser in order to retrieve information about possible executables..."
 @dataclass
 class LauncherParser:
-
     file      : str
     extension : str  = ''
 
@@ -49,24 +47,20 @@ class LauncherParser:
         self.extension = ext.lower().split('.')[1]
 
     """ === Predefined functions === """
-    # parse launcher => extension must be properly regarded
+    "Launch Parser"
     def parse(self):
-
-        # use ros2 launch structures...
+        # Use ros2 launch structures.
         from launch.launch_description_sources import get_launch_description_from_any_launch_file
-
         using_ros2_structures = False
         launch_description    = None
         # still deprecated...
         try:
             launch_description = get_launch_description_from_any_launch_file(self.file)
-            using_ros2_structures = True
+            using_ros2_structures = False # Once will be true.
         except:
             pass
-        
-        # parsing using ros2 structures...
-        # if using_ros2_structures == True:
-        #    return self._default_parse(ros2_entities=launch_description.entities)
+        if using_ros2_structures == True:
+           return self._default_parse(ros2_entities=launch_description.entities)
 
         if self.extension == '':
             return False
@@ -75,36 +69,10 @@ class LauncherParser:
         if self.extension == 'py':
             return LauncherParserPY(file=self.file).parse()
 
-    # validate xml schema
-    # ROS2 launch xsd is depecrated... 
-    @staticmethod
-    def validate_schema(file, schema, execute_cmd=(False, '')):
-
-        # Due to the depecrated xml file, the user might opt to check syntax through execution commands
-        if execute_cmd[0] == True:
-            cmd = execute_cmd[1].split(' ')
-            try:
-                subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-            except Exception as error:
-                return False
-        else:
-            # Schema routines...
-            schema_root = etree.parse(schema)
-            xml_schema = etree.XMLSchema(schema_root)
-            xml_doc = etree.parse(filename)        
-            try:
-                xml_schema.assertValid(xml_doc)
-            except Exception as error:
-                return False
-        # if everything goes to plan...
-        return True
-
-    """ Predefined method to extract entities from ros2! This uses the default ros2 launch structure to parse each entitie."""
+    "Predefined method to extract entities from ros2! This uses the default ros2 launch structure to parse each entitie."
     def _default_parse(self, ros2_entities):
-        # needed for tag checking
+        # Needed for tag checking.
         import launch, launch_ros
-
-        # in order to syntax evaluation...
         VALID_TAGS: {
             launch_ros.actions.node.Node,
             launch.actions.set_launch_configuration.SetLaunchConfiguration,
@@ -113,10 +81,8 @@ class LauncherParser:
             launch.conditions.unless_condition.UnlessCondition,
             launch.substitutions.text_substitution.TextSubstitution
         }
-
         return False
     """ === Predefined functions === """
-
 
 """ 
     This file contains the necessary classes and methods to export information about the ros2 running environment that the user may want to analyze.
@@ -126,25 +92,21 @@ class LauncherParser:
 
     NAIVE EXTRACTOR... C++ parser is deprecated...
 """
-
 "Default Colcon package finder, in order to retrieve information about possible executables"
 @dataclass
 class PackageFinder:
-
     ros_workspace : str  = ''
     ros_distro    : str  = '' 
     packages      : list = field(default_factory=list)
 
-    # After class __init__
     def __post_init__(self):
-        # find and set packages list
+        # Find and set packages list.
         if packages is []:
             self.find_packages()
 
     """ === Predefined functions === """
-    # find packages
     def find_packages(self, paths=[self.ros_workspace, self.ros_distro]):
-        # find ros package installer => colcon 
+        # Find ros package installer => colcon 
         colcon = find_executable('colcon')
         if colcon is None:
             return False
@@ -152,18 +114,15 @@ class PackageFinder:
         if paths is None: return False
         command.extend(paths)
 
-        # package processing
+        # Package processing.
         pkglist = subprocess.check_output(cmd).decode().split('\n')[:-1]
         pkgs={}
         for i in list(map(lambda info: info.split('\t'), pkglist)):
             if i[0] not in pkgs and len(i) >= 2:
                 pkgs[i[0]] = i[1]
-        
-        # set the packages up
         t = self.set_packages(self, pkgs)
         return t
 
-    # set packages
     def set_packages(self, packages=[]):
         if packages is not []:
             self.packages = packages
@@ -228,10 +187,14 @@ class harosExport:
     """ === Predefined functions === """
 
 
-# Testing...
+### TESTING ###
 if __name__ == "__main__":
-    file = sys.argv[1]
-
+    file = '/home/luis/Desktop/example.xml'
     l = LauncherParser(file=file, extension='.xml')
-    conf = l.parse()
-    print(conf.nodes)
+    print([NodeTag.NODES[n] for n in NodeTag.NODES])
+    print(NodeTag.NODES)
+    
+    file = '/home/luis/Desktop/ros2launch.py'
+    l = LauncherParserPY(file=file).parse()
+    print([NodeCall.NODES[n] for n in NodeCall.NODES])
+    print(NodeCall.NODES)
