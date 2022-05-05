@@ -7,148 +7,175 @@ from collections import defaultdict
 # Parsers
 from lxml import etree
 from lark import Lark, tree
+# haros...
+from haros.haros import HarosExportRunner
+# haros launcher is deprecated... => However, this tool makes use of the knowledge explored by them...
+# from haros.launch_parser import BaseLaunchTag, IncludeTag, RemapTag
 
-SCHEMAS = f'/home/luis/uni-area/Thesis/svROS/alloy_plugin/svROS/schemas'
+# InfoHandler => Prints, Exceptions and Warnings
+from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
+from tools.Loader import Loader
 
-""" 
-    This file contains the necessary classes and methods to export information from the launch file XML-based specified within the config file.
+# python parser helper...
+from bonsai.model import (
+    CodeGlobalScope, CodeReference, CodeFunctionCall, pretty_str
+)
+from bonsai.analysis import (
+    CodeQuery, resolve_reference, resolve_expression, get_control_depth,
+    get_conditions, get_condition_paths, is_under_loop
+)
+from bonsai.py.py_parser import PyAstParser
 
-    SCHEMA that ros2 provides is deprecated also... So we'll try to run ros2 launch -p instead:
-        => ros2 launch $file -p :: 
-"""
+global WORKDIR, SCHEMAS
+WORKDIR = os.path.dirname(__file__)
+SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 
 "Functions that every class inherits"
-class BaseLaunchTag(object):
-    
-    CONDITIONAL_ATTRIBUTES = {
-        "if": bool,
-        "unless": bool
-    }
+class BaseCall(object):
 
-    """ LAUNCH TREE according to xsd...
-            => node (can have if and unless)
-                    \-> remap tag (can have arg/let values...)
-            => arg  (can have if and unless)
-            => let  (can have if and unless)
+    @staticmethod
+    def get_value(call):
+        return call.named_args[0].value
+
+    @staticmethod
+    def process_code_reference(call):
+        reference = resolve_reference(call)
+        if reference == None:
+            raise
+        return reference
+
+    """ === Static Methods === """
+
+"Reference through call of LaunchConfiguration"
+class ReferenceCall(BaseCall):
+    REQUIRED = ("value")
+    """
+    ...
+        \_ LaunchConfiguration ==> ReferenceCall
     """
 
-    # custom filtering function
-    @staticmethod
-    def _filter(args: dict, tag: str):
-        return list(map(lambda ob: args[ob], list(filter(lambda obj: obj[1] == tag, list(args.keys())))))
+    def __init__(self, name):
+        # initial configuration
+        self.name = name
+        self.referenced = []
 
-    @staticmethod
-    def _arg_grammar(sentence='') -> (bool,str):
-        # parsing grammar...
-        grammar = """
-            sentence: /\$/ LP ARG NAME RP
-
-            LP: "("
-            RP: ")"
-            ARG: "var" | "env"
-            NAME: /[a-zA-Z0-9_\/\-.]+/
-            
-            %import common.WS
-            %ignore WS
-        """
-        # Larker parser
-        parser = Lark(grammar, start='sentence', ambiguity='explicit')
-        try:
-                tree   = parser.parse(f'{sentence}')
-        except:
-                return '', ''
-        # get token...
-        ARG = list(filter(lambda t: t.type == "ARG" , tree.children))[0].value
-        token = list(filter(lambda t: t.type == "NAME" , tree.children))[0].value
-        # if is env
-        if str(ARG) == 'env':
-                return 'set_env', token
-
-        return 'arg', token
-
-    # get positional
-    @staticmethod
-    def decouple(structure):
-        if structure is not None:
-            return structure[0]
-
-    # Predefined control of topic remapping...
-    @staticmethod
-    def namespace(tag: str):
-        return tag if tag.startswith('/') else f'/{tag}'
-
-    @staticmethod
-    def set_conditionals(element, node_mode=False):
-        for conditional in BaseLaunchTag.CONDITIONAL_ATTRIBUTES:
-            cond = element.get(conditional)
-            if cond:
-                t,v = BaseLaunchTag._arg_grammar(cond)
-                if v == '' or t == '':
-                    return False
-                if node_mode:
-                    return ArgsTag.ARGS[(v,t)].isTrue
-                return ReferenceIf(name=v, tag=t, condition=bool(cond=='if'))
+    def _add_reference(self, reference):
+        self.referenced.append(reference)
         return True
 
 
-"Reference through call of LaunchConfiguration"
-class ReferenceVar(BaseLaunchTag):
-    REQUIRED = ("value")
+class ArgsCall(BaseCall):
+    # ARGS class variables
+    CALL_REFERENCES = {}
+    ARGS            = {}
+    REQUIRED = ("name", r"(default_value|value)")
     """
-    ...
-        \_ $var or $env ==> ReferenceVar
+        DeclareLaunchArgument/SetEnvironmentVariable
+            \__ name
+            \__ named_args
+            \__ arguments => TextSubstitution
+                                \_ named_args
+                                \_ LaunchConfiguration ==> ReferenceCall
     """
 
-    def __init__(self, name, tag):
+    def __init__(self, name, value):
         # initial configuration
-        self.name       = name
-        self.tag        = tag
+        self.name   = name
+        self.value  = value
+        ArgsCall.ARGS[self.name] = self
+
+    @staticmethod
+    def process_references(name, value):
+        if name in ArgsCall.CALL_REFERENCES:
+            reference = ArgsCall.CALL_REFERENCES[name]
+            for ref in reference.referenced:
+                ref.value = value
+        return True
+
+    @staticmethod
+    def process_argument(call=None):
+        name  = call.arguments[0]
+        value = ArgsCall.get_value(call=call)
+
+        if isinstance(value, str):
+            ArgsCall.process_references(name, value)
+            return ArgsCall.init_argument(name=name, value=value)
+        else:
+            # Parsing-Error processing...
+            process_argument = ArgsCall.process_argument_value(name=name, value=value, tag=value.name)
+            if process_argument == '':
+                return None
+            value = process_argument
+
+        if isinstance(value, ReferenceCall):
+            if value.name in ArgsCall.ARGS:
+                arg_reference_value = ArgsCall.ARGS[value.name].value
+                return ArgsCall.init_argument(name=name, value=arg_reference_value)
+            
+            reference = ArgsCall.CALL_REFERENCES[value.name]
+            arg       = ArgsCall.init_argument(name=name, value=value)
+            reference._add_reference(arg)
+            return arg
+        else:
+            # TextSubstitution
+            ArgsCall.process_references(name, value)
+            return ArgsCall.init_argument(name=name, value=value)
+
+    @staticmethod
+    def process_argument_value(name, value, tag):
+        VALID_VALUE_TAGS = {'LaunchConfiguration', 'TextSubstitution'}
+        
+        if tag not in VALID_VALUE_TAGS:
+            return ''
+        # Text substitution is clear.
+        if tag == 'TextSubstitution':
+            value = ArgsCall.get_value(call=value)
+        # LaunchConfiguration might be different.
+        else:
+            value = value.arguments[0]
+            if not value in ArgsCall.CALL_REFERENCES:
+                # else, create another reference call
+                value = ReferenceCall(name=value)
+                ArgsCall.CALL_REFERENCES[value.name] = value
+        
+        if isinstance(value, CodeReference):
+            value = ArgsCall.process_code_reference(value)
+
+        return value
+
+    @classmethod
+    def init_argument(cls, name, value):
+        return cls(name=name, value=value)
 
 
-class ReferenceIf(BaseLaunchTag):
-    REQUIRED = ("value")
-    """
-    ...
-        \_ $var or $env in IF or UNLESS ==> ReferenceIf
-    """
-
-    def __init__(self, name, tag, condition=True):
-        # initial configuration
-        self.name       = name
-        self.tag        = tag
-        self.condition  = condition
-
-
-"Predefined Remap tag class"
-class RemapTag(BaseLaunchTag):
+class RemapCall(BaseCall):
     # class variables
     REQUIRED = ("from", "to")
-    REMAPS = set()
+    REMAPS = {}
 
     def __init__(self, f, t):
         self.origin = f
         self.destin = t
 
-        RemapTag.REMAPS.add(self)
+        RemapCall.REMAPS.add(self)
         
     @classmethod
     def init_remap(cls, **kwargs):
         return cls(f=kwargs.get('from'), t=kwargs.get('to'))
-        
 
-"Predefined Node tag class"
-class NodeTag(BaseLaunchTag):
-    # class variables
+
+class NodeCall(BaseCall):
+    # NODES class variables
     NODES          = {}
     PACKAGES_NODES = {}
     CHILDREN = ("remap", "param")
-    REQUIRED = ("pkg", "exec")
+    REQUIRED = ("package", "executable", "name")
     """
         Node
-            \__ arguments
-                \_ conditionals
-                \_ attributes
-            \__ remaps
+            \__ named_args
+                    \_ Text
+                    \_ TextSubstitution
+                    \_ LaunchConfiguration ==> ReferenceCall
     """
 
     def __init__(self, name, package, executable, remaps, namespace=None, enclave=None):
@@ -160,108 +187,19 @@ class NodeTag(BaseLaunchTag):
         self.remaps     = remaps
         self.enclave    = enclave
 
-        # Run @property decorator
-        index = self.name
-        NodeTag.NODES[index] = self
-        if self.package in NodeTag.PACKAGES_NODES: NodeTag.PACKAGES_NODES[self.package].add(self)
-        else: NodeTag.PACKAGES_NODES[self.package] = {self}
+        NodeCall.NODES[self.name] = self
+        if self.package in NodeCall.PACKAGES_NODES: NodeCall.PACKAGES_NODES[self.package].add(self)
+        else: NodeCall.PACKAGES_NODES[self.package] = {self}
 
     @classmethod
     def init_node(cls, **kwargs):
-        return cls(name=kwargs['name'], package=kwargs['pkg'], executable=kwargs['exec'], remaps=kwargs['remaps'], namespace=kwargs.get('ns'), enclave=kwargs.get('enclave'))
-    
-    @staticmethod
-    def process_node_argument(arg):
-        if not isinstance(arg, str):
-            return None
-        tag, value = BaseLaunchTag._arg_grammar(arg)
-        if not (tag == '' or value == ''):
-            arg = ArgsTag.ARGS[(value, tag)].value
-            
-        return arg
+        return cls(name=kwargs['name'], package=kwargs['package'], executable=kwargs['executable'], remaps=kwargs['remaps'], namespace=kwargs.get('namespace'), enclave=kwargs.get('enclave'))
 
     @staticmethod
-    def process_node_arguments(arguments=None):
-        """
-        Node args to be processed:
-            \_ name
-            \_ package
-            \_ executable
-            \_ namespace (?)
-            \_ remaps and arguments
-        """
-        SIMPLE_NODE_ARGUMENTS = {
-            'name', 'pkg', 'exec', 'ns'
-        }
-
-        valid = BaseLaunchTag.set_conditionals(arguments, node_mode=True)
-        if not valid:
-            #print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "A node is invalid due to its conditionals!"))}')
-            return None
-
-        node_arguments = {}
-        node_arguments['remaps'] = []
-        for valid in SIMPLE_NODE_ARGUMENTS:
-            node_arguments[valid] = NodeTag.process_node_argument(arg=arguments.get(valid))
-
-        for remap in NodeTag.process_remaps(node=arguments):
-            node_arguments['remaps'].append(remap)
-            RemapTag.init_remap(**remap)
-        
-        process_remaps = NodeTag.process_remaps(node=arguments)
-        for remap in process_remaps:
-            node_arguments['remaps'].append(remap)
-            RemapTag.init_remap(**remap)
-
-        in_line_args = arguments.get('args')
-        if in_line_args is not None:
-            if not isinstance(in_line_args, str):
-                #print(f'[svROS] {color.color("BOLD", color.color("RED", "A node failed to parse!"))}')
-                return None
-            cmd_enclave, cmd_remaps = NodeTag.parse_cmd_args(args=in_line_args)
-            node_arguments['enclave'] = cmd_enclave
-            for remap in cmd_remaps:
-                if remap in process_remaps:
-                    continue
-                node_arguments['remaps'].append(remap)
-                RemapTag.init_remap(**remap)
-
-        return node_arguments
-            
-    @staticmethod
-    def process_node(node=None):
-        # in-line arguments
-        arguments = node
-        
-        node_arguments = NodeTag.process_node_arguments(arguments=arguments)
-        if node_arguments is not None:
-            NodeTag.init_node(**node_arguments)
-        return True
-
-    @staticmethod
-    def process_remaps(node):
-            tags = node.findall('./remap')
-            remaps = []
-
-            # For each remap tag run this snippet.
-            for remap_tag in tags:
-                (origin, destin) = (remap_tag.get('from'), remap_tag.get('to'))
-                origin = NodeTag.process_node_argument(arg=origin)
-                destin = NodeTag.process_node_argument(arg=destin)
-                
-                object_remap = {'from': BaseLaunchTag.namespace(origin), 'to': BaseLaunchTag.namespace(destin)}
-                remaps.append(object_remap)
-            
-            return remaps
-
-    @staticmethod
-    def process_cmd_arg(tree, info_data, tag, enclave=False):
+    def process_cmd_arg(info_data, tag, enclave=False):
         # processing grammar...
         data = list(tree.find_data(info_data))
-        if data == []:
-            return {}
-
-        output = {}
+        output = []
         _data_ = data[len(data)-1]
         if _data_:
             # get tokens
@@ -305,171 +243,181 @@ class NodeTag(BaseLaunchTag):
         parser = Lark(grammar, start='sentence', ambiguity='explicit')
         tree = parser.parse(f'{args}')
 
-        remaps  = NodeTag.process_cmd_arg(tree=tree, info_data="arg_remap", tag='ARG_R')
-        enclave = NodeTag.process_cmd_arg(tree=tree, info_data="arg_enclave", tag='ARG_E', enclave=True)
-        enclave = next(iter(enclave or []), None)
+        remaps  = BaseCall.process_cmd_arg(info_data="arg_remap", token='ARG_R')
+        enclave = BaseCall.process_cmd_arg(info_data="arg_enclave", token='ARG_E', enclave=True)[0]
 
         for pair in remaps:
             output['remaps'].append({'from': str(pair[0]), 'to': str(pair[1])})
 
-        output['enclave'] = str(enclave) if enclave is not None else None
+        output['enclave'] = str(enclave)
 
+        return output
+
+    @staticmethod
+    def process_argument_value(name, value, tag):
+        VALID_VALUE_TAGS = {'LaunchConfiguration', 'TextSubstitution'}
+        # literal is related to list => for remappings and 
+        
+        if tag not in VALID_VALUE_TAGS:
+            return ''
+        # Text substitution is clear.
+        if tag == 'TextSubstitution':
+            value = NodeCall.get_value(call=value)
+        # LaunchConfiguration might be different.
+        elif tag == 'LaunchConfiguration':
+            value = value.arguments[0]
+            # Reference to argument already processed
+            if value not in ArgsCall.ARGS:
+                raise
+            value = ArgsCall.ARGS[value].value
+        else:
+            raise
+
+        if isinstance(value, CodeReference):
+            value = NodeCall.process_code_reference(value)
+        
+        return value
+
+    @staticmethod
+    def process_node_argument(value, tag=None):
+
+        if isinstance(value, str):
+            return value
+        else:
+            # Parsing-Error processing...
+            process_argument = NodeCall.process_argument_value(value=value, tag=value.name)
+            if process_argument == '':
+                return None
+            value = process_argument
+
+        return value
+
+    @staticmethod
+    def process_cmd_args(values):
+        arguments_cmd = ''
+        for v in values:
+            if isinstance(v, str):
+                arg_cnd = v
+            else:
+                arg_cmd = NodeCall.process_node_argument(value=v.value, tag=v.name)
+            arguments_cmd += arg_cmd
+        output = NodeCall.parse_cmd_args(args=arguments_cmd)
         return output.get('enclave'), output.get('remaps')
+
+    @staticmethod
+    def process_remaps(values):
+        remaps = []
+        for v in values:
+            if isinstance(v.value[0], str):
+                pass
+            else:
+                _from = NodeCall.process_node_argument(value=v.value[0].value, tag=v.value[0].name)
+            if isinstance(v.value[1], str):
+                pass
+            else:
+                _to = NodeCall.process_node_argument(value=v.value[1].value, tag=v.value[1].name)
+            
+            object_remap = {'from': _from, 'to': _to}
+            remaps.append(object_remap)
+        return remaps
+
+    @staticmethod
+    def process_node_arguments(arguments):
+        """
+        Node args to be processed:
+            \_ name
+            \_ package
+            \_ executable
+            \_ namespace (?)
+            \_ remaps and arguments
+        """
+        VALID_NODE_ARGUMENTS = {
+            'name', 'package', 'executable', 'namespace'
+        }
+        REMAPPINGS  = {
+            'remappings'
+        }
+        ARGUMENTS   = {
+            'arguments'
+        }
+
+        node_arguments = {}
+        node_arguments['remaps'] = []
+        base_arguments = list(filter(lambda arg: arg.name in VALID_NODE_ARGUMENTS, arguments))
+        for arg in arguments:
+            if arg.name in VALID_NODE_ARGUMENTS:
+                node_arguments[arg.name] = NodeCall.process_node_argument(value=arg.value, tag=arg.name)
+            elif arg.name in ARGUMENTS:
+                # in-line cmd ros2 arguments
+                cmd_enclave, cmd_remaps = NodeCall.process_cmd_args(values=arg.value.value)
+                node_arguments['enclave'] = cmd_enclave
+                for remap in cmd_remaps:
+                    node_arguments['remaps'].append(remap)
+                    RemapCall.init_remap(remap)
+            elif arg.name in REMAPPINGS:
+                remaps = NodeCall.process_remaps(remaps=arg.value.value)
+                for remap in remaps:
+                    node_arguments['remaps'].append(remap)
+                    RemapCall.init_remap(remap)
+
+        return node_arguments
+
+
+    @staticmethod
+    def process_node(call=None):
+        # in-line arguments
+        inline_arguments = call.named_args
+        arguments        = call.arguments
+        
+        if arguments:
+            raise
+            return None 
+        
+        node_arguments = NodeCall.process_node_arguments(arguments=inline_arguments)
+        NodeCall.init_node(**node_arguments)
 
     @property
     def name(self):
-        if self.namespace is None:
-            name = self._name
+        if self.namespace == None:
+            return self.name
         else:
-            name = self.namespace + '/' + self._name
-        return name
-    
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-"Predefined launch arguments tag class"
-class ArgsTag(BaseLaunchTag):
-    # class variables
-    ARGS         = {}
-    REQUIRED = ("name", r"(default|value)")
-    """
-        ArgTag
-            \_ arg
-                \_ conditionals n references
-            \_ let
-                \_ conditionals n references
-            \_ set_env
-                \_ conditionals n references
-            
-    """
-
-    def __init__(self, name, tag, value, valid):
-        self.name         = name
-        self.tag          = tag
-        self.value        = value
-        self.valid        = [valid]
-        self.isTrue       = True
-        ArgsTag.ARGS[(name, tag)] = self
-
-    @classmethod
-    def init_argument(cls, name, tag, value, valid):
-        return cls(name=name, tag=tag, value=value, valid=valid)
-
-    @staticmethod
-    def process_value(arg, tag=None):
-        if not tag:
-            raise Exception
-  
-        value = arg.get('value')
-        if tag == 'arg':
-            value = arg.get('default')
-        
-        t,v = BaseLaunchTag._arg_grammar(value)
-        if not (v == '' or t == ''):
-            value = ReferenceVar(name=v, tag=t)
-        return value
-        
-    @staticmethod
-    def process_argument(argument=None):
-        DEFAULT_TAGS = {'name', 'tag', r'value|default', 'if', 'unless'}
-
-        name  = argument.get('name')
-        tag   = argument.tag
-        value = ArgsTag.process_value(argument, tag)
-
-        valid = ArgsTag.set_conditionals(argument)
-        "elif isinstance(conditional, ReferenceIf)"
-        if isinstance(valid, bool):
-            if not valid:
-                return None
-            else:
-                valid = True
-
-        return ArgsTag.init_argument(name, tag, value, valid)
-
-    @classmethod
-    def process_valid_arguments(cls):
-        for argument in cls.ARGS:
-            element       = cls.ARGS[argument]
-            element.value = cls.process_var_reference(element)
-            cls.process_if_reference(element)
-            cls.process_valid(element)
-        return True
-
-    @staticmethod
-    def process_if_reference(argument):
-        if isinstance(argument.valid[0], ReferenceIf):
-            (name, tag, condition) = (argument.valid[0].name, argument.valid[0].tag, argument.valid[0].condition)
-            reference = ArgsTag.ARGS.get((name,tag))
-            if tag == 'arg':
-                if reference is None:
-                    tag = 'let'
-                    reference = ArgsTag.ARGS.get((name,tag))
-            argument.valid.append(ArgsTag.process_if_reference(reference))
-        else:
-            return bool(argument.valid[0] == ArgsTag.evaluate(argument.value))
-        
-    @staticmethod
-    def process_valid(argument):
-        boolean_temp = argument.isTrue
-        for condition in argument.valid:
-            if not isinstance(condition, bool):
-                (name, tag, condition) = (condition.name, condition.tag, condition.condition)
-                if tag == 'arg':
-                    reference = ArgsTag.ARGS.get((name,tag))
-                    if reference is None:
-                        tag = 'let'
-                condition = bool(ArgsTag.ARGS[(name,tag)] == condition)
-            boolean_temp = condition and boolean_temp
-            if boolean_temp == False:
-                break
-        argument.isTrue = boolean_temp
-        return True
-
-    @staticmethod
-    def process_var_reference(element):
-        if isinstance(element.value, ReferenceVar):
-            reference = element.value
-
-            if (reference.name, reference.tag) not in ArgsTag.ARGS:
-                if reference.tag == 'arg':
-                    if (reference.name, 'let') not in ArgsTag.ARGS:
-                        raise Exception
-                    reference.tag = 'let'
-            value = ArgsTag.process_var_reference(element=ArgsTag.ARGS[(reference.name, reference.tag)])
-        else:
-            value = element.value
-        return value
-
-    @staticmethod
-    def evaluate(value):
-        returning_boolean = None
-        if value.capitalize() in ['True', 'False', '0', '1']:
-            returning_boolean = False
-            if value.capitalize() in ['True', '1']:
-                    returning_boolean = True
-        return returning_boolean
+            return self.namespace + '/' + self.name
 
 
+""" 
+    This file contains the necessary classes and methods to export information from the launch file Python-based specified within the config file.
+
+    SCHEMA that ros2 provides is deprecated also... So we'll try to run ros2 launch -p instead:
+        => ros2 launch $file -p :: 
+
+    ROS2 launch is based on python, which I, Luís Ribeiro, test the tool in order to try to retrive some useful structures to ease the parsing process, however, they do not furnish a direct way of acessing those structures. Therefore, this parsing technique might have some attached issues.
+"""
 
 "Launcher parser in order to retrieve information about possible executables..."
 @dataclass
-class LauncherParserXML:
+class LauncherParserPY:
 
-    # XML-based tags
+    """ TAGS:
+        . Node tag                  -> Reference to a node
+        . DeclareLaunchArgument tag -> Arguments that can be used inside a node
+        . LaunchConfiguration   tag -> Yet more arguments...
+    """
+    # Call-based tags
     TAGS = {
-        "base": BaseLaunchTag,
-        "node": NodeTag,
-        "remap": RemapTag,
-        "arg/let/set_env": ArgsTag,
+        "Base": BaseCall,
+        "Node": NodeCall, # underlying remap call
+        "Remap": RemapCall,
+        "DeclareLaunchArgument" : {ArgsCall, ReferenceCall},
+        "SetEnvironmentVariable": {ArgsCall, ReferenceCall}
+
     }
     file      : str
 
-    """ === Predifined Functions === """
-    # ROS2 launch xsd is depecrated... 
+    """ === Predefined functions === """
+    # validate xml schema
     @staticmethod
-    def validate_schema(file, schema, execute_cmd=(False, '')):
+    def validate_schema(file, execute_cmd=(False,'')):
+
         # Due to the depecrated xml file, the user might opt to check syntax through execution commands
         if execute_cmd[0] == True:
             cmd = execute_cmd[1].split(' ')
@@ -477,44 +425,131 @@ class LauncherParserXML:
                 subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
             except Exception as error:
                 return False
-        else:
-            # Schema routines...
-            schema_root = etree.parse(schema)
-            xml_schema = etree.XMLSchema(schema_root)
-            xml_doc = etree.parse(filename)        
-            try:
-                xml_schema.assertValid(xml_doc)
-            except Exception as error:
-                return False
         return True
+    
 
-    def parse(self):
-        # Warn the user first...
-        #print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING"))} XML-Launch file parser might be deprecated due to complexity analysis...')
-        #print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, Let, Arg, SetEnv, Remaps, If and Unless Conditionals.')
+    # validate py schema
+    @staticmethod
+    def validate_py_schema(file, schema, workspace):
+        # PYTHON tags that should be evaluated...
+        """ TAGS:
+                . Node tag                  -> Reference to a node
+                . DeclareLaunchArgument tag -> Arguments that can be used inside a node
+                . LaunchConfiguration   tag -> Yet more arguments...
+        """
+        VALID_TAGS = {
+            'Node': [],
+            'DeclareLaunchArgument': [],
+            'SetEnvironmentVariable': []
+        }
+
+        # no workspace found...
+        if workspace == '':
+            return {}, None
+        try:
+            parser = PyAstParser(workspace=workspace)
+            parser.parse(file)
+        except:
+            return {}, None
+
+        # parser global scope
+        __gs__ = parser.global_scope
+
+        # fill with calls
+        VALID_TAGS = {tag: CodeQuery(__gs__).all_calls.where_name(tag).get() for tag in VALID_TAGS}
+        # to fulfill...
+        CALLABLE_TAGS = {}
+
+        ### GET VALID CALLABLE FUNCTIONS ###
+        callable_functions = str((CodeQuery(__gs__).all_calls.where_name('LaunchDescription').get())[0].arguments)
+        for _callable in re.findall(r'\#(.*?)[\,\}]\s*',callable_functions): 
+            scope = CodeQuery(__gs__).all_definitions.where_name(_callable).get()[0].scope
+            
+            call, name = re.findall(r'\=.*?\]\s*(.*?)\((.*?)\)\s*$',str(scope))[0]
+            call = str(call).strip()
+            name = str(name).strip()
+            
+            # tag validation...
+            if call in VALID_TAGS:
+                # treatment
+                if name == '':
+                        name = str(_callable).strip()
+                        CALLABLE_TAGS[str(_callable).strip()] = call  
+
+                call = list(filter(lambda n_call: str(_callable).strip() == str(n_call.parent.arguments[0].name.strip()), VALID_TAGS[call]))[0]
+                CALLABLE_TAGS[name] = call
+
+        # Schema routines...
+        return CALLABLE_TAGS, __gs__
+
+    # validate py schema
+    @staticmethod
+    def launch_py(calls={}, __gs__=None):
+
+        ARGS_TAGS={
+            'DeclareLaunchArgument',
+            'SetEnvironmentVariable'
+        }
+        # handling possible errors...
+        if calls == {} or parser is None:
+            return {}
+        # returning obj :: initialize...
+        object_ret = {}
+
+        arguments = list(filter(lambda call: calls[call].name == 'DeclareLaunchArgument', calls))
+        envs      = list(filter(lambda call: calls[call].name == 'SetEnvironmentVariable', calls))
+        nodes     = list(filter(lambda call: calls[call].name == 'Node', calls))
+
+        # Processing...
+        for arg in arguments: ArgsCall.process_argument(call=calls[arg])
+        for env in envs     : ArgsCall.process_argument(call=calls[env])
+
+        for node in nodes   : NodeCall.process_node(call=calls[node])
+
+
+        for ref_name in calls:
+            element = calls[ref_name]
+            if calls[call_name] != {}:
+                codeQ_calls = CodeQuery(__gs__).all_calls.where_name(call_name).get()
+
+
+
+    # parse py launcher
+    def parse(self, filename):
+        # Warner the user first...
+        print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING:"))} Python Launch file parser might be deprecated due to complexity analysis...')
         time.sleep(0.5)
 
-        filename = self.file
-        if not LauncherParserXML.validate_schema(file=filename, schema=f'{SCHEMAS}/launch.xsd', execute_cmd=(True,f'ros2 launch {filename} -p')):
+        # validate schema first...
+        if not LauncherParserPY.validate_schema(file=filename, execute_cmd=(True,f'ros2 launch {filename} -p')):
             return False
 
-        tree = etree.parse(filename)
-        root = tree.getroot()
-        #lconf = LauncherConfigXML()
-        if not root.tag == "launch":
+        # validate schema first...
+        # Note that workspace for ros launch packages must be given...
+        CALLABLE_TAGS = LauncherParserPY.validate_py_schema(file=f, workspace=LauncherParserPY.get_launch_python_workspace())
+        if CALLABLE_TAGS[0] == {}:
             return False
         
-        arguments = tree.xpath('(let|set_env|arg)')
-        nodes     = root.findall('./node')
-
-        for arg  in arguments: ArgsTag.process_argument(argument=arg)
-        if not ArgsTag.process_valid_arguments():
-            # print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SOMETHING WENT WRONG"))} ups...')
+        global_scope    = CALLABLE_TAGS[1]
+        CALLABLE_TAGS   = CALLABLE_TAGS[0]
+        # Here the idea is to capture all the possible tags that python launch might have
+        object_ret = LauncherParserPY.launch_py(calls=CALLABLE_TAGS, __gs__=global_scope)
+        if object_ret == {}:
             return False
-        for node in nodes    : NodeTag.process_node(node=node)
 
-        return True 
+        return True
     
+    # Python workspace getter so that can parse launch file with python extension...
+    @staticmethod
+    def get_launch_python_workspace():
+        ros_distro = os.getenv('ROS_DISTRO')
+        locate = f'/opt/ros2/{ros_distro}/lib'
+
+        workspace_path = os.getenv('PYTHONPATH').split(':')[::-1][0]
+        if not workspace_path.startswith(f'{locate}'):
+            return ''
+        return workspace_path
+
     # get positional
     @staticmethod
     def decouple(structure):
@@ -527,7 +562,6 @@ class LauncherParserXML:
 if __name__ == "__main__":
     file = sys.argv[1]
 
-    l = LauncherParserXML(file=file)
+    l = LauncherParserPY(file=file)
     conf = l.parse()
-    #print([ArgsTag.ARGS[arg].valid for arg in ArgsTag.ARGS])
-    print([NodeTag.NODES[n] for n in NodeTag.NODES])
+    print(conf.nodes)

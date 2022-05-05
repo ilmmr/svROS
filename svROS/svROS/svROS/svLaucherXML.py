@@ -23,13 +23,13 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
         => ros2 launch $file -p :: 
 """
 
-"Launcher with some configuration dicts..."
-@dataclass
-class LauncherConfigXML(object):
-
-    booleans: dict = field(default_factory=dict) 
-    nodes   : list = field(default_factory=list)
-    args    : dict = field(default_factory=dict)
+"Functions that every class inherits"
+class BaseLaunchTag(object):
+    
+    CONDITIONAL_ATTRIBUTES = {
+        "if": bool,
+        "unless": bool
+    }
 
     """ LAUNCH TREE according to xsd...
             => node (can have if and unless)
@@ -38,65 +38,11 @@ class LauncherConfigXML(object):
             => let  (can have if and unless)
     """
 
-    def __post_init__(self):
-        # define arg node let as they must defined at the top.
-        self.tree = {x: dict() for x in ['node', 'arg_let']}
-
-    # define booleans that might found within args...
-    def _booleans(self, key, t, value):
-        self.booleans[key] = dict()
-        self.booleans[key]['type'] = t
-        self.booleans[key]['value'] = value
-        return True
-
-    # process args...
-    def _process_args(self):
-        # use a temp instead of the main one...
-        args_temp = self.args
-        for index in args_temp:
-            element = args_temp[index]
-            try:
-                self.resolve_dependencies(args_temp, index)
-                element.expand_conditions(args_temp)
-                element._if_conditional(args_temp)
-            except:
-                return False
-        # set it up...
-        self.args = args_temp
-        return True
-        
-    # process nodes and remaps...
-    def _process_nodes(self):
-        # use a temp instead of the main one...
-        nodes_temp = self.nodes
-        for node in args_temp:
-                # process remaps
-                node.process_remaps(self.args)
-        
-        # set it up...
-        self.nodes = nodes_temp
-        return True
-        
-    """ === Static Methods === """
-    # recursive function to resolve some arg dependencies...
-    @staticmethod
-    def resolve_dependencies(args, value):
-        if value == None:
-                value = list(args.keys())[0]
-        if args[value].dependent[0] == True:
-                v = args[value].dependent[1]
-                args[value].value = LauncherConfigXML.resolve_dependencies(args, v)
-        
-        # evalute boolValue
-        args[value].evaluate()
-        return args[value].value
-
     # custom filtering function
     @staticmethod
     def _filter(args: dict, tag: str):
         return list(map(lambda ob: args[ob], list(filter(lambda obj: obj[1] == tag, list(args.keys())))))
-    
-    # Using lark to parse some dependencies strings...
+
     @staticmethod
     def _arg_grammar(sentence='') -> (bool,str):
         # parsing grammar...
@@ -126,15 +72,217 @@ class LauncherConfigXML(object):
 
         return 'arg', token
 
+    # get positional
+    @staticmethod
+    def decouple(structure):
+        if structure is not None:
+            return structure[0]
+
+    # Predefined control of topic remapping...
+    @staticmethod
+    def namespace(tag: str):
+        return tag if tag.startswith('/') else f'/{tag}'
+
+    @staticmethod
+    def set_conditionals(element, node_mode=False):
+        for conditional in BaseLaunchTag.CONDITIONAL_ATTRIBUTES:
+            cond = element.get(conditional)
+            if cond:
+                t,v = BaseLaunchTag._arg_grammar(cond)
+                if v == '' or t == '':
+                    return False
+                if node_mode:
+                    return ArgsTag.ARGS[(v,t)].isTrue
+                return ReferenceIf(name=v, tag=t, condition=bool(cond=='if'))
+        return True
+
+
+"Reference through call of LaunchConfiguration"
+class ReferenceVar(BaseLaunchTag):
+    REQUIRED = ("value")
+    """
+    ...
+        \_ $var or $env ==> ReferenceVar
+    """
+
+    def __init__(self, name, tag):
+        # initial configuration
+        self.name       = name
+        self.tag        = tag
+
+
+class ReferenceIf(BaseLaunchTag):
+    REQUIRED = ("value")
+    """
+    ...
+        \_ $var or $env in IF or UNLESS ==> ReferenceIf
+    """
+
+    def __init__(self, name, tag, condition=True):
+        # initial configuration
+        self.name       = name
+        self.tag        = tag
+        self.condition  = condition
+
+
+"Predefined Remap tag class"
+class RemapTag(BaseLaunchTag):
+    # class variables
+    REQUIRED = ("from", "to")
+    REMAPS = set()
+
+    def __init__(self, f, t):
+        self.origin = f
+        self.destin = t
+
+        RemapTag.REMAPS.add(self)
+        
+    @classmethod
+    def init_remap(cls, **kwargs):
+        return cls(f=kwargs.get('from'), t=kwargs.get('to'))
+        
+
+"Predefined Node tag class"
+class NodeTag(BaseLaunchTag):
+    # class variables
+    NODES          = {}
+    PACKAGES_NODES = {}
+    CHILDREN = ("remap", "param")
+    REQUIRED = ("pkg", "exec")
+    """
+        Node
+            \__ arguments
+                \_ conditionals
+                \_ attributes
+            \__ remaps
+    """
+
+    def __init__(self, name, package, executable, remaps, namespace=None, enclave=None):
+        # initial configuration
+        self.name       = name
+        self.namespace  = namespace
+        self.package    = package
+        self.executable = executable
+        self.remaps     = remaps
+        self.enclave    = enclave
+
+        # Run @property decorator
+        index = self.name
+        NodeTag.NODES[index] = self
+        if self.package in NodeTag.PACKAGES_NODES: NodeTag.PACKAGES_NODES[self.package].add(self)
+        else: NodeTag.PACKAGES_NODES[self.package] = {self}
+
+    @classmethod
+    def init_node(cls, **kwargs):
+        return cls(name=kwargs['name'], package=kwargs['pkg'], executable=kwargs['exec'], remaps=kwargs['remaps'], namespace=kwargs.get('ns'), enclave=kwargs.get('enclave'))
+    
+    @staticmethod
+    def process_node_argument(arg):
+        if not isinstance(arg, str):
+            return None
+        tag, value = BaseLaunchTag._arg_grammar(arg)
+        if not (tag == '' or value == ''):
+            arg = ArgsTag.ARGS[(value, tag)].value
+            
+        return arg
+
+    @staticmethod
+    def process_node_arguments(arguments=None):
+        """
+        Node args to be processed:
+            \_ name
+            \_ package
+            \_ executable
+            \_ namespace (?)
+            \_ remaps and arguments
+        """
+        SIMPLE_NODE_ARGUMENTS = {
+            'name', 'pkg', 'exec', 'ns'
+        }
+
+        valid = BaseLaunchTag.set_conditionals(arguments, node_mode=True)
+        if not valid:
+            #print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "A node is invalid due to its conditionals!"))}')
+            return None
+
+        node_arguments = {}
+        node_arguments['remaps'] = []
+        for valid in SIMPLE_NODE_ARGUMENTS:
+            node_arguments[valid] = NodeTag.process_node_argument(arg=arguments.get(valid))
+
+        for remap in NodeTag.process_remaps(node=arguments):
+            node_arguments['remaps'].append(remap)
+            RemapTag.init_remap(**remap)
+        
+        process_remaps = NodeTag.process_remaps(node=arguments)
+        for remap in process_remaps:
+            node_arguments['remaps'].append(remap)
+            RemapTag.init_remap(**remap)
+
+        in_line_args = arguments.get('args')
+        if in_line_args is not None:
+            if not isinstance(in_line_args, str):
+                #print(f'[svROS] {color.color("BOLD", color.color("RED", "A node failed to parse!"))}')
+                return None
+            cmd_enclave, cmd_remaps = NodeTag.parse_cmd_args(args=in_line_args)
+            node_arguments['enclave'] = cmd_enclave
+            for remap in cmd_remaps:
+                if remap in process_remaps:
+                    continue
+                node_arguments['remaps'].append(remap)
+                RemapTag.init_remap(**remap)
+
+        return node_arguments
+            
+    @staticmethod
+    def process_node(node=None):
+        # in-line arguments
+        arguments = node
+        
+        node_arguments = NodeTag.process_node_arguments(arguments=arguments)
+        if node_arguments is not None:
+            NodeTag.init_node(**node_arguments)
+        return True
+
+    @staticmethod
+    def process_remaps(node):
+            tags = node.findall('./remap')
+            remaps = []
+
+            # For each remap tag run this snippet.
+            for remap_tag in tags:
+                (origin, destin) = (remap_tag.get('from'), remap_tag.get('to'))
+                origin = NodeTag.process_node_argument(arg=origin)
+                destin = NodeTag.process_node_argument(arg=destin)
+                
+                object_remap = {'from': BaseLaunchTag.namespace(origin), 'to': BaseLaunchTag.namespace(destin)}
+                remaps.append(object_remap)
+            
+            return remaps
+
+    @staticmethod
+    def process_cmd_arg(tree, info_data, tag, enclave=False):
+        # processing grammar...
+        data = list(tree.find_data(info_data))
+        if data == []:
+            return {}
+
+        output = {}
+        _data_ = data[len(data)-1]
+        if _data_:
+            # get tokens
+            output = list(map(lambda v: v.value , list(filter(lambda vv: vv.type == tag, (_data_.scan_values(lambda v: isinstance(v, Token)))))))
+            if enclave == False:
+                output = list(zip(output[0::2], output[1::2]))
+            
+        return output
+    
     # Using lark to parse some dependencies strings...
     @staticmethod
-    def parse_args(args=''):
+    def parse_cmd_args(args=''):
         # returning dictionary
         output = {}
-        output = {x: list() for x in ['remaps', 'parameters', 'enclaves']}
-        # no args passed?
-        if args == '':
-            return False
+        output['remaps'] = list()
             
         # Grammar to parse arguments...
         grammar = """
@@ -163,260 +311,152 @@ class LauncherConfigXML(object):
         parser = Lark(grammar, start='sentence', ambiguity='explicit')
         tree = parser.parse(f'{args}')
 
-        # find parameters
-        p_list = list(tree.find_data("arg_parameter"))
-        if p_list:
-            parameters = p_list[len(p_list)-1]
-            if parameters:
-                # get tokens
-                p_tokens = list(map(lambda v: v.value , list(filter(lambda vv: vv.type == "ARG_P" ,(parameters.scan_values(lambda v: isinstance(v, Token)))))))
-                zipped = list(zip(p_tokens[0::2], p_tokens[1::2]))
-                for pair in zipped:
-                    output['parameters'].append({'from': str(pair[0]), 'to': str(pair[1])})
+        remaps  = NodeTag.process_cmd_arg(tree=tree, info_data="arg_remap", tag='ARG_R')
+        enclave = NodeTag.process_cmd_arg(tree=tree, info_data="arg_enclave", tag='ARG_E', enclave=True)
+        enclave = next(iter(enclave or []), None)
 
-        # find remaps
-        r_list = list(tree.find_data("arg_remap"))
-        if r_list:
-            remaps = r_list[len(p_list)-1]
-            if remaps:
-                # get tokens
-                r_tokens = list(map(lambda v: v.value , list(filter(lambda vv: vv.type == 'ARG_R', (remaps.scan_values(lambda v: isinstance(v, Token)))))))
-                zipped = list(zip(r_tokens[0::2], r_tokens[1::2]))
-                for pair in zipped:
-                    output['remaps'].append({'from': str(pair[0]), 'to': str(pair[1])})
-                
-        # find enclaves
-        e_list = list(tree.find_data("arg_enclave"))
-        if e_list:
-            enclaves = e_list[len(p_list)-1]
-            # get tokens
-            if enclaves:
-                # get tokens
-                e_tokens = list(map(lambda v: v.value, list(filter(lambda vv: vv.type == 'ARG_E', (enclaves.scan_values(lambda v: isinstance(v, Token)))))))
-                for en in e_tokens:
-                    output['enclaves'].append({(str(en))})
+        for pair in remaps:
+            output['remaps'].append({'from': str(pair[0]), 'to': str(pair[1])})
 
-        return output
-    """ === Static Methods === """
+        output['enclave'] = str(enclave) if enclave is not None else None
 
-
-"Base Launch Tag that might inherit some other classes..."
-class BaseLaunchTag(object):
-    # class variables
-    CHILDREN = ()
-    REQUIRED = ()
-    CONDITIONAL_ATTRIBUTES = {
-        "if": bool,
-        "unless": bool
-    }
-
-    """
-        true or false values:
-        dic[name] = {value, default}
-    """
-    def __init__(self, attributes):
-        self.attributes = attributes
-        self.conditions = list()
-        self.isTrue = True
-
-    def _conditionals(self):
-        # conditionals
-        for key_attribute in self.CONDITIONAL_ATTRIBUTES:
-            att = self.attributes.get(key_attribute)
-            if att:
-                t,v = LauncherConfigXML._arg_grammar(att)
-                if v == '' or t == '':
-                        return False
-                "Can either be if or unless"
-                if key_attribute == "if":
-                        self.conditions.append((True, (t, v)))
-                if key_attribute == "unless":
-                        self.conditions.append((False, (t, v)))
-        return True
-        
-    # expand conditions
-    def expand_conditions(self, args):
-        # conditional recursive...
-        for condition in self.conditions:
-                if condition is not None:
-                        value = condition[1]
-                        self.conditions.append(args[condition[1]].expand_conditions(args))
-                else:
-                        break
-        # filter...
-        self.conditions = list(filter(lambda c: c is not None, self.conditions))
-
-    # resolve if conditionals
-    def _if_conditional(self, args):
-        # if conditionals to set up isTrue value...
-        boolean_temp = True
-        for condition in self.conditions:
-            if condition[1] not in args:
-                return False
-            else:
-                # put is True
-                is_conditional_true = args[condition[1]].booleanValue
-                boolean_temp = bool(condition[0] == is_conditional_true) and boolean_temp
-            # if already false, break
-            if boolean_temp == False:
-                    break
-        
-        self.isTrue = boolean_temp
-        return True
-
-"Predefined Remap tag class"
-class RemapTag(BaseLaunchTag):
-    # class variables
-    CHILDREN = ()
-    REQUIRED = ("from", "to")
-    ATTRIBUTES = {
-            "from": str,
-            "to": str
-    } 
-
-    def __init__(self, attributes):
-        BaseLaunchTag.__init__(self, attributes=attributes)
-        self.from_ = attributes.get("from")
-        self.to_ = attributes.get("to")
-        
-        if LauncherConfigXML._arg_grammar(self.from_)[0] == True:
-            pass
-        if LauncherConfigXML._arg_grammar(self.to_)[0] == True:
-            pass
-
-
-"Predefined Node tag class"
-class NodeTag(BaseLaunchTag):
-    # class variables
-    CHILDREN = ("remap", "param")
-    REQUIRED = ("pkg", "exec")
-    ATTRIBUTES = {
-        "pkg": str,
-        "executable": str,
-        "name": str,
-        "args": str
-    } 
-
-    def __init__(self, attributes, launcher):
-            BaseLaunchTag.__init__(self, attributes=attributes)
-            self.package    = attributes.get("pkg")
-            self.executable = attributes.get("exec")
-            self.name       = attributes.get("name")
-            self.node_args  = attributes.get("args")
-            self.namespace  = attributes.get("ns")
-            
-            # after processing
-            self.remaps     = []
-            self.enclave    = ''
-            # loaded args
-            self.loaded_args = launcher.args
-            # run conditionals
-            if not self._conditionals():
-                    return None
-            
-            # process node...
-            self.expand_conditions(self.loaded_args)
-            self._if_conditional(self.loaded_args)
-            self.process_remaps()
-            self.process_node_args()
-    
-    # process remaps
-    def process_remaps(self):
-            remaps = self.attributes.findall('./remap')
-            # go for remaps...
-            temp_dict_remaps = {}
-            for r in remaps:
-                    r_tag = RemapTag(attributes=r)
-                    tf, vf = LauncherConfigXML._arg_grammar(r_tag.from_)
-                    tt, vt = LauncherConfigXML._arg_grammar(r_tag.to_)
-                    
-                    # process remaps...
-                    if not (tf == '' or vf == ''):
-                        r_tag.from_ = self.loaded_args[(tf,vf)].value
-                    if not (tt == '' or vt == ''):
-                        r_tag.to_ = self.loaded_args[(tt,vt)].value
-                    temp_dict_remaps[r_tag.from_] = r_tag.to_
-            
-            # update remaps...
-            for _from in temp_dict_remaps:
-                    _to   = NodeTag.namespace(temp_dict_remaps[_from])
-                    _from = NodeTag.namespace(_from)
-                    self.remaps.append({'from': _from, 'to': _to})
-                    
-            # finish
-            return True
-    
-    # process node-args in text...
-    def process_node_args(self):
-            output = LauncherConfigXML.parse_args(args=self.node_args)
-            # process remaps
-            for remap in output['remaps']:
-                    self.remaps.append(remap)
-            # process enclaves
-            if output['enclaves'] != []:
-                    self.enclave = output['enclaves'][0]
-            
-            self.remaps = NodeTag.transform_remaps(self.remaps)
-            # finish
-            return True
+        return output.get('enclave'), output.get('remaps')
 
     @property
-    def _remaps():
-            return self.remaps
-        
-    @_remaps.setter
-    def _remaps(r: RemapTag):
-            self.remaps.append(r)
-
-    # Managing and controlling remaps
-    @staticmethod
-    def transform_remaps(list_remaps: list):
-            temp_dict = {}
-            for lr in list_remaps: temp_dict[NodeTag.namespace(lr['from'])] = NodeTag.namespace(lr['to'])
-            list_remaps = []
-            list_remaps = list(map(lambda value: {'from': value, 'to': temp_dict[value]}, temp_dict))
-            return list_remaps
+    def name(self):
+        if self.namespace is None:
+            name = self._name
+        else:
+            name = self.namespace + '/' + self._name
+        return name
     
-    # Predefined control of topic remapping...
-    @staticmethod
-    def namespace(tag: str):
-            return tag if tag.startswith('/') else f'/{tag}'
-
+    @name.setter
+    def name(self, value):
+        self._name = value
 
 "Predefined launch arguments tag class"
-class ArgTag(BaseLaunchTag):
+class ArgsTag(BaseLaunchTag):
     # class variables
-    CHILDREN = ()
+    ARGS         = {}
     REQUIRED = ("name", r"(default|value)")
-    ATTRIBUTES = {
-        "name": str,
-        "default": str,
-        "description": str
-    } 
-
-    def __init__(self, attributes, value, booleanValue):
-            BaseLaunchTag.__init__(self, attributes=attributes)
-            self.name         = attributes.get("name")
-            self.tag          = attributes.tag
-            self.booleanValue = booleanValue
-            # if let or set_env
-            self.value        = value
+    """
+        ArgTag
+            \_ arg
+                \_ conditionals n references
+            \_ let
+                \_ conditionals n references
+            \_ set_env
+                \_ conditionals n references
             
-            # run conditionals
-            if not self._conditionals():
-                    return False
-            self.dependent  = (False, '')
-            # can be dependent
-            t,v = LauncherConfigXML._arg_grammar(self.value)
-            if not (v == '' or t == ''):
-                    self.dependent = (True,(t,v))
-    
-    # evaluate arg... if value is boolean stringenized, then booleanValue must be set
-    def evaluate(self):
-            if self.value.capitalize() in ['True', 'False', '0', '1']:
-                    self.booleanValue = False
-                    if self.value.capitalize() in ['True', '1']:
-                            self.booleanValue = True
+    """
+
+    def __init__(self, name, tag, value, valid):
+        self.name         = name
+        self.tag          = tag
+        self.value        = value
+        self.valid        = [valid]
+        self.isTrue       = True
+        ArgsTag.ARGS[(name, tag)] = self
+
+    @classmethod
+    def init_argument(cls, name, tag, value, valid):
+        return cls(name=name, tag=tag, value=value, valid=valid)
+
+    @staticmethod
+    def process_value(arg, tag=None):
+        if not tag:
+            raise Exception
+  
+        value = arg.get('value')
+        if tag == 'arg':
+            value = arg.get('default')
+        
+        t,v = BaseLaunchTag._arg_grammar(value)
+        if not (v == '' or t == ''):
+            value = ReferenceVar(name=v, tag=t)
+        return value
+        
+    @staticmethod
+    def process_argument(argument=None):
+        DEFAULT_TAGS = {'name', 'tag', r'value|default', 'if', 'unless'}
+
+        name  = argument.get('name')
+        tag   = argument.tag
+        value = ArgsTag.process_value(argument, tag)
+
+        valid = ArgsTag.set_conditionals(argument)
+        "elif isinstance(conditional, ReferenceIf)"
+        if isinstance(valid, bool):
+            if not valid:
+                return None
+            else:
+                valid = True
+
+        return ArgsTag.init_argument(name, tag, value, valid)
+
+    @classmethod
+    def process_valid_arguments(cls):
+        for argument in cls.ARGS:
+            element       = cls.ARGS[argument]
+            element.value = cls.process_var_reference(element)
+            cls.process_if_reference(element)
+            cls.process_valid(element)
+        return True
+
+    @staticmethod
+    def process_if_reference(argument):
+        if isinstance(argument.valid[0], ReferenceIf):
+            (name, tag, condition) = (argument.valid[0].name, argument.valid[0].tag, argument.valid[0].condition)
+            reference = ArgsTag.ARGS.get((name,tag))
+            if tag == 'arg':
+                if reference is None:
+                    tag = 'let'
+                    reference = ArgsTag.ARGS.get((name,tag))
+            argument.valid.append(ArgsTag.process_if_reference(reference))
+        else:
+            return bool(argument.valid[0] == ArgsTag.evaluate(argument.value))
+        
+    @staticmethod
+    def process_valid(argument):
+        boolean_temp = argument.isTrue
+        for condition in argument.valid:
+            if not isinstance(condition, bool):
+                (name, tag, condition) = (condition.name, condition.tag, condition.condition)
+                if tag == 'arg':
+                    reference = ArgsTag.ARGS.get((name,tag))
+                    if reference is None:
+                        tag = 'let'
+                condition = bool(ArgsTag.ARGS[(name,tag)] == condition)
+            boolean_temp = condition and boolean_temp
+            if boolean_temp == False:
+                break
+        argument.isTrue = boolean_temp
+        return True
+
+    @staticmethod
+    def process_var_reference(element):
+        if isinstance(element.value, ReferenceVar):
+            reference = element.value
+
+            if (reference.name, reference.tag) not in ArgsTag.ARGS:
+                if reference.tag == 'arg':
+                    if (reference.name, 'let') not in ArgsTag.ARGS:
+                        raise Exception
+                    reference.tag = 'let'
+            value = ArgsTag.process_var_reference(element=ArgsTag.ARGS[(reference.name, reference.tag)])
+        else:
+            value = element.value
+        return value
+
+    @staticmethod
+    def evaluate(value):
+        returning_boolean = None
+        if value.capitalize() in ['True', 'False', '0', '1']:
+            returning_boolean = False
+            if value.capitalize() in ['True', '1']:
+                    returning_boolean = True
+        return returning_boolean
+
 
 
 "Launcher parser in order to retrieve information about possible executables..."
@@ -428,16 +468,14 @@ class LauncherParserXML:
         "base": BaseLaunchTag,
         "node": NodeTag,
         "remap": RemapTag,
-        "arg/let/set_env": ArgTag,
+        "arg/let/set_env": ArgsTag,
     }
     file      : str
 
     """ === Predifined Functions === """
-    # validate xml schema
     # ROS2 launch xsd is depecrated... 
     @staticmethod
     def validate_schema(file, schema, execute_cmd=(False, '')):
-
         # Due to the depecrated xml file, the user might opt to check syntax through execution commands
         if execute_cmd[0] == True:
             cmd = execute_cmd[1].split(' ')
@@ -454,87 +492,34 @@ class LauncherParserXML:
                 xml_schema.assertValid(xml_doc)
             except Exception as error:
                 return False
-        # if everything goes to plan...
         return True
 
-    # parsing launch arguments...
-    @staticmethod
-    def _launch_args(args, config):
-        # process args, let and envs...
-        for arg in args:
-            # process args elements...
-            booleanValue = None
-            f = 'value'
-            if arg.tag == 'arg':
-                    f = 'default'
-            # note that every let is referenced the same way as arg, so the last read is what is counted...
-            if arg.tag == 'let':
-                    arg.tag = 'arg'
-            if arg.get(f).capitalize() in ['True', 'False', '0', '1']:
-                    booleanValue = False
-                    if arg.get(f).capitalize() in ['True', '1']:
-                            booleanValue = True
-
-            # create tags and add to elements...
-            a_tag = ArgTag(attributes=arg, value=arg.get(f), booleanValue=booleanValue)
-            config.args[(a_tag.tag, a_tag.name)] = a_tag
-        
-        # if everything goes to plan...
-        return True
-
-    # parsing launch nodes...
-    @staticmethod
-    def _launch_nodes(nodes, config):
-        # process nodes, accounting its isTrue value...
-        for n in nodes:
-            n_tag = NodeTag(attributes=n, launcher=config)
-            if n_tag.isTrue == True:
-                config.nodes.append(n_tag)
-        
-        # if everything goes to plan...
-        return True
-
-    # parse xml launcher
-    def parse(self, filename):
+    def parse(self):
         # Warn the user first...
-        print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING"))} XML-Launch file parser might be deprecated due to complexity analysis...')
-        print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, Let, Arg, SetEnv, Remaps, If and Unless Conditionals.')
+        #print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING"))} XML-Launch file parser might be deprecated due to complexity analysis...')
+        #print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, Let, Arg, SetEnv, Remaps, If and Unless Conditionals.')
         time.sleep(0.5)
-        
+
+        filename = self.file
         if not LauncherParserXML.validate_schema(file=filename, schema=f'{SCHEMAS}/launch.xsd', execute_cmd=(True,f'ros2 launch {filename} -p')):
             return False
 
-        # parsing using haros parser... => ROS2 change its launch syntax...
-        # parser = LaunchParser()
         tree = etree.parse(filename)
         root = tree.getroot()
-        lconf = LauncherConfigXML()
-
-        # should start with launch...
+        #lconf = LauncherConfigXML()
         if not root.tag == "launch":
             return False
         
-        # Note that this xml parsing is easier because we can easily get the tags that we want...
-        # need to parse args, nodes->remaps
-        args = tree.xpath('(let|set_env|arg)')
-        nodes = root.findall('./node')
+        arguments = tree.xpath('(let|set_env|arg)')
+        nodes     = root.findall('./node')
 
-        # parse args as dict
-        if not LauncherParserXML._launch_args(args=args, config=lconf):
-            print(f'[svROS] Failed parsing launch file: {color.color("BOLD", color.color("RED", "Launch args failed to parse!"))}')
+        for arg  in arguments: ArgsTag.process_argument(argument=arg)
+        if not ArgsTag.process_valid_arguments():
+            # print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SOMETHING WENT WRONG"))} ups...')
             return False
-        # process args
-        if not lconf._process_args():
-            print(f'[svROS] Failed parsing launch file: {color.color("BOLD", color.color("RED", "Launch args failed to process!"))}')
-            return False
+        for node in nodes    : NodeTag.process_node(node=node)
 
-        # parse nodes
-        if not LauncherParserXML._launch_nodes(nodes=nodes, config=lconf):
-            print(f'[svROS] Failed parsing launch file: {color.color("BOLD", color.color("RED", "Launch nodes failed to parse!"))}')
-            return False
-
-        # return config declaration
-        return lconf
+        return True 
     
     # get positional
     @staticmethod
@@ -550,4 +535,5 @@ if __name__ == "__main__":
 
     l = LauncherParserXML(file=file)
     conf = l.parse()
-    print(conf.nodes)
+    #print([ArgsTag.ARGS[arg].valid for arg in ArgsTag.ARGS])
+    print([NodeTag.NODES[n] for n in NodeTag.NODES])
