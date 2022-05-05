@@ -1,0 +1,9 @@
+README.md
+setup.py
+svROS/svROS.egg-info/PKG-INFO
+svROS/svROS.egg-info/SOURCES.txt
+svROS/svROS.egg-info/dependency_links.txt
+svROS/svROS.egg-info/entry_points.txt
+svROS/svROS.egg-info/requires.txt
+svROS/svROS.egg-info/top_level.txt
+svROS/svROS.egg-info/zip-safe

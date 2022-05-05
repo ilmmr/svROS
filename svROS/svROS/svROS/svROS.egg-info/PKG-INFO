@@ -1,0 +1,20 @@
+Metadata-Version: 2.1
+Name: svROS
+Version: 0.1.0
+Summary: Security Verification in ROS
+Home-page: https://github.com/luis1ribeiro/svROS
+Author: Luís Ribeiro
+Author-email: lmmr@outlook.pt
+License: MIT License
+Keywords: sros2 ros2 property-specification model-checking alloy haros
+Platform: UNKNOWN
+Description-Content-Type: text/markdown
+
+### svROS - Security Verification in ROS
+
+The *Security Verification in ROS* (svROS) tool concerns a technique, based on the software verification perspective, to automatically verify system-wide properties related to the security configuration of ROS2-based applications. 
+
+To that purpose it will model the ROS architecture, as well as the network communication behaviour, in Alloy, a formal specification language and analysis tool supported by a model-finder, with which system-wide properties will subsequently model-checked.
+
+Enjoy! (ง ͡❛ ͜ʖ ͡❛)ง
+

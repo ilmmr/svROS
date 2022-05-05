@@ -1,0 +1,27 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║                            svROS guide                               ║
+║                   (Security Verification in ROS)                     ║
+║                                                                      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║                                                                      ║
+║   svROS __version__ '0.1.0'                                          ║
+║   Copyright © 2021 Luís Ribeiro                                      ║
+║                                                                      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║                                                                      ║
+║     => svROS init [ , reset]                                         ║
+║         . initializes the .svROS directory                           ║
+║     => svROS export [args]                                           ║
+║         . extract node info and creates sros-based file              ║
+║         -f (--file) file [ ,options]                                 ║
+║            options:                                                  ║
+║                --haros plugin_file => Parse using HAROS              ║
+║                --force-init        => Force creation of svROS dir    ║
+║                --reset             => Reset project directory        ║
+║     => svROS run [args]                                              ║
+║         . runs the tool with a given project directory               ║
+║         -p (--project) project                                       ║
+║                                                                      ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
