@@ -19,7 +19,6 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 """ 
     This file contains the necessary classes and methods to export information from the launch file XML-based specified within the config file.
 """
-
 "Functions that every class inherits."
 class BaseLaunchTag(object):
     CONDITIONAL_ATTRIBUTES = {
@@ -32,7 +31,6 @@ class BaseLaunchTag(object):
             => arg  (can have if and unless)
             => let  (can have if and unless)
     """
-
     """ === Static Methods === """
     @staticmethod
     def _filter(args: dict, tag: str):
@@ -311,7 +309,6 @@ class ArgsTag(BaseLaunchTag):
                 \_ conditionals n references
             \_ set_env
                 \_ conditionals n references
-            
     """
     def __init__(self, name, tag, value, valid):
         self.name         = name
@@ -431,7 +428,6 @@ class LauncherParserXML:
         "arg/let/set_env": ArgsTag,
     }
     file      : str
-
     """ === Predifined Functions === """
     @staticmethod
     def validate_schema(file, schema, execute_cmd=(False, '')):
@@ -487,5 +483,6 @@ class LauncherParserXML:
 if __name__ == "__main__":
     file = '/home/luis/Desktop/example.xml'
     l = LauncherParserXML(file=file).parse()
-    print([NodeTag.NODES[n] for n in NodeTag.NODES])
-    print(NodeTag.NODES)
+    print('==> NODES:', [NodeTag.NODES[n] for n in NodeTag.NODES])
+    print('==> NODES names:', [NodeTag.NODES[n].name for n in NodeTag.NODES])
+    print('==> NODES remaps:', [NodeTag.NODES[n].remaps for n in NodeTag.NODES])

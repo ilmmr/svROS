@@ -405,9 +405,9 @@ class LauncherParserPY:
                 . LaunchConfiguration   tag -> Yet more arguments...
         """
         VALID_TAGS = {
-            'Node': [],
-            'DeclareLaunchArgument': [],
-            'SetEnvironmentVariable': []
+            'Node',
+            'DeclareLaunchArgument',
+            'SetEnvironmentVariable'
         }
         if workspace == '':
             return {}, None
@@ -424,8 +424,14 @@ class LauncherParserPY:
         CALLABLE_TAGS = {}
 
         ### GET VALID CALLABLE FUNCTIONS ###
-        callable_functions = str((CodeQuery(__gs__).all_calls.where_name('LaunchDescription').get())[0].arguments)
-        for _callable in re.findall(r'\#(.*?)[\,\}]\s*',callable_functions): 
+        callable_functions = (CodeQuery(__gs__).all_calls.where_name('LaunchDescription').get())[0].arguments
+        if not re.findall(r'\#(.*?)[\,\}]\s*',str(callable_functions)):
+            callable_functions = callable_functions[0].value
+            for call in callable_functions:
+                CALLABLE_TAGS[len(CALLABLE_TAGS)] = call
+            return CALLABLE_TAGS, __gs__
+        # Launch Description might have variables associated to tags.
+        for _callable in re.findall(r'\#(.*?)[\,\}]\s*',str(callable_functions)): 
             scope = CodeQuery(__gs__).all_definitions.where_name(_callable).get()[0].scope
             call, name = re.findall(r'\=.*?\]\s*(.*?)\((.*?)\)\s*$',str(scope))[0]
             call = str(call).strip()
@@ -498,7 +504,9 @@ class LauncherParserPY:
 
 ### TESTING ###
 if __name__ == "__main__":
-    file = '/home/luis/Desktop/ros2launch.py'
-    l = LauncherParserPY(file=file).parse()
-    print([NodeCall.NODES[n] for n in NodeCall.NODES])
-    print(NodeCall.NODES)
+    file  = '/home/luis/Desktop/ros2launch.py'
+    file2 = '/home/luis/uni-area/Tutorials-Extra-main/ROS-Applications/Tutorials/launch-files/launch-file-turtle.py'
+    l = LauncherParserPY(file=file2).parse()
+    print('==> NODES:', [NodeCall.NODES[n] for n in NodeCall.NODES])
+    print('==> NODES names:', [NodeCall.NODES[n].name for n in NodeCall.NODES])
+    print('==> NODES remaps:', [NodeCall.NODES[n].remaps for n in NodeCall.NODES])
