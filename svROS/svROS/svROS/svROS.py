@@ -111,16 +111,15 @@ class Configuration:
 "Project Parser class that through method-application helps the parsing of the user-provided files."
 @dataclass
 class ProjectParser:
-
-    FILE_PATH       : str     
+    FILE_PATH       : str
+    ros_distro      : str
+    ros_workspace   : str     
     content         : dict    = field(default_factory=dict)
     valid           : bool    = False
     default         : bool    = False
     project_dir     : str     = ''
     # for HAROS maybe??
     # scopes      : dict    = field(default_factory=dict)
-    ros_distro      : str
-    ros_workspace   : str
     log             : logging.getLogger() = None 
     SCHEMA          : str     = """
 {   

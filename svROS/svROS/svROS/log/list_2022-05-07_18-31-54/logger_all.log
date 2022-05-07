@@ -1,0 +1,266 @@
+[1.195s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'list', '--base-paths', '/home/luis/workspaces/ros2-galactic/', '/opt/ros2/galactic/']
+[1.195s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='list', build_base='build', ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['/home/luis/workspaces/ros2-galactic/', '/opt/ros2/galactic/'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, topological_order=False, names_only=False, paths_only=False, topological_graph=False, topological_graph_dot=False, topological_graph_density=False, topological_graph_legend=False, topological_graph_dot_cluster=False, topological_graph_dot_include_skipped=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7f40c98f8700>, verb_extension=<colcon_package_information.verb.list.ListVerb object at 0x7f40c988f190>, main=<bound method ListVerb.main of <colcon_package_information.verb.list.ListVerb object at 0x7f40c988f190>>)
+[1.282s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[1.282s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[1.282s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[1.282s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[1.282s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[1.282s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/luis/workspaces/ros2-galactic', '/opt/ros2/galactic'
+[1.282s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extensions ['ignore', 'ignore_ament_install']
+[1.283s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extension 'ignore'
+[1.283s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extension 'ignore_ament_install'
+[1.283s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extensions ['colcon_pkg']
+[1.283s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extension 'colcon_pkg'
+[1.283s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extensions ['colcon_meta']
+[1.283s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extension 'colcon_meta'
+[1.283s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extensions ['ros']
+[1.283s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extension 'ros'
+[1.488s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extensions ['cmake', 'python']
+[1.489s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extension 'cmake'
+[1.489s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extension 'python'
+[1.489s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extensions ['python_setup_py']
+[1.489s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic) by extension 'python_setup_py'
+[1.504s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/build) by extensions ['ignore', 'ignore_ament_install']
+[1.504s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/build) by extension 'ignore'
+[1.504s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/build) ignored
+[1.504s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/install) by extensions ['ignore', 'ignore_ament_install']
+[1.504s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/install) by extension 'ignore'
+[1.504s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/install) ignored
+[1.505s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/log) by extensions ['ignore', 'ignore_ament_install']
+[1.505s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/log) by extension 'ignore'
+[1.505s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/log) ignored
+[1.505s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extensions ['ignore', 'ignore_ament_install']
+[1.505s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extension 'ignore'
+[1.505s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extension 'ignore_ament_install'
+[1.505s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extensions ['colcon_pkg']
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extension 'colcon_pkg'
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extensions ['colcon_meta']
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extension 'colcon_meta'
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extensions ['ros']
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extension 'ros'
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extensions ['cmake', 'python']
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extension 'cmake'
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extension 'python'
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extensions ['python_setup_py']
+[1.506s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security) by extension 'python_setup_py'
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extensions ['ignore', 'ignore_ament_install']
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extension 'ignore'
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extension 'ignore_ament_install'
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extensions ['colcon_pkg']
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extension 'colcon_pkg'
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extensions ['colcon_meta']
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extension 'colcon_meta'
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extensions ['ros']
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extension 'ros'
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extensions ['cmake', 'python']
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extension 'cmake'
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extension 'python'
+[1.518s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extensions ['python_setup_py']
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common) by extension 'python_setup_py'
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extensions ['ignore', 'ignore_ament_install']
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extension 'ignore'
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extension 'ignore_ament_install'
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extensions ['colcon_pkg']
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extension 'colcon_pkg'
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extensions ['colcon_meta']
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extension 'colcon_meta'
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extensions ['ros']
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extension 'ros'
+[1.519s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extensions ['cmake', 'python']
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extension 'cmake'
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extension 'python'
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extensions ['python_setup_py']
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/common/node) by extension 'python_setup_py'
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extensions ['ignore', 'ignore_ament_install']
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extension 'ignore'
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extension 'ignore_ament_install'
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extensions ['colcon_pkg']
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extension 'colcon_pkg'
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extensions ['colcon_meta']
+[1.520s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extension 'colcon_meta'
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extensions ['ros']
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extension 'ros'
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extensions ['cmake', 'python']
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extension 'cmake'
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extension 'python'
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extensions ['python_setup_py']
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo) by extension 'python_setup_py'
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extensions ['ignore', 'ignore_ament_install']
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extension 'ignore'
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extension 'ignore_ament_install'
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extensions ['colcon_pkg']
+[1.521s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extension 'colcon_pkg'
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extensions ['colcon_meta']
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extension 'colcon_meta'
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extensions ['ros']
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extension 'ros'
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extensions ['cmake', 'python']
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extension 'cmake'
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extension 'python'
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extensions ['python_setup_py']
+[1.522s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves) by extension 'python_setup_py'
+[1.530s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extensions ['ignore', 'ignore_ament_install']
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extension 'ignore'
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extension 'ignore_ament_install'
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extensions ['colcon_pkg']
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extension 'colcon_pkg'
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extensions ['colcon_meta']
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extension 'colcon_meta'
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extensions ['ros']
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extension 'ros'
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extensions ['cmake', 'python']
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extension 'cmake'
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extension 'python'
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extensions ['python_setup_py']
+[1.531s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/keyboard) by extension 'python_setup_py'
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extensions ['ignore', 'ignore_ament_install']
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extension 'ignore'
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extension 'ignore_ament_install'
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extensions ['colcon_pkg']
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extension 'colcon_pkg'
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extensions ['colcon_meta']
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extension 'colcon_meta'
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extensions ['ros']
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extension 'ros'
+[1.532s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extensions ['cmake', 'python']
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extension 'cmake'
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extension 'python'
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extensions ['python_setup_py']
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/multiplexer) by extension 'python_setup_py'
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extensions ['ignore', 'ignore_ament_install']
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extension 'ignore'
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extension 'ignore_ament_install'
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extensions ['colcon_pkg']
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extension 'colcon_pkg'
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extensions ['colcon_meta']
+[1.533s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extension 'colcon_meta'
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extensions ['ros']
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extension 'ros'
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extensions ['cmake', 'python']
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extension 'cmake'
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extension 'python'
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extensions ['python_setup_py']
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/random) by extension 'python_setup_py'
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extensions ['ignore', 'ignore_ament_install']
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extension 'ignore'
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extension 'ignore_ament_install'
+[1.534s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extensions ['colcon_pkg']
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extension 'colcon_pkg'
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extensions ['colcon_meta']
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extension 'colcon_meta'
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extensions ['ros']
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extension 'ros'
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extensions ['cmake', 'python']
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extension 'cmake'
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extension 'python'
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extensions ['python_setup_py']
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/enclaves/turtlesim) by extension 'python_setup_py'
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extensions ['ignore', 'ignore_ament_install']
+[1.535s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extension 'ignore'
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extension 'ignore_ament_install'
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extensions ['colcon_pkg']
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extension 'colcon_pkg'
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extensions ['colcon_meta']
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extension 'colcon_meta'
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extensions ['ros']
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extension 'ros'
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extensions ['cmake', 'python']
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extension 'cmake'
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extension 'python'
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extensions ['python_setup_py']
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/private) by extension 'python_setup_py'
+[1.536s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extensions ['ignore', 'ignore_ament_install']
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extension 'ignore'
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extension 'ignore_ament_install'
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extensions ['colcon_pkg']
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extension 'colcon_pkg'
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extensions ['colcon_meta']
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extension 'colcon_meta'
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extensions ['ros']
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extension 'ros'
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extensions ['cmake', 'python']
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extension 'cmake'
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extension 'python'
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extensions ['python_setup_py']
+[1.537s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/security/demo/public) by extension 'python_setup_py'
+[1.546s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extensions ['ignore', 'ignore_ament_install']
+[1.546s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extension 'ignore'
+[1.546s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extension 'ignore_ament_install'
+[1.546s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extensions ['colcon_pkg']
+[1.546s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extension 'colcon_pkg'
+[1.546s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extensions ['colcon_meta']
+[1.546s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extension 'colcon_meta'
+[1.547s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extensions ['ros']
+[1.547s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extension 'ros'
+[1.547s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extensions ['cmake', 'python']
+[1.547s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extension 'cmake'
+[1.547s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extension 'python'
+[1.547s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extensions ['python_setup_py']
+[1.547s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src) by extension 'python_setup_py'
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extensions ['ignore', 'ignore_ament_install']
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extension 'ignore'
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extension 'ignore_ament_install'
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extensions ['colcon_pkg']
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extension 'colcon_pkg'
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extensions ['colcon_meta']
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extension 'colcon_meta'
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extensions ['ros']
+[1.565s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/interfaces) by extension 'ros'
+[1.616s] DEBUG:colcon.colcon_core.package_identification:Package '/home/luis/workspaces/ros2-galactic/src/interfaces' with type 'ros.ament_cmake' and name 'interfaces'
+[1.628s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extensions ['ignore', 'ignore_ament_install']
+[1.628s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extension 'ignore'
+[1.629s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extension 'ignore_ament_install'
+[1.629s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extensions ['colcon_pkg']
+[1.629s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extension 'colcon_pkg'
+[1.629s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extensions ['colcon_meta']
+[1.630s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extension 'colcon_meta'
+[1.630s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extensions ['ros']
+[1.630s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extension 'ros'
+[1.630s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extensions ['cmake', 'python']
+[1.630s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extension 'cmake'
+[1.631s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extension 'python'
+[1.631s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extensions ['python_setup_py']
+[1.631s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials) by extension 'python_setup_py'
+[1.645s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/ros_tutorials) by extensions ['ignore', 'ignore_ament_install']
+[1.646s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/ros_tutorials) by extension 'ignore'
+[1.646s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/ros_tutorials) ignored
+[1.646s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/roscpp_tutorials) by extensions ['ignore', 'ignore_ament_install']
+[1.647s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/roscpp_tutorials) by extension 'ignore'
+[1.647s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/roscpp_tutorials) ignored
+[1.654s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/rospy_tutorials) by extensions ['ignore', 'ignore_ament_install']
+[1.655s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/rospy_tutorials) by extension 'ignore'
+[1.655s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/rospy_tutorials) ignored
+[1.663s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extensions ['ignore', 'ignore_ament_install']
+[1.663s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extension 'ignore'
+[1.664s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extension 'ignore_ament_install'
+[1.664s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extensions ['colcon_pkg']
+[1.664s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extension 'colcon_pkg'
+[1.664s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extensions ['colcon_meta']
+[1.664s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extension 'colcon_meta'
+[1.665s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extensions ['ros']
+[1.665s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim) by extension 'ros'
+[1.676s] DEBUG:colcon.colcon_core.package_identification:Package '/home/luis/workspaces/ros2-galactic/src/ros_tutorials/turtlesim' with type 'ros.ament_cmake' and name 'turtlesim'
+[1.677s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extensions ['ignore', 'ignore_ament_install']
+[1.677s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extension 'ignore'
+[1.677s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extension 'ignore_ament_install'
+[1.677s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extensions ['colcon_pkg']
+[1.678s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extension 'colcon_pkg'
+[1.678s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extensions ['colcon_meta']
+[1.678s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extension 'colcon_meta'
+[1.678s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extensions ['ros']
+[1.678s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer) by extension 'ros'
+[1.699s] DEBUG:colcon.colcon_core.package_identification:Package '/home/luis/workspaces/ros2-galactic/src/turtle_multiplexer' with type 'ros.ament_python' and name 'turtle_multiplexer'
+[1.708s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extensions ['ignore', 'ignore_ament_install']
+[1.709s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extension 'ignore'
+[1.709s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extension 'ignore_ament_install'
+[1.710s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extensions ['colcon_pkg']
+[1.710s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extension 'colcon_pkg'
+[1.710s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extensions ['colcon_meta']
+[1.710s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extension 'colcon_meta'
+[1.710s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extensions ['ros']
+[1.710s] Level 1:colcon.colcon_core.package_identification:_identify(/home/luis/workspaces/ros2-galactic/src/turtle_random) by extension 'ros'
+[1.719s] DEBUG:colcon.colcon_core.package_identification:Package '/home/luis/workspaces/ros2-galactic/src/turtle_random' with type 'ros.ament_python' and name 'turtle_random'
+[1.719s] Level 1:colcon.colcon_core.package_identification:_identify(/opt/ros2/galactic) by extensions ['ignore', 'ignore_ament_install']
+[1.719s] Level 1:colcon.colcon_core.package_identification:_identify(/opt/ros2/galactic) by extension 'ignore'
+[1.720s] Level 1:colcon.colcon_core.package_identification:_identify(/opt/ros2/galactic) ignored
+[1.720s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults

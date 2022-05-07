@@ -49,11 +49,10 @@ class LauncherParser:
     """ === Predefined functions === """
     "Launch Parser"
     def parse(self):
-        # Use ros2 launch structures.
+        ### LAUNCH STRUCTURES FROM ROS2 => Still deprecated!
         from launch.launch_description_sources import get_launch_description_from_any_launch_file
         using_ros2_structures = False
         launch_description    = None
-        # still deprecated...
         try:
             launch_description = get_launch_description_from_any_launch_file(self.file)
             using_ros2_structures = False # Once will be true.
@@ -61,13 +60,15 @@ class LauncherParser:
             pass
         if using_ros2_structures == True:
            return self._default_parse(ros2_entities=launch_description.entities)
-
+        # PARSING EXTENSION
         if self.extension == '':
             return False
         if self.extension == 'xml':
-            return LauncherParserXML(file=self.file).parse()
+            if LauncherParserXML(file=self.file).parse():
+                return NodeTag.NODES, NodeTag.PACKAGES_NODES 
         if self.extension == 'py':
-            return LauncherParserPY(file=self.file).parse()
+            if LauncherParserPY(file=self.file).parse():
+                return NodeCall.NODES, NodeCall.PACKAGES_NODES 
 
     "Predefined method to extract entities from ros2! This uses the default ros2 launch structure to parse each entitie."
     def _default_parse(self, ros2_entities):
@@ -101,11 +102,10 @@ class PackageFinder:
 
     def __post_init__(self):
         # Find and set packages list.
-        if packages is []:
-            self.find_packages()
+        self.find_packages(paths=[self.ros_workspace, self.ros_distro])
 
     """ === Predefined functions === """
-    def find_packages(self, paths=[self.ros_workspace, self.ros_distro]):
+    def find_packages(self, paths):
         # Find ros package installer => colcon 
         colcon = find_executable('colcon')
         if colcon is None:
@@ -113,56 +113,55 @@ class PackageFinder:
         command = [colcon, 'list', '--base-paths']
         if paths is None: return False
         command.extend(paths)
-
+        print(command, 'command')
         # Package processing.
-        pkglist = subprocess.check_output(cmd).decode().split('\n')[:-1]
+        pkglist = subprocess.check_output(command).decode().split('\n')[:-1]
         pkgs={}
         for i in list(map(lambda info: info.split('\t'), pkglist)):
             if i[0] not in pkgs and len(i) >= 2:
                 pkgs[i[0]] = i[1]
-        t = self.set_packages(self, pkgs)
+        t = self.set_packages(packages=pkgs)
         return t
-
-    def set_packages(self, packages=[]):
-        if packages is not []:
+    
+    def set_packages(self, packages):
+        try:
             self.packages = packages
-            return True
-        return False
+        except:
+            return False
+        return True
     """ === Predefined functions === """
 
 "Default svROS exporter class..."      
 @dataclass
 class svrosExport:
-
     launch        : str
-    project_dir   : str = ''
     ros_distro    : str
     ros_workspace : str
-    log        : logging.getLogger() = None
+    project_dir   : str = ''
+    log           : logging.getLogger() = None
 
-    # After class __init__
     def __post_init__(self):
         if self.log is None:
-            self.log = format_logger()
-        # ros_distro full path
+            print('No logger provided.')
         if os.path.exists(f'/opt/ros2/{self.ros_distro}/'):
             self.ros_distro = f'/opt/ros2/{self.ros_distro}/'
         else:
             return False
 
     """ === Predefined functions === """
-    # Main exporter...
+    # Main exporter
     def _export(self):
-        # get all packages
-        package_finder = PackageFinder(ros_workspace=self.ros_workspace, distro=self.ros_distro)
+        # Get all packages found.
+        package_finder = PackageFinder(ros_workspace=self.ros_workspace, ros_distro=self.ros_distro)
         all_packages = package_finder.packages
-
-        # launcher information
         launcher = LauncherParser(file=self.launch)
-        # try to parse...
-        if not launcher.parse():
+        parser   = launcher.parse()
+        if isinstance(parser, bool):
             return False
-        nodes, remaps = launcher.nodes, launcher.remaps
+        nodes, packages = parser[0], parser[1]
+        __VALID_PACKAGES__ = {package for package in packages}
+        VALID_PACKAGES     = dict(filter(lambda package: package[0] in __VALID_PACKAGES__, all_packages.items()))
+        print(__VALID_PACKAGES__)
         pass
 
     # Python exporter...
@@ -173,7 +172,7 @@ class svrosExport:
     def cpp_export(self):
         pass
 
-    def store_in_dir(self, directory=self.project_dir):
+    def store_in_dir(self, directory):
         pass
     """ === Predefined functions === """
 
@@ -190,11 +189,12 @@ class harosExport:
 ### TESTING ###
 if __name__ == "__main__":
     file = '/home/luis/Desktop/example.xml'
-    l = LauncherParser(file=file, extension='.xml')
+    l = svrosExport(launch=file, ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/')._export()
+    # l = LauncherParser(file=file, extension='.xml').parse()
     print([NodeTag.NODES[n] for n in NodeTag.NODES])
     print(NodeTag.NODES)
     
-    file = '/home/luis/Desktop/ros2launch.py'
-    l = LauncherParserPY(file=file).parse()
-    print([NodeCall.NODES[n] for n in NodeCall.NODES])
-    print(NodeCall.NODES)
+    # file = '/home/luis/Desktop/ros2launch.py'
+    # l = LauncherParser(file=file, extension='.xml').parse()
+    # print([NodeCall.NODES[n] for n in NodeCall.NODES])
+    # print(NodeCall.NODES)
