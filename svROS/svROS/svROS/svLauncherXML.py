@@ -144,7 +144,7 @@ class NodeTag(BaseLaunchTag):
         self.executable = executable
         self.remaps     = remaps
         self.enclave    = enclave
-        index = self.executable
+        index = self.name
         NodeTag.NODES[index] = self
         if self.package in NodeTag.PACKAGES_NODES: NodeTag.PACKAGES_NODES[self.package].add(self)
         else: NodeTag.PACKAGES_NODES[self.package] = {self}
@@ -296,15 +296,6 @@ class NodeTag(BaseLaunchTag):
     @name.setter
     def name(self, value):
         self._name = value
-
-    @property
-    def executable(self):
-        exec_ = self.package + '/' + self._executable
-        return exec_
-    
-    @executable.setter
-    def executable(self, value):
-        self._executable = value
 
 "ROS2-based arguments that Nodes instances might use."
 class ArgsTag(BaseLaunchTag):

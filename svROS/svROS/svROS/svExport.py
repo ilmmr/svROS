@@ -10,6 +10,7 @@ from tools.Loader import Loader
 
 # Needed for cpp nodes...
 from haros.cmake_parser import RosCMakeParser
+from haros.extractor    import RoscppExtractor, RospyExtractor
 from distutils.spawn import find_executable
 
 # Launcher
@@ -40,7 +41,8 @@ class Topic(object):
 
 "ROS2-based Node already parse, with remaps and topic handling."
 class Node(object):
-    NODES = {}
+    PRE_PROCESSED_NODES = {}
+    NODES               = {}
     """
         Node
             \__ INFO FROM NODETAG OR NODECALL
@@ -75,6 +77,15 @@ class Node(object):
     @name.setter
     def name(self, value):
         self._name = value
+
+    @property
+    def executable(self):
+        exec_ = self.package + '/' + self._executable
+        return exec_
+    
+    @executable.setter
+    def executable(self, value):
+        self._executable = value
 
 "Launcher parser in order to retrieve information about possible executables..."
 @dataclass
@@ -206,7 +217,8 @@ class svrosExport:
         parser         = launcher.parse()
         if isinstance(parser, bool):
             return False
-        nodes, packages = parser[0], parser[1]
+        nodes, packages          = parser[0], parser[1]
+        Node.PRE_PROCESSED_NODES = nodes
         __VALID_PACKAGES__ = {package for package in packages}
         VALID_PACKAGES     = dict(filter(lambda package: package[0] in __VALID_PACKAGES__, all_packages.items()))
         if not self.get_valid_nodes(VALID_PACKAGES=VALID_PACKAGES, NODES_PACKAGES=packages):
@@ -217,16 +229,40 @@ class svrosExport:
             PACKAGE_PATH = VALID_PACKAGES[package]
             srcdir       = PACKAGE_PATH[len(self.ros_workspace):]
             # Process package source directory.
-            srcdir = os.path.join(self.ros_workspace, srcdir.split(os.sep, 1)[0])
-            bindir = os.path.join(self.ros_workspace, "build")
+            srcdir     = os.path.join(self.ros_workspace, srcdir.split(os.sep, 1)[0])
+            bindir     = os.path.join(self.ros_workspace, "build")
             cmake_path = os.path.join(PACKAGE_PATH, "CMakeLists.txt")
-            executables_from_package = svrosExport.executables_from_package(cmake_path=cmake_path, srcdir=srcdir, bindir=bindir, package_path=PACKAGE_PATH)
-            print(executables_from_package, 'olaola')
-    
+
+            executables_from_package, iscpp = svrosExport.executables_from_package(cmake_path=cmake_path, srcdir=srcdir, bindir=bindir, package_path=PACKAGE_PATH)
+            nodes_from_package              = dict(map(lambda _node: (_node, executables_from_package.get(_node)), map(lambda node: node.executable, NODES_PACKAGES[package])))
+            print(nodes_from_package, '=======')
+            #if not svrosExport.process_nodes(NODES=nodes_from_package):
+            #    return False
+
+    @staticmethod
+    def process_nodes(NODES):
+        for node in NODES:
+            info            = NODES[node]
+            multi_part_node = isinstance(info, list)
+            if multi_part_node:
+                svrosExport.process_multi_part_node(NODE=info)
+            else:
+                return False
+
+    @staticmethod
+    def process_multi_part_node(NODE):
+        for node_part in NODE:
+            return False
+
     @staticmethod
     def executables_from_package(cmake_path, srcdir, bindir, package_path):
+        """ LANG:
+            \_ if CPP => True
+            \_ if PY  => False
+        """
         # CPP PACKAGES.
         if os.path.isfile(cmake_path):
+            LANG = True
             "Courtesy to André's work in HAROS."
             parser = RosCMakeParser(srcdir, bindir)
             parser.parse(cmake_path)
@@ -248,10 +284,14 @@ class svrosExport:
                         raise Exception
                 target_dict = dict()
                 for target in executables:
-                    target_dict[target[0]] = target[1]
+                    path = f'{package_path}/{target[1].split(":")[0].replace(".", "/")}.py'
+                    if not os.path.isfile(path):
+                        raise Exception
+                    target_dict[target[0]] = path
             else:
                 raise Exception
-        return target_dict
+            LANG = False
+        return target_dict, LANG
     
     # Python exporter...
     def python_export(self):
