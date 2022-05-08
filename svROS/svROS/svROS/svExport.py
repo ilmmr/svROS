@@ -3,6 +3,7 @@ from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
 from collections import defaultdict
+from typing import ClassVar
 
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
@@ -196,6 +197,7 @@ class svrosExport:
     launch        : str
     ros_distro    : str
     ros_workspace : str
+    last_workspace: ClassVar[str] = ''
     project_dir   : str = ''
     log           : str = None
 
@@ -206,6 +208,7 @@ class svrosExport:
             self.ros_distro = f'/opt/ros2/{self.ros_distro}/'
         else:
             return False
+        svrosExport.last_workspace = self.ros_workspace
 
     """ === Predefined functions === """
     # Main exporter
@@ -234,7 +237,9 @@ class svrosExport:
             cmake_path = os.path.join(PACKAGE_PATH, "CMakeLists.txt")
 
             executables_from_package, iscpp = svrosExport.executables_from_package(cmake_path=cmake_path, srcdir=srcdir, bindir=bindir, package_path=PACKAGE_PATH)
-            nodes_from_package              = dict(map(lambda _node: (_node, executables_from_package.get(_node)), map(lambda node: node.executable, NODES_PACKAGES[package])))
+            iscpp                           = isinstance(iscpp, RoscppExtractor)
+        
+            nodes_from_package = dict(map(lambda _node: (_node, executables_from_package.get(_node)), map(lambda node: node.executable, NODES_PACKAGES[package])))
             print(nodes_from_package, '=======')
             #if not svrosExport.process_nodes(NODES=nodes_from_package):
             #    return False
@@ -262,7 +267,7 @@ class svrosExport:
         """
         # CPP PACKAGES.
         if os.path.isfile(cmake_path):
-            LANG = True
+            extractor = RoscppExtractor(package=package_path, workspace=svrosExport.last_workspace)
             "Courtesy to André's work in HAROS."
             parser = RosCMakeParser(srcdir, bindir)
             parser.parse(cmake_path)
@@ -290,8 +295,8 @@ class svrosExport:
                     target_dict[target[0]] = path
             else:
                 raise Exception
-            LANG = False
-        return target_dict, LANG
+            extractor = RospyExtractor(package=package_path, workspace=svrosExport.last_workspace)
+        return target_dict, extractor
     
     # Python exporter...
     def python_export(self):
@@ -312,11 +317,12 @@ class svrosExport:
 
 ### TESTING ###
 if __name__ == "__main__":
-    file = '/home/luis/Desktop/example.xml'
-    l = svrosExport(launch=file, ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/')._export()
-    # l = LauncherParser(file=file, extension='.xml').parse()
-    print([NodeTag.NODES[n] for n in NodeTag.NODES])
-    print(NodeTag.NODES)
+    pass
+    # file = '/home/luis/Desktop/example.xml'
+    # l = svrosExport(launch=file, ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/')._export()
+    # # l = LauncherParser(file=file, extension='.xml').parse()
+    # print([NodeTag.NODES[n] for n in NodeTag.NODES])
+    # print(NodeTag.NODES)
     
     # file = '/home/luis/Desktop/ros2launch.py'
     # l = LauncherParser(file=file, extension='.xml').parse()
