@@ -20,17 +20,62 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 from svLauncherXML import LauncherParserXML, NodeTag
 from svLauncherPY import LauncherParserPY, NodeCall
 
-""" 
-    This file contains the necessary classes and methods to export information from the launch file specified within the config file.
+"ROS2-based Topic already parse for node handling."
+class Topic(object):
+    TOPICS = {}
+    """
+        Topic
+            \__ Name
+            \__ Type
+    """
+    def __init__(self, _id, name, topic_type):
+        self.id   = _id
+        self.name = name
+        self.type = topic_type
+        Topic.TOPICS[index] = self
 
-    Although haros already provides a well-riched launcher parser, however it is not compatible with ROS2...
+    @classmethod
+    def init_topic(cls, **kwargs):
+        return cls(_id=kwargs['_id'], name=kwargs['name'], type=kwargs['topic_type'])
 
-    SCHEMA that ros2 provides is deprecated also... So we'll try to run ros2 launch -p instead:
-        => ros2 launch $file -p :: 
+"ROS2-based Node already parse, with remaps and topic handling."
+class Node(object):
+    NODES = {}
+    """
+        Node
+            \__ INFO FROM NODETAG OR NODECALL
+            \__ Topic subscribing and publishing
+    """
+    def __init__(self, name, package, executable, remaps, enclave=None, topic_sub=[], topic_pub=[]):
+        self.name       = name
+        self.package    = package
+        self.executable = executable
+        self.remaps     = remaps
+        self.enclave    = enclave
+        self.subscribes = topic_sub
+        self.publishes  = topic_pub
+        # Add to NODES class variable.
+        index = self.executable
+        Node.NODES[index] = self
 
-    However, many of the current work explored here is thanks to haros and André's work!
-    The ideia here was to take what previously worked by haros, to export the necessary data to this tool, while considering the notable changes on ROS2 launch schema...
-"""
+    @classmethod
+    def nodes_to_string(cls):
+        for node in cls.NODES:
+            return False
+    
+    @classmethod
+    def init_node(cls, **kwargs):
+        return cls(name=kwargs['name'], package=kwargs['package'], executable=kwargs['executable'], remaps=kwargs['remaps'], enclave=kwargs.get('enclave'), topic_sub=kwargs['subscribes'], topic_pub=kwargs['publishes'])
+
+    @property
+    def name(self):
+        name = self.package + '/' + self._name
+        return name
+    
+    @name.setter
+    def name(self, value):
+        self._name = value
+
 "Launcher parser in order to retrieve information about possible executables..."
 @dataclass
 class LauncherParser:
@@ -113,9 +158,12 @@ class PackageFinder:
         command = [colcon, 'list', '--base-paths']
         if paths is None: return False
         command.extend(paths)
-        print(command, 'command')
         # Package processing.
-        pkglist = subprocess.check_output(command).decode().split('\n')[:-1]
+        try:
+            pkglist = subprocess.check_output(command).decode().split('\n')[:-1]
+            svrosExport.remove_log_dir()
+        except Exception:
+            raise
         pkgs={}
         for i in list(map(lambda info: info.split('\t'), pkglist)):
             if i[0] not in pkgs and len(i) >= 2:
@@ -138,7 +186,7 @@ class svrosExport:
     ros_distro    : str
     ros_workspace : str
     project_dir   : str = ''
-    log           : logging.getLogger() = None
+    log           : str = None
 
     def __post_init__(self):
         if self.log is None:
@@ -153,17 +201,58 @@ class svrosExport:
     def _export(self):
         # Get all packages found.
         package_finder = PackageFinder(ros_workspace=self.ros_workspace, ros_distro=self.ros_distro)
-        all_packages = package_finder.packages
-        launcher = LauncherParser(file=self.launch)
-        parser   = launcher.parse()
+        all_packages   = package_finder.packages
+        launcher       = LauncherParser(file=self.launch)
+        parser         = launcher.parse()
         if isinstance(parser, bool):
             return False
         nodes, packages = parser[0], parser[1]
         __VALID_PACKAGES__ = {package for package in packages}
         VALID_PACKAGES     = dict(filter(lambda package: package[0] in __VALID_PACKAGES__, all_packages.items()))
-        print(__VALID_PACKAGES__)
-        pass
+        if not self.get_valid_nodes(VALID_PACKAGES=VALID_PACKAGES, NODES_PACKAGES=packages):
+            return False
 
+    def get_valid_nodes(self, VALID_PACKAGES, NODES_PACKAGES):
+        for package in VALID_PACKAGES:
+            PACKAGE_PATH = VALID_PACKAGES[package]
+            srcdir       = PACKAGE_PATH[len(self.ros_workspace):]
+            # Process package source directory.
+            srcdir = os.path.join(self.ros_workspace, srcdir.split(os.sep, 1)[0])
+            bindir = os.path.join(self.ros_workspace, "build")
+            cmake_path = os.path.join(PACKAGE_PATH, "CMakeLists.txt")
+            executables_from_package = svrosExport.executables_from_package(cmake_path=cmake_path, srcdir=srcdir, bindir=bindir, package_path=PACKAGE_PATH)
+            print(executables_from_package, 'olaola')
+    
+    @staticmethod
+    def executables_from_package(cmake_path, srcdir, bindir, package_path):
+        # CPP PACKAGES.
+        if os.path.isfile(cmake_path):
+            "Courtesy to André's work in HAROS."
+            parser = RosCMakeParser(srcdir, bindir)
+            parser.parse(cmake_path)
+            # Extracted executables information.
+            executables = parser.executables
+            installs = parser.include_dirs
+            target_dict = dict()
+            for target in executables.values():
+                target_dict[target.name] = target.files
+        # PYTHON PACKAGES.
+        else:
+            pattern = re.compile(r'^(\t|\s)*\'.*?\s*=\s*(.*?):main\'') # Pattern to catch def main.
+            setup_path = f'{package_path}/setup.py' 
+            if os.path.exists(setup_path) and os.path.isfile(setup_path):
+                with open(setup_path) as setup:
+                    match = re.findall(r'\'\s*([^\n\s]*?)\s+\=\s+([^\n\s]*?:main)\'', setup.read())
+                    executables = match
+                    if match is None:
+                        raise Exception
+                target_dict = dict()
+                for target in executables:
+                    target_dict[target[0]] = target[1]
+            else:
+                raise Exception
+        return target_dict
+    
     # Python exporter...
     def python_export(self):
         pass
@@ -174,15 +263,10 @@ class svrosExport:
 
     def store_in_dir(self, directory):
         pass
-    """ === Predefined functions === """
 
-@dataclass
-class harosExport:
-
-    workspace: str
-
-    """ === Predefined functions === """
-    pass
+    @staticmethod
+    def remove_log_dir(LOG=f'{WORKDIR}/log'):
+        return shutil.rmtree(LOG)
     """ === Predefined functions === """
 
 

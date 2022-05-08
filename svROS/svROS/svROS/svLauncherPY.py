@@ -172,7 +172,7 @@ class NodeCall(BaseCall):
         self.executable = executable
         self.remaps     = remaps
         self.enclave    = enclave
-        index = self.name
+        index = self.executable
         NodeCall.NODES[index] = self
         if self.package in NodeCall.PACKAGES_NODES: NodeCall.PACKAGES_NODES[self.package].add(self)
         else: NodeCall.PACKAGES_NODES[self.package] = {self}
@@ -356,6 +356,15 @@ class NodeCall(BaseCall):
     @name.setter
     def name(self, value):
         self._name = value
+
+    @property
+    def executable(self):
+        exec_ = self.package + '/' + self._executable
+        return exec_
+    
+    @executable.setter
+    def executable(self, value):
+        self._executable = value
 
 """ 
     This file contains the necessary classes and methods to export information from the launch file Python-based specified within the config file.
