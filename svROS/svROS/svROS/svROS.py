@@ -10,7 +10,7 @@ from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
 from tools.Loader import Loader
 
 # Exporters
-from svExport import svrosExport, harosExport
+from svExport import svrosExport
 
 global WORKDIR, INIT_SCHEMA, _INIT_
 WORKDIR      = os.path.dirname(__file__)
