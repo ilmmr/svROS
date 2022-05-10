@@ -35,19 +35,43 @@ from svLauncherPY import LauncherParserPY, NodeCall
 class ExporterCPP:
     content: str
 
+    @staticmethod
+    def call_grammar(topic_call: str):
+        # Grammar to parse arguments.
+        grammar = """
+            sentence: CALL \< TOPIC_TYPE \> \( TOPIC_NAME \,
+
+            CALL:"create_publisher" | "advertise" | "create_subscription" | "subscribe"
+            TOPIC_TYPE:/(?!\>)[a-zA-Z0-9_\/\-.\:]+/
+            TOPIC_NAME:/(?!\,)[a-zA-Z0-9_\/\-.\:]+/
+
+            %import common.WS
+            %ignore WS
+        """
+        parser = Lark(grammar, start='sentence', ambiguity='explicit')
+        if not parser.parse(topic_call):
+            return False
+        return True
+
     def extract_publishers(self):
-        publishers  = re.findall(r'(create_publisher|advertise)\<([^\>]*?)\>\s*\(\s*\"([^\"]*?)\"', self.content)
+        publishers  = re.findall(r'((create_publisher|advertise)\<([^\>]*?)\>\s*\(\s*\"([^\"]*?)\")', self.content)
         pubs        = []
         for pub in publishers:
-            topic = Topic(_id=len(Topic.TOPICS), name=pub[2], topic_type=pub[1])
+            call, name, topic_type = pub[0], pub[3], pub[2]
+            if not ExporterCPP.call_grammar(topic_call=call):
+                raise Exception
+            topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
             pubs.append(topic)
         return pubs
     
     def extract_subscribers(self):
-        subscribers = re.findall(r'(create_subscription|subscribe)\<([^\>]*?)\>\s*\(\s*\"([^\"]*?)\"', self.content)
+        subscribers = re.findall(r'((create_subscription|subscribe)\<([^\>]*?)\>\s*\(\s*\"([^\"]*?)\")', self.content)
         subs        = []
         for sub in subscribers:
-            topic = Topic(_id=len(Topic.TOPICS), name=sub[2], topic_type=sub[1])
+            call, name, topic_type = sub[0], sub[3], sub[2]
+            if not ExporterCPP.call_grammar(topic_call=call):
+                raise Exception
+            topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
             subs.append(topic)
         return subs
 
@@ -107,11 +131,13 @@ class ExporterPY:
     def extract_topic_name(call):
         return resolve_expression(ExporterPY.get_arg(call, 0, 'name'))
 
+    # Method developed by HAROS.
     @staticmethod
     def extract_topic_type(call):
         topic_type = ExporterPY.get_arg(call, 1, 'data_class')
         return ExporterPY.process_topic_type(topic_type=topic_type)
 
+    # Method developed by HAROS.
     @staticmethod
     def get_arg(call, pos, name):
         try:
