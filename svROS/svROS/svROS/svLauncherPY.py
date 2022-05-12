@@ -3,20 +3,13 @@ from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
 from collections import defaultdict
-
 # Parsers
 from lxml import etree
 from lark import Lark, tree
-# haros...
-from haros.haros import HarosExportRunner
-# haros launcher is deprecated... => However, this tool makes use of the knowledge explored by them...
-# from haros.launch_parser import BaseLaunchTag, IncludeTag, RemapTag
-
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
 from tools.Loader import Loader
-
-# python parser helper...
+# Python parser helper
 from bonsai.model import (
     CodeGlobalScope, CodeReference, CodeFunctionCall, pretty_str
 )

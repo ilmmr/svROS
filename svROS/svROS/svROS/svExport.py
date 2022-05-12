@@ -4,11 +4,9 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from collections import defaultdict
 from typing import ClassVar
-
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
 from tools.Loader import Loader
-
 # Needed for cpp nodes...
 from haros.cmake_parser import RosCMakeParser
 from haros.extractor    import RoscppExtractor, RospyExtractor
@@ -21,14 +19,16 @@ from bonsai.analysis import (
 )
 from bonsai.py.py_parser import PyAstParser
 from distutils.spawn import find_executable
-
+# Parsers
+from lxml import etree
+from lark import Lark, tree
 # Launcher
+from svLauncherXML import LauncherParserXML, NodeTag
+from svLauncherPY import LauncherParserPY, NodeCall
+
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
 SCHEMAS = os.path.join(WORKDIR, '../schemas/')
-
-from svLauncherXML import LauncherParserXML, NodeTag
-from svLauncherPY import LauncherParserPY, NodeCall
 
 "Exporter CPP. => Using Regular Expressions only..."
 @dataclass
@@ -39,11 +39,13 @@ class ExporterCPP:
     def call_grammar(topic_call: str):
         # Grammar to parse arguments.
         grammar = """
-            sentence: CALL \< TOPIC_TYPE \> \( TOPIC_NAME \,
+            sentence: CALL "<" TOPIC_TYPE ">" "(" LIXO? ASP TOPIC_NAME ASP
 
             CALL:"create_publisher" | "advertise" | "create_subscription" | "subscribe"
             TOPIC_TYPE:/(?!\>)[a-zA-Z0-9_\/\-.\:]+/
             TOPIC_NAME:/(?!\,)[a-zA-Z0-9_\/\-.\:]+/
+            LIXO:/(?!\")[^\"]+/
+            ASP:/\"/
 
             %import common.WS
             %ignore WS
@@ -54,12 +56,12 @@ class ExporterCPP:
         return True
 
     def extract_publishers(self):
-        publishers  = re.findall(r'((create_publisher|advertise)\<([^\>]*?)\>\s*\(\s*\"([^\"]*?)\")', self.content)
+        publishers  = re.findall(r'((create_publisher|advertise)\<([^\>]*?)\>\s*\([^\"]*?\"([^\"]*?)\")', self.content)
         pubs        = []
         for pub in publishers:
             call, name, topic_type = pub[0], pub[3], pub[2]
             if not ExporterCPP.call_grammar(topic_call=call):
-                raise Exception
+                continue
             topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
             pubs.append(topic)
         return pubs
@@ -70,7 +72,7 @@ class ExporterCPP:
         for sub in subscribers:
             call, name, topic_type = sub[0], sub[3], sub[2]
             if not ExporterCPP.call_grammar(topic_call=call):
-                raise Exception
+                continue
             topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
             subs.append(topic)
         return subs
@@ -82,7 +84,7 @@ class ExporterPY:
     from_imports: dict
 
     @staticmethod
-    def process_topic_type(topic_type):
+    def process_topic_reference(topic_type):
         if resolve_reference(topic_type) is None:
             topic_type = str(topic_type)[1:]
             if topic_type in self.imports:
@@ -152,31 +154,50 @@ class ExporterPY:
                 return None
 
 "Package class for haros integration."
-@dataclass
 class Package:
-    name    : str
-    path    : str
-    nodes   : dict
-    PACKAGES: ClassVar[dict] = field(default_factory=dict)
+    PACKAGES = {}
 
-    def __post_init__(self):
+    def __init__(self, name: str, path: str, nodes: dict):
+        self.name  = name
+        self.path  = path
+        self.nodes = nodes
         Package.PACKAGES[self.name] = self
 
 @dataclass
 class SourceFile:
-    path: str
+    path : str
+    iscpp: bool
+    publishes   : list = field(default_factory=list)
+    subscribes  : list = field(default_factory=list)
+
+    def __post_init__(self):
+        try:    
+            if self.iscpp: self.publishes, self.subscribes = svrosExport.cpp_export(self.path)
+            else: self.publishes, self.subscribes = svrosExport.py_export(self.path)
+        except Exception:
+            raise
+        # print("\nsource=>", self.path, self.publishes, self.subscribes)
 
 @dataclass
 class NodeSource:
-    name: str
+    name        : str
     source_files: list
+    iscpp       : bool
+    publishes   : list = field(default_factory=list)
+    subscribes  : list = field(default_factory=list)
 
     def __post_init__(self):
         source_list = []
         for sf_path in self.source_files:
-            sf = SourceFile(path=sf_path)
+            sf = SourceFile(path=sf_path, iscpp=self.iscpp)
             source_list.append(sf)
         self.source_files = source_list
+
+    def process_calls(self):
+        for sf in self.source_files:
+            self.publishes  += sf.publishes
+            self.subscribes += sf.subscribes
+        return True
 
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
@@ -190,7 +211,7 @@ class Topic(object):
         self.id   = _id
         self.name = name
         self.type = topic_type
-        Topic.TOPICS[index] = self
+        Topic.TOPICS[self.id] = self
 
     @classmethod
     def init_topic(cls, **kwargs):
@@ -392,11 +413,11 @@ class svrosExport:
             bindir     = os.path.join(self.ros_workspace, "build")
             cmake_path = os.path.join(PACKAGE_PATH, "CMakeLists.txt")
 
-            executables_from_package, iscpp, package = svrosExport.executables_from_package(cmake_path=cmake_path, srcdir=srcdir, bindir=bindir, package_path=PACKAGE_PATH, package=package)
-            iscpp                                    = isinstance(iscpp, RoscppExtractor)
+            executables_from_package, iscpp, cls_package = svrosExport.executables_from_package(cmake_path=cmake_path, srcdir=srcdir, bindir=bindir, package_path=PACKAGE_PATH, package=package)
+            iscpp                                        = isinstance(iscpp, RoscppExtractor)
         
             nodes_from_package   = dict(map(lambda _node: (_node, executables_from_package.get(_node)), map(lambda node: node.executable, NODES_PACKAGES[package])))
-            if not svrosExport.process_source_files(package=package, nodes_from_package=nodes_from_package, iscpp=iscpp):
+            if not svrosExport.process_source_files(package=cls_package, nodes_from_package=nodes_from_package, iscpp=iscpp):
                 raise Exception
 
             #if not svrosExport.process_nodes(NODES=nodes_from_package):
@@ -405,13 +426,15 @@ class svrosExport:
     @staticmethod
     def process_source_files(package, nodes_from_package, iscpp):
         node_sources = []
+        # print('===', package.name, nodes_from_package, '=> nodes_from_package ===')
         for n_source in nodes_from_package:
-            source_files = nodes_from_package[n]
-            node_source  = NodeSource(name=n_source, source_files=source_files)
+            source_files = nodes_from_package[n_source]
+            node_source  = NodeSource(name=n_source, source_files=source_files, iscpp=iscpp)
+            # Process Subscribe and Publish calls.
+            node_source.process_calls()
             node_sources.append(node_source)
-        package.nodes = nodes_sources
-        # ...
-        pass
+        package.nodes = node_sources
+        return True
 
     @staticmethod
     def process_nodes(NODES):
@@ -449,7 +472,8 @@ class svrosExport:
             extractor = RoscppExtractor(package=package, workspace=svrosExport.last_workspace)
         # PYTHON PACKAGES.
         else:
-            pattern = re.compile(r'^(\t|\s)*\'.*?\s*=\s*(.*?):main\'') # Pattern to catch def main.
+            # Pattern to catch def main.
+            pattern = re.compile(r'^(\t|\s)*\'.*?\s*=\s*(.*?):main\'')
             setup_path = f'{package_path}/setup.py' 
             if os.path.exists(setup_path) and os.path.isfile(setup_path):
                 with open(setup_path) as setup:
@@ -471,7 +495,7 @@ class svrosExport:
     
     # Python exporter...
     @staticmethod
-    def python_export(source_file, node: Node):
+    def python_export(source_file):
         parser = PyAstParser(workspace=svrosExport.last_workspace)
         parser.parse(f'{source_file}')
         __gs__ = parser.global_scope
@@ -489,11 +513,11 @@ class svrosExport:
         # Subscriber calls
         subs = py.extract_subscribers()
         map(lambda call: node.subscribes.append(call), subs)
-        return True
+        return pubs, subs
 
     # Cpp exporter... Deprecated...
     @staticmethod
-    def cpp_export(source_file, node: Node):
+    def cpp_export(source_file):
         with open(source_file, 'r') as source_content:
             source_content = source_content.read()
         # Exporter CPP
@@ -504,7 +528,7 @@ class svrosExport:
         # Subscriber calls
         subs = cpp.extract_subscribers()
         map(lambda call: node.subscribes.append(call), subs)
-        return True
+        return pubs, subs
 
     def store_in_dir(self, directory):
         pass
