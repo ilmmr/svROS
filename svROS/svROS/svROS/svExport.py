@@ -219,23 +219,23 @@ class Topic(object):
 
 "ROS2-based Node already parse, with remaps and topic handling."
 class Node(object):
-    PRE_PROCESSED_NODES = {}
     NODES               = {}
     """
         Node
             \__ INFO FROM NODETAG OR NODECALL
             \__ Topic subscribing and publishing
     """
-    def __init__(self, name, package, executable, remaps, enclave=None, topic_sub=[], topic_pub=[]):
+    def __init__(self, name, namespace, package, executable, remaps, enclave=None):
         self.name       = name
+        self.namespace  = namespace
         self.package    = package
         self.executable = executable
         self.remaps     = remaps
         self.enclave    = enclave
-        self.subscribes = topic_sub
-        self.publishes  = topic_pub
+        # Associated source file.
+        self.source     = None
         # Add to NODES class variable.
-        index = self.executable
+        index = self.index
         Node.NODES[index] = self
 
     @classmethod
@@ -245,7 +245,7 @@ class Node(object):
     
     @classmethod
     def init_node(cls, **kwargs):
-        return cls(name=kwargs['name'], package=kwargs['package'], executable=kwargs['executable'], remaps=kwargs['remaps'], enclave=kwargs.get('enclave'), topic_sub=kwargs['subscribes'], topic_pub=kwargs['publishes'])
+        return cls(name=kwargs['_name'], namespace=kwargs['namespace'], package=kwargs['package'], executable=kwargs['executable'], remaps=kwargs['remaps'], enclave=kwargs.get('enclave'))
 
     @property
     def name(self):
@@ -257,13 +257,13 @@ class Node(object):
         self._name = value
 
     @property
-    def executable(self):
-        exec_ = self.package + '/' + self._executable
-        return exec_
+    def index(self):
+        index_ = self.package + '/' + self.executable
+        return index_
     
-    @executable.setter
-    def executable(self, value):
-        self._executable = value
+    @index.setter
+    def index(self, value):
+        self._index = value
 
 "Launcher parser in order to retrieve information about possible executables..."
 @dataclass
@@ -397,8 +397,8 @@ class svrosExport:
         parser         = launcher.parse()
         if isinstance(parser, bool):
             return False
-        nodes, packages          = parser[0], parser[1]
-        Node.PRE_PROCESSED_NODES = nodes
+        # Process package.
+        packages           = parser[1]
         __VALID_PACKAGES__ = {package for package in packages}
         VALID_PACKAGES     = dict(filter(lambda package: package[0] in __VALID_PACKAGES__, all_packages.items()))
         if not self.get_valid_nodes(VALID_PACKAGES=VALID_PACKAGES, NODES_PACKAGES=packages):
@@ -417,14 +417,15 @@ class svrosExport:
             iscpp                                        = isinstance(iscpp, RoscppExtractor)
         
             nodes_from_package   = dict(map(lambda _node: (_node, executables_from_package.get(_node)), map(lambda node: node.executable, NODES_PACKAGES[package])))
-            if not svrosExport.process_source_files(package=cls_package, nodes_from_package=nodes_from_package, iscpp=iscpp):
+            nodes = list(map(lambda node: Node.init_node(**(node.__dict__)), NODES_PACKAGES[package]))
+            if not svrosExport.process_source_files(package=cls_package, nodes_from_package=nodes_from_package, nodes=nodes, iscpp=iscpp):
                 raise Exception
 
             #if not svrosExport.process_nodes(NODES=nodes_from_package):
             #    return False
 
     @staticmethod
-    def process_source_files(package, nodes_from_package, iscpp):
+    def process_source_files(package, nodes_from_package, nodes, iscpp):
         node_sources = []
         # print('===', package.name, nodes_from_package, '=> nodes_from_package ===')
         for n_source in nodes_from_package:
@@ -432,6 +433,9 @@ class svrosExport:
             node_source  = NodeSource(name=n_source, source_files=source_files, iscpp=iscpp)
             # Process Subscribe and Publish calls.
             node_source.process_calls()
+            # Node processing.
+            nodes_ = list(filter(lambda n: n.executable == n_source, nodes))
+            for node in nodes_: node.source = node_source
             node_sources.append(node_source)
         package.nodes = node_sources
         return True
