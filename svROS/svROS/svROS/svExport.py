@@ -239,31 +239,62 @@ class Node(object):
         Node.NODES[index] = self
 
     @classmethod
-    def nodes_to_string(cls):
-        for node in cls.NODES:
-            return False
+    def nodes_to_yaml(cls):
+        # Returning object.
+        ret_object = {}
+        for index in cls.NODES:
+            node = cls.NODES[index]
+            ret_object[index]               = {}
+            ret_object[index]['rosname']    = node.rosname
+            ret_object[index]['executable'] = node.executable
+            ret_object[index]['enclave']    = node.enclave if node.enclave is not None else ''
+            # Topic treatment.
+            ret_object[index]['advertise'] = {}
+            ret_object[index]['subscribe'] = {}
+            if not node.source:
+                continue
+            for adv in node.source.publishes:
+                topic_type = adv.type
+                adv        = Node.render_remap(topic=adv.name, remaps=node.remaps)
+                ret_object[index]['advertise'][adv] = topic_type
+            for sub in node.source.subscribes:
+                topic_type = sub.type
+                sub        = Node.render_remap(topic=sub.name, remaps=node.remaps)
+                ret_object[index]['subscribe'][sub] = topic_type
+            # HPL Properties
+            ret_object[index]['hpl'] = {'properties': []}
+        return ret_object
+
+    @classmethod
+    def nodes_to_sros(cls):
+        for index in cls.NODES:
+            node = cls.NODES[index]
+            if node.enclave is not None:
+                pass
+            pass
+        return False
+
+    @staticmethod
+    def render_remap(topic, remaps):
+        for r in remaps:
+            if topic.strip() == r['to'].strip():
+                topic = r['to'].strip()
+                break
+        return topic
     
     @classmethod
     def init_node(cls, **kwargs):
         return cls(name=kwargs['_name'], namespace=kwargs['namespace'], package=kwargs['package'], executable=kwargs['executable'], remaps=kwargs['remaps'], enclave=kwargs.get('enclave'))
 
     @property
-    def name(self):
-        name = self.package + '/' + self._name
-        return name
-    
-    @name.setter
-    def name(self, value):
-        self._name = value
+    def rosname(self):
+        rsn_ = self.namespace + '/' + self.name
+        return rsn_
 
     @property
     def index(self):
-        index_ = self.package + '/' + self.executable
+        index_ = self.package + '::' + self.namespace + '/' + self.name
         return index_
-    
-    @index.setter
-    def index(self, value):
-        self._index = value
 
 "Launcher parser in order to retrieve information about possible executables..."
 @dataclass
@@ -534,8 +565,22 @@ class svrosExport:
         map(lambda call: node.subscribes.append(call), subs)
         return pubs, subs
 
-    def store_in_dir(self, directory):
+    # Function that will origin the needed files to run the analysis.
+    def generate_artifacts(self):
+        DIRECTORY = self.project_dir
+        # YAML-file
+        file_yaml = self.generate_yaml_file()
+        
+        # SROS-file
         pass
+
+    def generate_yaml_file(self):
+        file_yaml = {}
+        file_yaml['project']  = ''
+        file_yaml['packages'] = list(map(lambda package: package.name.lower(), Package.PACKAGES))
+        file_yaml['nodes']    = Node.nodes_to_yaml()
+        file_yaml['configurations'] = self.import_default_configuration()
+        return file_yaml
 
     @staticmethod
     def remove_log_dir(LOG=f'{WORKDIR}/log'):
@@ -546,6 +591,7 @@ class svrosExport:
 if __name__ == "__main__":
     file = '/home/luis/Desktop/ros2launch.py'
     l = svrosExport(launch=file, ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/')._export()
+    print(Node.nodes_to_yaml())
     # # l = LauncherParser(file=file, extension='.xml').parse()
     # print([NodeTag.NODES[n] for n in NodeTag.NODES])
     # print(NodeTag.NODES)
