@@ -84,13 +84,13 @@ class ExporterPY:
     from_imports: dict
 
     @staticmethod
-    def process_topic_reference(topic_type):
+    def process_topic_reference(topic_type, imports, from_imports):
         if resolve_reference(topic_type) is None:
             topic_type = str(topic_type)[1:]
-            if topic_type in self.imports:
+            if topic_type in imports:
                 pass
-            elif topic_type in self.from_imports:
-                topic_type = self.from_imports[topic_type].replace('.', '/')
+            elif topic_type in from_imports:
+                topic_type = from_imports[topic_type].replace('.', '/')
             else: raise Exception
         else: topic_type = resolve_reference(topic_type)
         return topic_type
@@ -104,7 +104,7 @@ class ExporterPY:
             if pub.name == 'create_publisher':
                 name, topic_type = pub.arguments[1], pub.arguments[0]
                 if isinstance(topic_type, CodeReference):
-                    topic_type = ExporterPY.process_topic_reference(topic_type=topic_type)
+                    topic_type = ExporterPY.process_topic_reference(topic_type=topic_type, imports=self.imports, from_imports=self.from_imports)
             else:
                 name       = ExporterPY.extract_topic_name(call=pub)
                 topic_type = ExporterPY.extract_topic_type(call=pub)
@@ -121,7 +121,7 @@ class ExporterPY:
             if sub.name == 'create_subscription':
                 name, topic_type = sub.arguments[1], sub.arguments[0]
                 if isinstance(topic_type, CodeReference):
-                    topic_type = ExporterPY.process_topic_reference(topic_type=topic_type)
+                    topic_type = ExporterPY.process_topic_reference(topic_type=topic_type, imports=self.imports, from_imports=self.from_imports)
             else:
                 name       = ExporterPY.extract_topic_name(call=sub)
                 topic_type = ExporterPY.extract_topic_type(call=sub)
@@ -173,7 +173,7 @@ class SourceFile:
     def __post_init__(self):
         try:    
             if self.iscpp: self.publishes, self.subscribes = svrosExport.cpp_export(self.path)
-            else: self.publishes, self.subscribes = svrosExport.py_export(self.path)
+            else: self.publishes, self.subscribes = svrosExport.python_export(self.path)
         except Exception:
             raise
         # print("\nsource=>", self.path, self.publishes, self.subscribes)
@@ -288,12 +288,14 @@ class Node(object):
 
     @property
     def rosname(self):
-        rsn_ = self.namespace + '/' + self.name
+        if self.namespace: rsn_ = self.namespace + '/' + self.name
+        else: rsn_ = self.name
         return rsn_
 
     @property
     def index(self):
-        index_ = self.package + '::' + self.namespace + '/' + self.name
+        if self.namespace: index_ = self.package + '::' + self.namespace + '/' + self.name
+        else: index_ = self.package + '::' + self.name
         return index_
 
 "Launcher parser in order to retrieve information about possible executables..."
@@ -305,14 +307,14 @@ class LauncherParser:
     def __post_init__(self):
         if not (os.path.exists(self.file) and os.path.isfile(self.file)):
             return False
-        base, ext = os.path.splitext(file)
+        base, ext = os.path.splitext(self.file)
         if ext.lower() not in ['.xml', '.py']:
             # Launch File given is depecrated. Supported formats: .py and .xml!
             return False
         self.extension = ext.lower().split('.')[1]
 
     """ === Predefined functions === """
-    "Launch Parser"
+    # Launch Parser
     def parse(self):
         ### LAUNCH STRUCTURES FROM ROS2 => Still deprecated!
         from launch.launch_description_sources import get_launch_description_from_any_launch_file
@@ -402,7 +404,7 @@ class PackageFinder:
 "Default svROS exporter class..."      
 @dataclass
 class svrosExport:
-    launch        : str
+    launch        : list
     ros_distro    : str
     ros_workspace : str
     last_workspace: ClassVar[str] = ''
@@ -420,21 +422,31 @@ class svrosExport:
 
     """ === Predefined functions === """
     # Main exporter
-    def _export(self):
+    def launch_export(self):
         # Get all packages found.
         package_finder = PackageFinder(ros_workspace=self.ros_workspace, ros_distro=self.ros_distro)
         all_packages   = package_finder.packages
-        launcher       = LauncherParser(file=self.launch)
+        for lf in self.launch:
+            print(f'[svROS] {color.color("BOLD", color.color("BLUE", "EXPORTING FILE"))} {color.color("BOLD", color.color("UNDERLINE", lf))}')
+            if not self._export(LAUNCH_FILE=lf, ALL_PACKAGES=all_packages):
+                print(f'[svROS] {color.color("BOLD", color.color("RED", "EXPORTING ERROR"))} {color.color("BOLD", color.color("UNDERLINE", lf))}')
+                break
+            print(f'[svROS] {color.color("BOLD", color.color("GREEN", "FINISHED"))} {color.color("BOLD", color.color("UNDERLINE", lf))}')
+        return True
+
+    def _export(self, LAUNCH_FILE, ALL_PACKAGES):
+        launcher       = LauncherParser(file=LAUNCH_FILE)
         parser         = launcher.parse()
         if isinstance(parser, bool):
             return False
         # Process package.
         packages           = parser[1]
         __VALID_PACKAGES__ = {package for package in packages}
-        VALID_PACKAGES     = dict(filter(lambda package: package[0] in __VALID_PACKAGES__, all_packages.items()))
+        VALID_PACKAGES     = dict(filter(lambda package: package[0] in __VALID_PACKAGES__, ALL_PACKAGES.items()))
         if not self.get_valid_nodes(VALID_PACKAGES=VALID_PACKAGES, NODES_PACKAGES=packages):
             return False
-
+        return True
+    
     def get_valid_nodes(self, VALID_PACKAGES, NODES_PACKAGES):
         for package in VALID_PACKAGES:
             PACKAGE_PATH = VALID_PACKAGES[package]
@@ -451,9 +463,7 @@ class svrosExport:
             nodes = list(map(lambda node: Node.init_node(**(node.__dict__)), NODES_PACKAGES[package]))
             if not svrosExport.process_source_files(package=cls_package, nodes_from_package=nodes_from_package, nodes=nodes, iscpp=iscpp):
                 raise Exception
-
-            #if not svrosExport.process_nodes(NODES=nodes_from_package):
-            #    return False
+        return True
 
     @staticmethod
     def process_source_files(package, nodes_from_package, nodes, iscpp):
@@ -524,11 +534,11 @@ class svrosExport:
                     target_dict[target[0]] = [path]
             else:
                 raise Exception
-            package   = Package(path=package_path, nodes=target_dict)
+            package   = Package(name=package, path=package_path, nodes=target_dict)
             extractor = RospyExtractor(package=package, workspace=svrosExport.last_workspace)
         return target_dict, extractor, package
     
-    # Python exporter...
+    # Python exporter
     @staticmethod
     def python_export(source_file):
         parser = PyAstParser(workspace=svrosExport.last_workspace)
@@ -536,9 +546,9 @@ class svrosExport:
         __gs__ = parser.global_scope
         with open(source_file, 'r') as source_content:
             source_content = source_content.read()
-        from_imports = re.findall(r'\n(\t|\s)*from\s*(.*?)\s*import\s*(.*?)\s*\n', source_content)
+        from_imports = re.findall(r'(\t|\s)*from\s*(.*?)\s*import\s*(.*?)\s*\n', source_content)
         from_imports = dict(map(lambda pair: (pair[1], f'{pair[0]}.{pair[1]}'), list(map(lambda fi: (fi[1], fi[2]), from_imports))))
-        imports      = re.findall(r'\n(\t|\s)*import\s*(.*?)\s*\n', source_content)
+        imports      = re.findall(r'(\t|\s)*import\s*(.*?)\s*\n', source_content)
         imports      = list(map(lambda fi: fi[1], imports))
         # Exporter PY
         py   = ExporterPY(global_scope=__gs__ , imports=imports, from_imports=from_imports)
@@ -550,7 +560,7 @@ class svrosExport:
         map(lambda call: node.subscribes.append(call), subs)
         return pubs, subs
 
-    # Cpp exporter... Deprecated...
+    # Cpp exporter: Deprecated...
     @staticmethod
     def cpp_export(source_file):
         with open(source_file, 'r') as source_content:
@@ -575,13 +585,16 @@ class svrosExport:
         pass
 
     def generate_yaml_file(self):
-        file_yaml = {}
-        file_yaml['project']  = ''
-        file_yaml['packages'] = list(map(lambda package: package.name.lower(), Package.PACKAGES))
-        file_yaml['nodes']    = Node.nodes_to_yaml()
-        file_yaml['configurations'] = self.import_default_configuration()
-        return file_yaml
+        default_configuration = {'files': {'launch': self.imported_launches(), 'enclave': self.get_enclave_file()}, 'analysis': {'scope': {'Message': 9, 'Value': 4}}}
+        return {'project': '', 'packages': list(map(lambda package: package.name.lower(), Package.PACKAGES)), 'nodes': Node.nodes_to_yaml(), 'configurations': default_configuration}
 
+    def imported_launches(self):
+        return self.launch
+    
+    # Retrieve associated enclave file.
+    def get_enclave_file(self, default_directory=''):
+        return self.project_dir + 'default-SROS.xml'
+        
     @staticmethod
     def remove_log_dir(LOG=f'{WORKDIR}/log'):
         return shutil.rmtree(LOG)
@@ -590,8 +603,9 @@ class svrosExport:
 ### TESTING ###
 if __name__ == "__main__":
     file = '/home/luis/Desktop/ros2launch.py'
-    l = svrosExport(launch=file, ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/')._export()
-    print(Node.nodes_to_yaml())
+    fil2 = '/home/luis/Desktop/example.xml'
+    l = svrosExport(launch=[fil2, file], ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/').launch_export()
+    print(Node.nodes_to_yaml().keys())
     # # l = LauncherParser(file=file, extension='.xml').parse()
     # print([NodeTag.NODES[n] for n in NodeTag.NODES])
     # print(NodeTag.NODES)

@@ -460,10 +460,9 @@ class LauncherParserPY:
     "Main Launch-Parser."
     def parse(self):
         # Warner the user first...
-        print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING:"))} Python Launch file parser might be deprecated due to complexity analysis...')
-        print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, LaunchConfiguration, SetEnvironmentVariable, DeclareLaunchArgument and LaunchDescription.')
-        time.sleep(0.5)
+        print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING:"))} Python Launch file parser might be deprecated due to complexity analysis.', f'{color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, LaunchConfiguration, SetEnvironmentVariable, DeclareLaunchArgument and LaunchDescription.')
         filename = self.file
+        
         if not LauncherParserPY.validate_schema(file=filename, execute_cmd=(True,f'ros2 launch {filename} -p')):
             return False
         # Validate schema first... Note that workspace for ros launch packages must be given...

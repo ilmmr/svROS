@@ -450,9 +450,7 @@ class LauncherParserXML:
     "Main Launch-Parser."
     def parse(self):
         # Warn the user first...
-        print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING"))} XML-Launch file parser might be deprecated due to complexity analysis...')
-        print(f'[svROS] {color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, Let, Arg, SetEnv, Remaps, If and Unless Conditionals.')
-        time.sleep(0.5)
+        print(f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING"))} XML-Launch file parser might be deprecated due to complexity analysis.', f'{color.color("BOLD", color.color("UNDERLINE", "SUPPORTED TAGS"))} Node, Let, Arg, SetEnv, Remaps, If and Unless Conditionals.')
         filename = self.file
 
         if not LauncherParserXML.validate_schema(file=filename, schema=f'{SCHEMAS}/launch.xsd', execute_cmd=(True,f'ros2 launch {filename} -p')):
