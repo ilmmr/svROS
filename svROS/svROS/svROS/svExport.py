@@ -407,8 +407,9 @@ class svrosExport:
     launch        : list
     ros_distro    : str
     ros_workspace : str
+    project       : str
+    project_dir   : str
     last_workspace: ClassVar[str] = ''
-    project_dir   : str = ''
     log           : str = None
 
     def __post_init__(self):
@@ -586,7 +587,7 @@ class svrosExport:
 
     def generate_yaml_file(self):
         default_configuration = {'files': {'launch': self.imported_launches(), 'enclave': self.get_enclave_file()}, 'analysis': {'scope': {'Message': 9, 'Value': 4}}}
-        return {'project': '', 'packages': list(map(lambda package: package.name.lower(), Package.PACKAGES)), 'nodes': Node.nodes_to_yaml(), 'configurations': default_configuration}
+        return {'project': self.project, 'packages': list(map(lambda package: package.name.lower(), Package.PACKAGES)), 'nodes': Node.nodes_to_yaml(), 'configurations': default_configuration}
 
     def imported_launches(self):
         return self.launch
@@ -602,9 +603,13 @@ class svrosExport:
 
 ### TESTING ###
 if __name__ == "__main__":
+    project_dir = '.svROS/projects/Project'
+    project     = 'project'
     file = '/home/luis/Desktop/ros2launch.py'
     fil2 = '/home/luis/Desktop/example.xml'
-    l = svrosExport(launch=[fil2, file], ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/').launch_export()
+    export = svrosExport(launch=[fil2, file], ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/', project=project, project_dir=project_dir)
+    if not export.launch_export():
+        print('TESTE')
     print(Node.nodes_to_yaml().keys())
     # # l = LauncherParser(file=file, extension='.xml').parse()
     # print([NodeTag.NODES[n] for n in NodeTag.NODES])

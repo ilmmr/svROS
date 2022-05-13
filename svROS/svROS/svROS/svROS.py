@@ -109,15 +109,9 @@ class Configuration:
 "Project Parser class that through method-application helps the parsing of the user-provided files."
 @dataclass
 class ProjectParser:
-    FILE_PATH       : str
+    content         : dict    = field(default_factory=dict)
     ros_distro      : str
     ros_workspace   : str     
-    content         : dict    = field(default_factory=dict)
-    valid           : bool    = False
-    default         : bool    = False
-    project_dir     : str     = ''
-    # for HAROS maybe??
-    # scopes      : dict    = field(default_factory=dict)
     log             : logging.getLogger() = None 
     SCHEMA          : str     = """
 {   
@@ -125,128 +119,36 @@ class ProjectParser:
         'required': True,
         'type': 'string'
     },
-    'configurations': {
+    'launch': {
         'required': True,
-        'type': 'dict',
-        'schema': {
-            'launch': {
-                'required': True,
-                'type': 'string'
-            },
-            'properties': {
-                'type': 'dict',
-                'required': True,
-                'keysrules': {'type': 'string', 'regex': '^/[^\s]+'},
-                "valuesrules": {
-                    "type": "list"
-                }
-            },
-            'scopes': {
-                'type': 'dict',
-                'required': False,
-                'schema': {
-                    'Time': {
-                        'required': True,
-                        'type': 'number'
-                    },
-                    'Message': {
-                        'required': True,
-                        'type': 'number'
-                    },
-                    'Value': {
-                        'required': True,
-                        'type': 'number'
-                    }
-                }
-            }
-        }
-    } 
+        'type': 'list',
+    }
 }"""
 
     # After class __init__
     def __post_init__(self):
         if self.log is None:
             self.log = format_logger()
-        # It only makes sense to evaluate the content schema if svROS default method is selected
-        if self.default == True:
-            self.valid = validate(file=self.content, schema=f'{self.SCHEMA}', file_is_a_dict=True)
-        # Scope evaluation
-        if not self.load_scopes(default=self.default):
+        if not validate(file=self.content, schema=f'{self.SCHEMA}', file_is_a_dict=True):
             return False
 
     """ === Predefined functions === """
-    # Load scopes from input file => Scope Evaluation
-    def load_scopes(self, default = True):
-        scopes   = None
-        # conditional to later define scopes as predefined...
-        no_scopes     = False
-        want_continue = False
-        self.content['__scopes__'] = {}
-        
-        if default:
-            if 'scopes' not in self.content['configurations']:
-                no_scopes = True
-            else:
-                self.content['__scopes__'] = self.content['configurations']['scopes']
-                return True
-        else:
-            if 'scope' not in self._haros_plugin_:
-                no_scopes = True
-            else:
-                self.content['__scopes__'] = self._haros_plugin_['scope']
-                return True
-
-        # if no scopes have been provided
-        if no_scopes:
-            print(f'[svROS] No Alloy scopes provided...', end=' ')
-            while True:
-                opt = input('Do you want to continue? [y/N] ').strip()
-                if opt == "y" or opt == "Y":
-                    want_continue = True
-                    break
-                elif opt == "n" or opt == "N" or opt == "":
-                    print('[svROS] Please define some analysis scopes!')
-                    return False
-                else:
-                    continue        
-        
-        # no scopes have been provided and yet still want to continue
-        if want_continue:
-            print(f'[svROS] {color.color("BOLD", "Using Alloy default scopes...")}')
-            self.log.info('Using Alloy default scopes...')
-            # Default Scopes...
-            self.content['__scopes__']['Time']    = 10
-            self.content['__scopes__']['Message'] =  9
-            self.content['__scopes__']['Value']   =  4
-        else:
-            print(f'[svROS] {color.color("BOLD", "Using user-given scopes...")}')
-            self.log.info('Using user-given scopes...')
-
-        return True
-
     # Export using svExport meta classes
     def export(self, default=True):
-        # svROS way...
         if default:
-            export = svrosExport(launch=self.content['launch'], project_dir=self.project_dir, ros_distro=self.ros_distro, ros_workspace=self.ros_workspace, log=self.log)
+            export = svrosExport(launch=self.content['launch'], project_dir=self.project_dir, project=self.project, ros_distro=self.ros_distro, ros_workspace=self.ros_workspace, log=self.log)
 
-    # Get Project Name
-    def get_project(self):
+    @property
+    def project(self):
         return self.content['project']
 
-    # Set directory
-    def set_directory(self, path):
-        self.project_dir = path
-        return True
-
-    def get_properties(self):
-        # here it must be distinguished haros from svROS
-        if self.default:
-            return self.content['configurations']['properties']
-        else:
-            # haros might need some special iteration over a dict -> nodes only
-            return iterate_dict(self.content['nodes'], 'properties')
-        return None
+    @property
+    def project_path(self):
+        return self._project_path
+    
+    @project_path.setter
+    def project_path(self, value):
+        self._project_path = value
     """ === Predefined functions === """
 
 
@@ -449,7 +351,6 @@ class svEXPORT:
     # Additionally, its syntax must also be ensured
     def _config_file(self, project_name, config_file, mode=False):
         f,v = validate(file=config_file, schema=f'{_PROJECT_SCHEMA}')
-        
         # check file structure
         if not mode:
             # check again for parsing purposes
@@ -466,13 +367,11 @@ class svEXPORT:
                 # self.log.info(f'Failed to validate {project_name} .config file.')
                 print(f'[svROS] {color.color("BOLD", color.color("RED", f"Config file from {project_name} is corrupted!"))}')
                 return False
-
         # create file
         else:
             name                = f'{project_name}'
             original_file_path  = self.FILE_PATH
             last_modified       = '__.svROS__ORIGINAL'
-            
             if v == '':
                 v = Validator(eval(f'{_PROJECT_SCHEMA}'))
             dic = v.schema
@@ -487,27 +386,20 @@ class svEXPORT:
             # dump
             with open(f'{config_file}', 'w+') as f:
                 dump(new_dict, f)
-
         return True
 
     # Function to retrieve project dir existance alongside with its config file
     def _exists_project_dir(self, project_name):
         project_path = os.path.join(f'{self._PROJECTS}', f'{project_name}')
-        
         config = self._config_file(project_name=project_name, config_file=f'{project_path}/.config', mode=False)
         exists = os.path.exists(project_path)
-        
         return exists, config
 
     # Setting the project directory structure up
-    def _create_project_dir(self, project_name, project_path, properties=False):
+    def _create_project_dir(self, project_name, project_path):
         try:
             os.mkdir(f'{project_path}', mode=0o777)
             os.mkdir(f'{project_path}/models', mode=0o777)
-            os.mkdir(f'{project_path}/data', mode=0o777)
-            if properties:
-                os.mkdir(f'{project_path}/data/properties', mode=0o777)
-
             # create .config file
             if not self._config_file(project_name, f'{project_path}/.config', mode=True):
                 return False
@@ -517,12 +409,9 @@ class svEXPORT:
 
     # Create Project directory, considering the --reset option
     def _project_dir(self, project, reset=False):
-        # path is defined as it is.
-        project_cap    = project.get_project().capitalize()
-        has_properties = True if (project.get_properties() is not None) else False
+        project_cap    = project.project.capitalize()
         path        = os.path.join(f'{self._PROJECTS}', f'{project_cap}')
-
-        # if reset option is set, then directory must be reseted!
+        # If reset option is set, then directory must be reseted!
         if reset:
             # check again
             if os.path.exists(path):
@@ -532,30 +421,25 @@ class svEXPORT:
                     self.log.info(f'Failed to reset {project_cap} project directory...')
                     print(f'[svROS] Failed to reset {project_cap} project directory...')
                     return ''
-                
             else:
                 self.log.info(f'Failed to reset {project_cap} project directory... Directory does not exist.')
                 print(f'[svROS] Failed to reset {project_cap} project directory... {color.color("BOLD", color.color("RED", "Directory do not exist!"))}')
                 return ''
-        
-        # create project dir
-        if not self._create_project_dir(project_name=project_cap, project_path=path, properties=has_properties):
+        # Create project directory.
+        if not self._create_project_dir(project_name=project_cap, project_path=path):
             self.log.info(f'Failed to create {project_cap} project directory...')
             print(f'[svROS] Failed to create {project_cap} project directory...')
             return ''
-
         return path
 
     # Call parser function and some verification techniques...
     def _call_parser(self, default=True):
-        # try to load content from file
         content = _load(self.FILE_PATH)
         if content is None:
             self.log.info(f'Failed to load {os.path.relpath(self.FILE_PATH)}.')
             print(f'[svROS] Failed to load {color.color("BOLD", f"{os.path.relpath(self.FILE_PATH)}")} => {color.color("BOLD", color.color("RED", "Not a yaml-based file!"))}')
             return False
-
-        # call another class instance => Project Parser <=
+        # Call another class instance => Project Parser <=
         ros_version, ros_distro, ros_workspace = self._get_ros_info()
         project_parser = ProjectParser(FILE_PATH=self.FILE_PATH, content=content, default=default, log=self.log, ros_distro=ros_distro, ros_workspace=ros_workspace)
         project_name   = project_parser.get_project().capitalize()
@@ -578,11 +462,9 @@ class svEXPORT:
                 else:
                     print(f'Make sure you reset the project directory {color.color("RED", project_name)}!')
                     return False, project_name
-
         path = self._project_dir(project_parser, reset=self.reset)
-        if path == '' : return False, project_name
-
-        project_parser.set_directory(path)
+        if path == '': return False, project_name
+        project_parser.project_path = path
         return project_parser, project_name
 
     # svROS export
@@ -594,7 +476,7 @@ class svEXPORT:
         self.log.info(f'Exporting project {project_name} from svROS...')
         print('[svROS] Exporting from svROS...')
         loading()
-        # call exporter...
+        # Exporter.
         project_parser.export(default=project_parser.default)
         return True
 
