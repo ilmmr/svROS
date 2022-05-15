@@ -489,7 +489,7 @@ class svrosExport:
         # YAML-file
         data_yml  = self.generate_config_file()
         with open(f'{self.project_dir}/{self.project}.yml', 'w+') as config:
-            dump(data_yml, config, Dumper=DefaultDumper, sort_keys=False, default_flow_style=False, explicit_start=True)
+            dump(data_yml, config, Dumper=DefaultDumper, sort_keys=False, default_flow_style=False, explicit_start=True, version=(1,1))
         # SROS-file
         sros_root = self.generate_security_file()
         with open(f'{self.project_dir}/{self.project}-sros.xml', 'w+') as sros:
@@ -500,7 +500,7 @@ class svrosExport:
         return True
 
     def generate_config_file(self):
-        default_configuration = {'files': {'launch': self.launch, 'enclave': self.enclave_file}, 'analysis': {'scope': {'Message': 9, 'Value': 4}}}
+        default_configuration = {'files': {'launch': self.launch, 'SROS': self.enclave_file}, 'analysis': {'scope': {'Message': 9, 'Value': 4}, 'unsecured_enclaves': [None]}}
         return {'project': self.project, 'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': Node.process_config_file(), 'configurations': default_configuration}
     
     def generate_security_file(self):

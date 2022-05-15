@@ -180,3 +180,12 @@ class Node(object):
         if self.namespace: index_ = self.package + '::' + self.namespace + '/' + self.name
         else: index_ = self.package + '::' + self.name
         return index_
+
+"ROS2-based Node to be analyzed."
+class svROSNode(object):
+    NODES               = {}
+    """
+        svROSNode
+            \__ ALREADY PARSED NODE
+            \__ PROFILE FROM SROS
+    """

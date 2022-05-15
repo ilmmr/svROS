@@ -61,46 +61,39 @@ _PROJECT_SCHEMA = """
 "Initial Configuration class: It will initially provide information about the running ROS2 environment."
 @dataclass
 class Configuration:
-
-    # ROS2 environment variables
     setup       : bool = False
     distro      : str = ''
     workspace   : str = ''
     domain_id   : str = ''
     ros_version : str = ''
 
-    # After class __init__
     def __post_init__(self):
         if self.setup == True:
             self.export_ros_info()
 
     """ === Configuration functions === """
-    # Default :: Export ROS info
+    # Export ROS info
     def export_ros_info(self):
-        # set distro up
         try:
             self.distro = os.getenv('ROS_DISTRO')
         except OSError as error:
             print("ERROR: No ROS2 distro specified --> %s" % (error.strerror))
             raise
-        # self.log.info(f'Current ROS2 Distro: {self.distro}.')
-        
-        # set environment variables
+        # Set environment variables.
         try:
             self.domain_id   = os.getenv('ROS_DOMAIN_ID')
             self.ros_version = os.getenv('ROS_VERSION')
         except OSError as error:
             print("ERROR: Could not get any ROS environment variable! --> %s" % (error.strerror))
             raise
-        
-        # set workspace
+        # Set workspace.
         try:
             self.workspace   = os.getenv('ROS_WORKSPACE')
         except OSError as error:
             print("ERROR: Could not sourced any workspace! --> %s" % (error.strerror))
             raise
     
-    # Default :: Return ROS info
+    # Return ROS info
     def get_ros_info(self):
         return self.distro, self.workspace, self.domain_id, self.ros_version
     """ === Configuration functions === """
@@ -124,8 +117,6 @@ class ProjectParser:
         'type': 'list',
     }
 }"""
-
-    # After class __init__
     def __post_init__(self):
         if self.log is None:
             self.log = format_logger()
@@ -155,8 +146,7 @@ class ProjectParser:
 "=> if $ svROS init"
 @dataclass
 class svINIT:
-    # args is actually not necessary for now (for this particular class).
-    args : dict
+    args : dict     # Args is actually not necessary for now (for this particular class).
     _DIR : str      = os.path.join(os.path.expanduser("~"), ".svROS")
     _BIN : str      = ''
     _INIT: str      = ''
@@ -178,12 +168,10 @@ class svINIT:
     def _create(self, log_not_reseted=False):
         created = os.path.exists(f"{self._DIR}")
         dir     =   f"{self._DIR}"
-        # check if init ./svROS
         if dir == f'{self._DIR}':
-            # create dir
             if log_not_reseted == False:
                 os.mkdir(f'{dir}', mode=0o777)
-            # generate dir using a dir structure
+            # Generate dir using a dir structure.
             try:
                 os.mkdir(f'{dir}/projects', mode=0o777)
                 os.mkdir(f'{dir}/.bin', mode=0o777)
@@ -192,31 +180,24 @@ class svINIT:
             except OSError as error:
                 print("[svROS] Failed to set up svROS default directory!")
                 return False
-            
-            # Copy and generate files
+            # Copy and generate files.
             try:
                 files = glob.iglob(os.path.join(f'{WORKDIR}/../models', "*.als"))
                 for xfile in (list(filter(lambda x : os.path.isfile(x), files))):
                     shutil.copy(xfile, f'{dir}/.bin/')
-
-                # Create environment dir with content
+                # Create environment dir with content.
                 shutil.copy(f'{WORKDIR}/../models/org.alloytools.alloy.dist.jar', f'{dir}/.bin/')
             except Exception as error:
                 print("[svROS] Failed to set up svROS default directory!")
                 return False
-        # return to the parser
         self.log.info('Default directory setup was completed.')
         print("[svROS] svROS default directory setup was completed with success.")
         return True
 
-    # Check the existence of the .init file in the defined svROS directory
-    # Additionally, its syntax must also be ensured
+    # Check the existence of the .init file in the defined svROS directory => Additionally, its syntax must also be ensured
     def _init_file(self, file, mode=False):
         f,v = validate(file=file, schema=f'{_INIT_SCHEMA}')
-        
-        # check file structure
         if not mode:
-            # check again for parsing purposes
             try:
                 exists = os.path.exists(f'{self._DIR}/.init') and os.path.isfile(f'{self._DIR}/.init')
                 assert(exists)
@@ -227,19 +208,15 @@ class svINIT:
                 assert(f)
             except AssertionError as error:
                 return False
-
-        # create file
         else:
             name = 'svROS'
             version = re.search(r"^__version__\s*=\s*(u|f|r)?['\"]([^'\"]*)['\"]", open(_INIT_, "rt").read(), re.M).group(2)
             creation_time = datetime.now().strftime("%B %d, %Y => %H:%M:%S")
             ros_version, ros_distro, ros_workspace = self._get_ros_info()
-
+            # Validating.
             if v == '':
                 v = Validator(eval(f'{_INIT_SCHEMA}'))
             dic = v.schema
-            
-            # update dict
             new_dict = dict()
             for key in dic:
                 match = re.match(r'__(.*?)__', key).group(1)
@@ -247,35 +224,29 @@ class svINIT:
                     new_dict[key] = locals()[match]
                 except Exception as error:
                     raise
-            # dump
             with open(f'{file}', 'w+') as f:
                 dump(new_dict, f)
 
         return True
 
-    # Create log file => Print initial information...
+    # Create log file
     def _log_file(self, file):
-        # only if not exists
+        # Only if not exists.
         if not os.path.exists(f'{file}'):
             ros_version, ros_distro, ros_workspace = self._get_ros_info()
             self.log.info(f"ROS version: {ros_version}; ROS distro: {ros_distro}; ROS workspace: {ros_workspace}.")
-
 
     # Ensure svROS directory existance
     def _ensure_dir(self):
         exists  = os.path.exists(f"{self._DIR}")
         dir     =   f"{self._DIR}"
-        # make sure dir is created.
         if not exists:
             print(f"[svROS] Cannot ensure a directory because {dir} does not exist.\nRUNNING $ svROS init...")
             self._create()
-        
-        # check again, i guess...
         if exists and not os.path.isdir(dir):
             return False
         elif exists and os.path.isdir(dir):
             init_file = os.path.exists(f'{dir}/.init') and os.path.isfile(f'{dir}/.init')
-            # exists
             if init_file:
                 try:
                     assert(self._init_file(file=f'{dir}/.init'))
@@ -285,11 +256,9 @@ class svINIT:
                     return False
             else:
                 return False
-                # raise(f'Directory {dir} exists but it is not a svROS predefined directory!')
         else:
             return False
-        
-        # return to the parser
+        # Return to the parser.
         self.log.info("svROS directory is valid.")
         print("[svROS] svROS default directory is validated.")
         return True
@@ -306,12 +275,10 @@ class svINIT:
                     for d in dirnames:
                         shutil.rmtree(f'{path}/{d}')
             except OSError as error:
-                #print(f'[svROS] Failed to reset svROS directory...' , end = ' ')
                 return False
-        # create directory after reset
+        # Create directory after reset.
         if not self._create(log_not_reseted=True):
             return False
-        
         self.log.info("============")
         self.log.info("svROS directory was successfully reseted.")
         return True
@@ -330,7 +297,6 @@ class svEXPORT:
     ros        : str      = ''
     log        : logging.getLogger() = None
 
-    # After class __init__
     def __post_init__(self):
         if self.log is None:
             self.log = format_logger()
@@ -347,27 +313,23 @@ class svEXPORT:
     def _can_export(self):
         return self.can_export
 
-    # Check the existence of the .config file in the defined project directory
-    # Additionally, its syntax must also be ensured
+    # Check the existence of the .config file in the defined project directory => Additionally, its syntax must also be ensured
     def _config_file(self, project_name, config_file, mode=False):
         f,v = validate(file=config_file, schema=f'{_PROJECT_SCHEMA}')
-        # check file structure
         if not mode:
-            # check again for parsing purposes
             try:
                 exists = os.path.exists(f'{config_file}') and os.path.isfile(f'{config_file}')
                 assert(exists)
             except AssertionError as error:
                 print(f'[svROS] {color.color("BOLD", color.color("RED", f"Config file from {project_name} is corrupted!"))}')
                 return False
-            # check validate 
+            # Validate.
             try:
                 assert(f)
             except AssertionError as error:
-                # self.log.info(f'Failed to validate {project_name} .config file.')
                 print(f'[svROS] {color.color("BOLD", color.color("RED", f"Config file from {project_name} is corrupted!"))}')
                 return False
-        # create file
+        # Create file.
         else:
             name                = f'{project_name}'
             original_file_path  = self.FILE_PATH
@@ -383,7 +345,6 @@ class svEXPORT:
                 except Exception as error:
                     print(f'[svROS] {color.color("BOLD", color.color("RED", f"Failed to create {project_name} config file!"))}')
                     return False
-            # dump
             with open(f'{config_file}', 'w+') as f:
                 dump(new_dict, f)
         return True
@@ -400,7 +361,7 @@ class svEXPORT:
         try:
             os.mkdir(f'{project_path}', mode=0o777)
             os.mkdir(f'{project_path}/models', mode=0o777)
-            # create .config file
+            # Create .config file.
             if not self._config_file(project_name, f'{project_path}/.config', mode=True):
                 return False
         except OSError as error:
@@ -413,7 +374,6 @@ class svEXPORT:
         path        = os.path.join(f'{self._PROJECTS}', f'{project_cap}')
         # If reset option is set, then directory must be reseted!
         if reset:
-            # check again
             if os.path.exists(path):
                 try:
                     shutil.rmtree(path, onerror = lambda f, p, e : print(e))
@@ -432,7 +392,7 @@ class svEXPORT:
             return ''
         return path
 
-    # Call parser function and some verification techniques...
+    # Call parser function and some verification techniques
     def _call_parser(self, default=True):
         content = _load(self.FILE_PATH)
         if content is None:
@@ -499,9 +459,7 @@ class svEXPORT:
         loading()
         # project_parser.export(default=project_parser.default)
         return True
-
     """ === Predefined functions === """
-
 
 "=> if $ svROS run"
 @dataclass
@@ -551,23 +509,20 @@ class Launcher:
                 --reset      => Reset project directory 
         => svROS run -p $project
     """
-
-    # ROS2 environment variables
+    # ROS2 environment variables.
     distro      : str
     workspace   : str
     domain_id   : str
     ros_version : str
-
+    # Remaining variables.
     if not os.path.expanduser("~"): 
         raise Exception('ERROR: Failed to get home.')
-    
     _DIR : str      = os.path.join(os.path.expanduser("~"), ".svROS")
     _BIN : str      = ''
     _LOG : str      = ''
     _PROJECTS : str = ''
     log : logging.getLogger() = None
 
-    # After class __init__
     def __post_init__(self):
         self._LOG      = os.path.join(self._DIR, ".log")
         self.log       = set_logger(log_path=self._LOG, new=(False, ''))
@@ -579,46 +534,39 @@ class Launcher:
     def _get_ros_info(self):
         return self.ros_version, self.distro, self.workspace
 
-    # Check the existence of the .init file in the defined svROS directory
-    # Additionally, its syntax must also be ensured
+    # Check the existence of the .init file in the defined svROS directory => Additionally, its syntax must also be ensured
     def _check_file(self, file, mode=False):
         f,v = validate(file=file, schema=f'{_INIT_SCHEMA}')
-        # check file structure
+        # Check file structure.
         if not mode:
-            # check again for parsing purposes
             try:
                 exists = os.path.exists(f'{self._DIR}/.init') and os.path.isfile(f'{self._DIR}/.init')
                 assert(exists)
             except AssertionError as error:
                 return False, True
-            # check validate 
             try:
                 assert(f)
             except AssertionError as error:
-                # self.log.info(f'Failed to validate .init config file.')
                 return True, False
-
         return True, True
     """ === Predefined functions === """
 
     """ === Launcher functions === """
     # Launcher launch
     def launch(self, argv=None):
-        # Call parser function => that will recursevely call other parsers...
         args = self.parse(arguments=argv)
-        # get function from parsing options
+        # Get function from parsing options.
         func   = getattr(args, "func",  None)
         bin    = getattr(args, "bin",   None)
         home   = getattr(args, "home",  None)
         reset  = getattr(args, "reset", None)
         log_cl = getattr(args, "clear_log", None)
         scopes = getattr(args, "scopes", None)
-
+        # Retrieving function.
         if func is None:
             if not (bin or home or reset or log_cl or scopes):
                 return True
             if reset:
-                # reset option to True
                 created = os.path.exists(f"{self._DIR}")
                 if created:
                     return self.setup(args, reset=True)
@@ -629,16 +577,13 @@ class Launcher:
                 created = os.path.exists(f"{self._DIR}") and os.path.exists(f"{self._LOG}")
                 if created:
                     if not clear_logger(logger=self.log):
-                        # prints handled by function
                         return False
                     else:
-                        # prints handled by function
                         return True
                 else:
                     print(f'[svROS] Failed to clear directory {self._DIR}... {color.color("BOLD", "Directory does not exist")}')
                     return False
-
-        # output for bin and home help commands!
+        # Output for bin and home help commands!
         if bin:
             bin_dir  = f'$HOME/{self._BIN[len(os.path.expanduser("~"))+1:]}'
             bin_tree = str(subprocess.check_output(f'tree -a {self._BIN}', shell=True).decode())[len(self._BIN):]
@@ -652,39 +597,34 @@ class Launcher:
         if scopes:
             print(f"\n=> --scopes output <=\n\tTime: 10\n\tMessage: 9\n\tValue: 4")
             return True
-        
         # Since it was defined a function to run withing each subparser -,
         # The idea is to parse using that defined function       <--^___/
         return func(args)
 
     # Default parser
     def parse(self, arguments):
-
         interpreter = argparse.ArgumentParser(prog = "svROS", description='=> Security Verification in ROS <=', epilog='Stay tuned for more! (ง ͡❛ ͜ʖ ͡❛)ง')
-        # help commands
+        # HELP COMMANDS
         interpreter.add_argument("--home", help=f"svROS local directory -> default: $HOME/{self._DIR[len(os.path.expanduser('~'))+1:]}", action='store_true')
         interpreter.add_argument("--reset", help=f"Reset the directory :: Including log {self._LOG} file!", action='store_true')
         interpreter.add_argument("--clear-log", help=f"Clear {self._LOG} file!", action='store_true')
         interpreter.add_argument("--scopes", help=f"Alloy default analysis scopes!", action='store_true')
-        
         bin = ''
         if os.path.exists(f'{self._BIN}'):
             try:
                 bin = str(subprocess.check_output(f'tree {self._BIN}', shell=True).decode())
             except OSError as error:
                 raise
-        
         interpreter.add_argument("--bin", help=f"svROS bin directory -> default: $HOME/{self._BIN[len(os.path.expanduser('~'))+1:]}", action='store_true')
-        # subparsers: init, extract and run
+        # SUBSPARSERS: init, extract and run
         options = interpreter.add_subparsers(help='sub-command')
         init    = options.add_parser('init')
         export  = options.add_parser('export')
         run     = options.add_parser('run')
-
+        # Handling functions
         self._init(parser=init)
         self._export(parser=export)
         self._run(parser=run)
-
         return interpreter.parse_args(arguments)
 
     # Handler svROS init
@@ -699,7 +639,6 @@ class Launcher:
             loading()
             return init._create()
         else:
-            # reseting svROS directory...
             if reset == True or args.reset:
                 print(f"[svROS] Reseting svROS directory...")
                 self.log.info("Reseting svROS directory...")
@@ -725,21 +664,16 @@ class Launcher:
     def _init(self, parser):
         parser.add_argument("--reset",  help = "Reset the svROS directory and all the directory subdirectories.", action="store_true")
         parser.set_defaults(func = self.setup)
-        # command = self.setup(vars(args), created=os.path.exists(f"{self._DIR}"), dir=f"{self._DIR}")
 
     # Handler svROS export
     def command_export(self, args):
-        # check if init file in directory is created
+        # Check if init file exists.
         exists, init = self._check_file(f'{self._DIR}/.init', mode=False)
-
-        # check if is file
         if not os.path.isfile(args.file):
-            # raise ValueError("Not a file: " + args.file)
             print(f'[svROS] Failed to export... {color.color("RED", f"{color.bold(args.file)} is not a file")}')
             self.log.info(f"Failed to export... {args.file} is not a file.")
             return False
-
-        # directory may not be setted
+        # Directory may not be setted...
         if not exists:
             print("[svROS] Directory is not set!", end=' ')
             if args.force_init:
@@ -757,14 +691,12 @@ class Launcher:
                         return False
                     else:
                         continue
-        # file can be corrupted
         if not init:
             print(f'[svROS] Failed to export... svROS directory is corrupted: {color.color("BOLD", "run $ svROS init --reset!")}')
             self.log.info(f'Failed to export file {args.file}.')
             return False
-        
-        export = svEXPORT(file=args.file, FILE_PATH=os.path.abspath(args.file), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_export=init, reset=args.reset, log=self.log, ros=rf'{self.ros_version}=\t={self.distro}=\t={self.workspace}')
 
+        export = svEXPORT(file=args.file, FILE_PATH=os.path.abspath(args.file), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_export=init, reset=args.reset, log=self.log, ros=rf'{self.ros_version}=\t={self.distro}=\t={self.workspace}')
         print(f"[svROS] Exporting file {args.file} into a project: Setup operation.")
         self.log.info(f"Exporting file {args.file} into a project: Setup operation.")
         if args.haros:
@@ -778,19 +710,16 @@ class Launcher:
         parser.add_argument("--haros", help = "Use haros export.")
         parser.add_argument("--force-init",  help = "Force creation of svROS directory, if not created.", action="store_true")
         parser.add_argument("--reset",  help = "Reset the project directory, if it already exists.", action="store_true")
-
         parser.set_defaults(func = self.command_export)
-        # command = self.command_export(vars(args), init=self._init_file(f'{self._DIR}/.init', mode=False))
 
     # Handler svROS run
     def command_run(self, args):
-        # check if init file in directory is created
+        # Check if init file exists.
         exists, init = self._check_file(f'{self._DIR}/.init', mode=False)
-        # directory may not be setted
+        # Directory may not be setted...
         if not exists:
             print(f'[svROS] Failed to set directory up: {color.color("BOLD", "run $ svROS init!")}')
             return False
-        # file can be corrupted
         if not init:
             print(f'[svROS] Failed to run... svROS directory is corrupted: {color.color("BOLD", "run $ svROS init --reset!")}')
             self.log.info(f'Failed to run {args.project}...')
@@ -804,9 +733,7 @@ class Launcher:
     # => svROS run -p (--project) $project
     def _run(self, parser):
         parser.add_argument("-p", "--project", help = "Provide a project to be analyzed.", required=True)
-
         parser.set_defaults(func = self.command_run)
-        # command = self.command_run(vars(args), init=self._init_file(f'{self._DIR}/.init', mode=False))
     """ === Launcher functions === """
 
 ###             --- additional ---               ###
@@ -815,20 +742,17 @@ class Launcher:
 # Worth-Mention https://stackoverflow.com/a/56689445
 #               https://stackoverflow.com/a/13733863
 def set_logger(log_path='', new=(False, "")):
-    # SET LOGGER CONFIG - CURRENT = ROOT
+    # SET LOGGER CONFIG - CURRENT = ROOT.
     current_logger = logging.getLogger()
-    # if new option is set to True => create another logger
     if new[0] == True:
         current_logger = logging.getLogger(new[1])
     current_logger.setLevel(logging.INFO)
-
-    # FILE HANDLER
+    # FILE HANDLER.
     fileHandler = logging.FileHandler(f"{log_path}", 'a')
     fileHandler.setLevel(logging.INFO)
     formatter = logging.Formatter('[svROS LOGGER] %(asctime)s :: %(message)s', "%Y-%m-%d %H:%M:%S")
     fileHandler.setFormatter(formatter)
-
-    # FINALLY => Add the defined handler to the returning logger
+    # FINALLY => Add the defined handler to the returning logger.
     current_logger.addHandler(fileHandler)
     return current_logger
 
@@ -837,15 +761,12 @@ def clear_logger(logger=None):
     if logger is None:
         return False
     else:
-        # get logger
         if logger == logging.getLogger().name:
             logger = logging.getLogger()
         else:
             if logger in logging.root.manager.loggerDict:
                 logger = logging.getLogger()
-        # files to clear
         files_to_clear = list(map(lambda fhandler: fhandler.stream.name, list(filter(lambda handler: isinstance(handler, FileHandler), logger.handlers))))
-        # clear log files
         for f in files_to_clear:
             try:
                 with open(f'{f}', 'w'):
@@ -853,34 +774,26 @@ def clear_logger(logger=None):
             except:
                 print(f'[svROS] {color.color("BOLD", color.color("RED", "Failed to clear log files!"))}')
                 return False
-
     print(f'[svROS] Log files cleared!')
     return True
 
 # Useful for validating files according to a yaml schema
 # Worth-Mention https://stackoverflow.com/a/46626418
 def validate(file, schema, file_is_a_dict=False):
-    # schema might be a file
     if os.path.exists(f'{schema}') or os.path.isfile(f'{schema}'):
         schema = eval(open(f'{schema}', 'r').read())
     else:
-        # is a string -> force eval.str's cast anyway
         schema = eval(str(f'{schema}'))
-    # yaml validator -> from Cerberus
+    # YAML validator -> from Cerberus.
     v = Validator(schema)
-
     if not file_is_a_dict:
-        # should firstly check the existence of the file...
         if not os.path.exists(f'{file}'):
             return False, ''
-        # act as else...
         try:
             assert(v.validate(safe_load(open(f'{file}', 'r'))))
         except AssertionError as error:
             return False, v
-    # file is already dict
     else:
-        # validate is direct...
         try:
             assert(v.validate(file))
         except AssertionError as error:
@@ -899,7 +812,6 @@ def loading():
 
 # Load .yml file using yaml.safe_load
 def _load(FILE_PATH):
-    # check if it is a yaml-based file...
     f = os.path.abspath(FILE_PATH)
     if not _check_extension(f, extension=['.yml', '.yaml']):
         return None
@@ -932,18 +844,16 @@ def iterate_dict(dictionary: dict, key: str):
 
 ###             --- svROS main ---               ###
 def main(argv=None, src=False):
-    # set some configuration up
+    # Set some configuration up.
     configuration = Configuration(setup=True)
     distro, workspace, id, ros_version = configuration.get_ros_info()
-    
-    # LOG => ROS distro and workspace
+    # LOG => ROS distro and workspace.
     print(f"[svROS] ROS_DISTRO => {distro.capitalize()}\n[svROS] ROS_WORKSPACE => {workspace}")
-
+    # Set svROS UP!!
     launcher = Launcher(distro=distro, workspace=workspace, domain_id=id, ros_version=ros_version)
     if launcher.launch(argv=argv):
         return 0
     return 1
-
 if __name__ == "__main__":
     main()
 ###             --- svROS main ---               ###
