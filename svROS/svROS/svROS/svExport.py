@@ -1,8 +1,7 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema
 from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
-from collections import defaultdict
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
@@ -20,15 +19,23 @@ from bonsai.analysis import (
 from bonsai.py.py_parser import PyAstParser
 from distutils.spawn import find_executable
 # Parsers
-from lxml import etree
+import xml.etree.ElementTree as ET
 from lark import Lark, tree
 # Launcher
 from svLauncherXML import LauncherParserXML, NodeTag
 from svLauncherPY import LauncherParserPY, NodeCall
+# Data
+from svData import Node, Topic, Package
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
 SCHEMAS = os.path.join(WORKDIR, '../schemas/')
+
+"YAML default dumper"
+# Worth-Mention https://stackoverflow.com/a/39681672
+class DefaultDumper(Dumper):
+    def increase_indent(self, flow=False, indentless=False):
+        return super(DefaultDumper, self).increase_indent(flow, False)
 
 "Exporter CPP. => Using Regular Expressions only..."
 @dataclass
@@ -62,6 +69,7 @@ class ExporterCPP:
             call, name, topic_type = pub[0], pub[3], pub[2]
             if not ExporterCPP.call_grammar(topic_call=call):
                 continue
+            topic_type = topic_type.replace('::', '/')
             topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
             pubs.append(topic)
         return pubs
@@ -73,7 +81,8 @@ class ExporterCPP:
             call, name, topic_type = sub[0], sub[3], sub[2]
             if not ExporterCPP.call_grammar(topic_call=call):
                 continue
-            topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
+            topic_type = topic_type.replace('::', '/')
+            topic      = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
             subs.append(topic)
         return subs
 
@@ -87,10 +96,10 @@ class ExporterPY:
     def process_topic_reference(topic_type, imports, from_imports):
         if resolve_reference(topic_type) is None:
             topic_type = str(topic_type)[1:]
-            if topic_type in imports:
-                pass
-            elif topic_type in from_imports:
+            if topic_type in from_imports:
                 topic_type = from_imports[topic_type].replace('.', '/')
+            elif topic_type in imports:
+                pass
             else: raise Exception
         else: topic_type = resolve_reference(topic_type)
         return topic_type
@@ -103,11 +112,13 @@ class ExporterPY:
         for pub in publishers:
             if pub.name == 'create_publisher':
                 name, topic_type = pub.arguments[1], pub.arguments[0]
+                if isinstance(name, CodeReference):
+                    continue
                 if isinstance(topic_type, CodeReference):
                     topic_type = ExporterPY.process_topic_reference(topic_type=topic_type, imports=self.imports, from_imports=self.from_imports)
             else:
                 name       = ExporterPY.extract_topic_name(call=pub)
-                topic_type = ExporterPY.extract_topic_type(call=pub)
+                topic_type = ExporterPY.extract_topic_type(call=pub, imports=self.imports, from_imports=self.from_imports)
             topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
             pubs.append(topic)
         return pubs
@@ -120,11 +131,13 @@ class ExporterPY:
         for sub in subscribers:
             if sub.name == 'create_subscription':
                 name, topic_type = sub.arguments[1], sub.arguments[0]
+                if isinstance(name, CodeReference):
+                    continue
                 if isinstance(topic_type, CodeReference):
                     topic_type = ExporterPY.process_topic_reference(topic_type=topic_type, imports=self.imports, from_imports=self.from_imports)
             else:
                 name       = ExporterPY.extract_topic_name(call=sub)
-                topic_type = ExporterPY.extract_topic_type(call=sub)
+                topic_type = ExporterPY.extract_topic_type(call=sub, imports=self.imports, from_imports=self.from_imports)
             topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
             subs.append(topic)
         return subs
@@ -135,9 +148,9 @@ class ExporterPY:
 
     # Method developed by HAROS.
     @staticmethod
-    def extract_topic_type(call):
+    def extract_topic_type(call, imports, from_imports):
         topic_type = ExporterPY.get_arg(call, 1, 'data_class')
-        return ExporterPY.process_topic_type(topic_type=topic_type)
+        return ExporterPY.process_topic_reference(topic_type=topic_type, imports=imports, from_imports=from_imports)
 
     # Method developed by HAROS.
     @staticmethod
@@ -152,16 +165,6 @@ class ExporterPY:
                 return call.arguments[pos]
             except IndexError:
                 return None
-
-"Package class for haros integration."
-class Package:
-    PACKAGES = {}
-
-    def __init__(self, name: str, path: str, nodes: dict):
-        self.name  = name
-        self.path  = path
-        self.nodes = nodes
-        Package.PACKAGES[self.name] = self
 
 @dataclass
 class SourceFile:
@@ -198,105 +201,6 @@ class NodeSource:
             self.publishes  += sf.publishes
             self.subscribes += sf.subscribes
         return True
-
-"ROS2-based Topic already parse for node handling."
-class Topic(object):
-    TOPICS = {}
-    """
-        Topic
-            \__ Name
-            \__ Type
-    """
-    def __init__(self, _id, name, topic_type):
-        self.id   = _id
-        self.name = name
-        self.type = topic_type
-        Topic.TOPICS[self.id] = self
-
-    @classmethod
-    def init_topic(cls, **kwargs):
-        return cls(_id=kwargs['_id'], name=kwargs['name'], type=kwargs['topic_type'])
-
-"ROS2-based Node already parse, with remaps and topic handling."
-class Node(object):
-    NODES               = {}
-    """
-        Node
-            \__ INFO FROM NODETAG OR NODECALL
-            \__ Topic subscribing and publishing
-    """
-    def __init__(self, name, namespace, package, executable, remaps, enclave=None):
-        self.name       = name
-        self.namespace  = namespace
-        self.package    = package
-        self.executable = executable
-        self.remaps     = remaps
-        self.enclave    = enclave
-        # Associated source file.
-        self.source     = None
-        # Add to NODES class variable.
-        index = self.index
-        Node.NODES[index] = self
-
-    @classmethod
-    def nodes_to_yaml(cls):
-        # Returning object.
-        ret_object = {}
-        for index in cls.NODES:
-            node = cls.NODES[index]
-            ret_object[index]               = {}
-            ret_object[index]['rosname']    = node.rosname
-            ret_object[index]['executable'] = node.executable
-            ret_object[index]['enclave']    = node.enclave if node.enclave is not None else ''
-            # Topic treatment.
-            ret_object[index]['advertise'] = {}
-            ret_object[index]['subscribe'] = {}
-            if not node.source:
-                continue
-            for adv in node.source.publishes:
-                topic_type = adv.type
-                adv        = Node.render_remap(topic=adv.name, remaps=node.remaps)
-                ret_object[index]['advertise'][adv] = topic_type
-            for sub in node.source.subscribes:
-                topic_type = sub.type
-                sub        = Node.render_remap(topic=sub.name, remaps=node.remaps)
-                ret_object[index]['subscribe'][sub] = topic_type
-            # HPL Properties
-            ret_object[index]['hpl'] = {'properties': []}
-        return ret_object
-
-    @classmethod
-    def nodes_to_sros(cls):
-        for index in cls.NODES:
-            node = cls.NODES[index]
-            if node.enclave is not None:
-                pass
-            pass
-        return False
-
-    @staticmethod
-    def render_remap(topic, remaps):
-        for r in remaps:
-            if topic.strip() == r['to'].strip():
-                topic = r['to'].strip()
-                break
-        return topic
-    
-    @classmethod
-    def init_node(cls, **kwargs):
-        return cls(name=kwargs['_name'], namespace=kwargs['namespace'], package=kwargs['package'], executable=kwargs['executable'], remaps=kwargs['remaps'], enclave=kwargs.get('enclave'))
-
-    @property
-    def rosname(self):
-        if self.namespace: rsn_ = self.namespace + '/' + self.name
-        else: rsn_ = self.name
-        return rsn_
-
-    @property
-    def index(self):
-        if self.namespace: index_ = self.package + '::' + self.namespace + '/' + self.name
-        else: index_ = self.package + '::' + self.name
-        return index_
 
 "Launcher parser in order to retrieve information about possible executables..."
 @dataclass
@@ -409,7 +313,7 @@ class svrosExport:
     ros_workspace : str
     project       : str
     project_dir   : str
-    last_workspace: ClassVar[str] = ''
+    last_workspace: ClassVar[str]
     log           : str = None
 
     def __post_init__(self):
@@ -445,6 +349,9 @@ class svrosExport:
         __VALID_PACKAGES__ = {package for package in packages}
         VALID_PACKAGES     = dict(filter(lambda package: package[0] in __VALID_PACKAGES__, ALL_PACKAGES.items()))
         if not self.get_valid_nodes(VALID_PACKAGES=VALID_PACKAGES, NODES_PACKAGES=packages):
+            return False
+        # Retrieve information back to the PROJECT FOLDER!
+        if not export.generate_artifacts():
             return False
         return True
     
@@ -580,21 +487,39 @@ class svrosExport:
     def generate_artifacts(self):
         DIRECTORY = self.project_dir
         # YAML-file
-        file_yaml = self.generate_yaml_file()
-        
+        data_yml  = self.generate_config_file()
+        with open(f'{self.project_dir}/{self.project}.yml', 'w+') as config:
+            dump(data_yml, config, Dumper=DefaultDumper, sort_keys=False, default_flow_style=False, explicit_start=True)
         # SROS-file
-        pass
+        sros_root = self.generate_security_file()
+        with open(f'{self.project_dir}/{self.project}-sros.xml', 'w+') as sros:
+            ET.indent(sros_root)
+            ET.register_namespace('xi', 'http://www.w3.org/2001/XInclude')
+            __xml__ = ET.tostring(sros_root, encoding='unicode')
+            sros.write(__xml__)
+        return True
 
-    def generate_yaml_file(self):
-        default_configuration = {'files': {'launch': self.imported_launches(), 'enclave': self.get_enclave_file()}, 'analysis': {'scope': {'Message': 9, 'Value': 4}}}
-        return {'project': self.project, 'packages': list(map(lambda package: package.name.lower(), Package.PACKAGES)), 'nodes': Node.nodes_to_yaml(), 'configurations': default_configuration}
-
-    def imported_launches(self):
-        return self.launch
+    def generate_config_file(self):
+        default_configuration = {'files': {'launch': self.launch, 'enclave': self.enclave_file}, 'analysis': {'scope': {'Message': 9, 'Value': 4}}}
+        return {'project': self.project, 'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': Node.process_config_file(), 'configurations': default_configuration}
     
+    def generate_security_file(self):
+        default_tag = '<xi:include href="common/node.xml" xpointer="xpointer(/profile/*)"/>'
+        sch      = f'{SCHEMAS}sros/sros.xsd'
+        schema   = xmlschema.XMLSchema(sch) 
+        tmp      = f'{SCHEMAS}sros/template.xml'
+        template = ET.parse(tmp).getroot()
+        template = Node.process_sros_file(template=template)
+        try:
+            validate = schema.validate(template)
+        except Exception: raise
+        default  = Node.retrieve_sros_default_tag(template=template)
+        return default
+
     # Retrieve associated enclave file.
-    def get_enclave_file(self, default_directory=''):
-        return self.project_dir + 'default-SROS.xml'
+    @property
+    def enclave_file(self):
+        return self.project_dir + f'/{self.project}-sros.xml'
         
     @staticmethod
     def remove_log_dir(LOG=f'{WORKDIR}/log'):
@@ -603,14 +528,13 @@ class svrosExport:
 
 ### TESTING ###
 if __name__ == "__main__":
-    project_dir = '.svROS/projects/Project'
+    project_dir = os.path.expanduser("~") + '/.svROS/projects/Project'
     project     = 'project'
     file = '/home/luis/Desktop/ros2launch.py'
     fil2 = '/home/luis/Desktop/example.xml'
     export = svrosExport(launch=[fil2, file], ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/', project=project, project_dir=project_dir)
     if not export.launch_export():
-        print('TESTE')
-    print(Node.nodes_to_yaml().keys())
+        print('ERRO::TESTE')
     # # l = LauncherParser(file=file, extension='.xml').parse()
     # print([NodeTag.NODES[n] for n in NodeTag.NODES])
     # print(NodeTag.NODES)

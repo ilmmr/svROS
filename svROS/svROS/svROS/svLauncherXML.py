@@ -1,11 +1,11 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema
 from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
 from collections import defaultdict
 # Parsers
-from lxml import etree
-from lark import Lark, tree
+import xml.etree.ElementTree as ET
+from lark import Lark, tree, Token
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
 from tools.Loader import Loader
@@ -238,7 +238,7 @@ class NodeTag(BaseLaunchTag):
         output = {}
         _data_ = data[len(data)-1]
         if _data_:
-            output = list(map(lambda v: v.value , list(filter(lambda vv: vv.type == tag, (_data_.scan_values(lambda v: isinstance(v, Token)))))))
+            output = list(map(lambda v: v.value , list(filter(lambda vv: str(vv.type) == tag, _data_.scan_values(lambda v: isinstance(v, Token))))))
             if enclave == False:
                 output = list(zip(output[0::2], output[1::2]))
         return output
@@ -274,7 +274,7 @@ class NodeTag(BaseLaunchTag):
         """
         parser = Lark(grammar, start='sentence', ambiguity='explicit')
         tree = parser.parse(f'{args}')
-
+        
         remaps  = NodeTag.process_cmd_arg(tree=tree, info_data="arg_remap", tag='ARG_R')
         enclave = NodeTag.process_cmd_arg(tree=tree, info_data="arg_enclave", tag='ARG_E', enclave=True)
         enclave = next(iter(enclave or []), None)
@@ -438,11 +438,9 @@ class LauncherParserXML:
                 return False
         else:
             # Schema Routines.
-            schema_root = etree.parse(schema)
-            xml_schema = etree.XMLSchema(schema_root)
-            xml_doc = etree.parse(filename)        
+            xml_schema = xmlschema.XMLSchema(schema)        
             try:
-                xml_schema.assertValid(xml_doc)
+                xml_schema.validate(file)
             except Exception as error:
                 return False
         return True
@@ -455,11 +453,11 @@ class LauncherParserXML:
 
         if not LauncherParserXML.validate_schema(file=filename, schema=f'{SCHEMAS}/launch.xsd', execute_cmd=(True,f'ros2 launch {filename} -p')):
             return False
-        tree = etree.parse(filename)
+        tree = ET.parse(filename)
         root = tree.getroot()
         if not root.tag == "launch":
             return False
-        arguments = tree.xpath('(let|set_env|arg)')
+        arguments = root.findall('./let') + root.findall('./set_env') + root.findall('./arg')
         nodes     = root.findall('./node')
 
         # Processing...

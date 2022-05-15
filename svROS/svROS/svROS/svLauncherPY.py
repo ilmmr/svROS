@@ -5,7 +5,7 @@ from logging import FileHandler
 from collections import defaultdict
 # Parsers
 from lxml import etree
-from lark import Lark, tree
+from lark import Lark, tree, Token
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
 from tools.Loader import Loader

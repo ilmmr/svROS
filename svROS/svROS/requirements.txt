@@ -2,4 +2,4 @@ jjcli
 argparse
 bonsai-code
 haros
-lxml
+xmlschema
