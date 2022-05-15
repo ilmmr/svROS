@@ -5,8 +5,7 @@ from datetime import datetime
 from cerberus import Validator
 from logging import FileHandler
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
-from tools.Loader import Loader
+from tools.InfoHandler import color, svException, svInfo
 # Exporters
 from svExport import svrosExport
 
@@ -78,20 +77,20 @@ class Configuration:
             self.distro = os.getenv('ROS_DISTRO')
         except OSError as error:
             print("ERROR: No ROS2 distro specified --> %s" % (error.strerror))
-            raise
+            raise svException(message='No ROS2 distro specified.')
         # Set environment variables.
         try:
             self.domain_id   = os.getenv('ROS_DOMAIN_ID')
             self.ros_version = os.getenv('ROS_VERSION')
         except OSError as error:
             print("ERROR: Could not get any ROS environment variable! --> %s" % (error.strerror))
-            raise
+            raise svException(message='Could not get any ROS environment variable.')
         # Set workspace.
         try:
             self.workspace   = os.getenv('ROS_WORKSPACE')
         except OSError as error:
             print("ERROR: Could not sourced any workspace! --> %s" % (error.strerror))
-            raise
+            raise svException(message='Could not sourced any workspace.')
     
     # Return ROS info
     def get_ros_info(self):
@@ -102,9 +101,9 @@ class Configuration:
 "Project Parser class that through method-application helps the parsing of the user-provided files."
 @dataclass
 class ProjectParser:
-    content         : dict    = field(default_factory=dict)
     ros_distro      : str
-    ros_workspace   : str     
+    ros_workspace   : str  
+    content         : dict    = field(default_factory=dict)   
     log             : logging.getLogger() = None 
     SCHEMA          : str     = """
 {   
@@ -121,13 +120,16 @@ class ProjectParser:
         if self.log is None:
             self.log = format_logger()
         if not validate(file=self.content, schema=f'{self.SCHEMA}', file_is_a_dict=True):
-            return False
+            raise svException(message='File given as input is not valid.')
 
     """ === Predefined functions === """
     # Export using svExport meta classes
     def export(self, default=True):
         if default:
-            export = svrosExport(launch=self.content['launch'], project_dir=self.project_dir, project=self.project, ros_distro=self.ros_distro, ros_workspace=self.ros_workspace, log=self.log)
+            export = svrosExport(launch=self.content['launch'], project_dir=self.project_path, project=self.project, ros_distro=self.ros_distro, ros_workspace=self.ros_workspace)
+            if not export.launch_export():
+                raise svException(message='Failed to parse input file and its launch files.')
+        return True
 
     @property
     def project(self):
@@ -141,7 +143,6 @@ class ProjectParser:
     def project_path(self, value):
         self._project_path = value
     """ === Predefined functions === """
-
 
 "=> if $ svROS init"
 @dataclass
@@ -203,7 +204,6 @@ class svINIT:
                 assert(exists)
             except AssertionError as error:
                 return False
-            # check validate 
             try:
                 assert(f)
             except AssertionError as error:
@@ -222,11 +222,10 @@ class svINIT:
                 match = re.match(r'__(.*?)__', key).group(1)
                 try:
                     new_dict[key] = locals()[match]
-                except Exception as error:
-                    raise
+                except Exception:
+                    raise svException(message='Init configuration failed.')
             with open(f'{file}', 'w+') as f:
                 dump(new_dict, f)
-
         return True
 
     # Create log file
@@ -401,9 +400,9 @@ class svEXPORT:
             return False
         # Call another class instance => Project Parser <=
         ros_version, ros_distro, ros_workspace = self._get_ros_info()
-        project_parser = ProjectParser(FILE_PATH=self.FILE_PATH, content=content, default=default, log=self.log, ros_distro=ros_distro, ros_workspace=ros_workspace)
-        project_name   = project_parser.get_project().capitalize()
-
+        project_parser = ProjectParser(content=content, log=self.log, ros_distro=ros_distro, ros_workspace=ros_workspace)
+        project_name   = project_parser.project.capitalize()
+        # Project directory validater.
         exists, valid_config = self._exists_project_dir(project_name)
         if exists:
             print(f'[svROS] Project directory {color.color("RED", project_name)} already exists...', end=' ')
@@ -432,32 +431,11 @@ class svEXPORT:
         project_parser, project_name = self._call_parser(default=True)
         if isinstance(project_parser, bool):
             return False
-        project_name   = project_parser.get_project().capitalize()
-        self.log.info(f'Exporting project {project_name} from svROS...')
-        print('[svROS] Exporting from svROS...')
-        loading()
+        project_name   = project_parser.project.capitalize()
+        self.log.info(f'Exporting project {project_name}...')
         # Exporter.
-        project_parser.export(default=project_parser.default)
-        return True
-
-    # HAROS export
-    def _haros_export(self, haros=None):
-        # HAROS extra treatment...
-        haros_exists = True if haros is not None else False
-        haros_file_c = os.path.exists(f'{haros}') and os.path.isfile(f'{haros}') and (True if _load(f'{haros}') is not None else False)
-        # haros-plugin based file
-        if not (haros_exists and haros_file_c):
-            self.log.info(f'Failed to load --haros plugin file.')
-            print(f'[svROS] Failed to load {color.color("BOLD", color.color("RED", "--haros plugin file!"))}')
-            return False
-
-        project_parser, project_name = self._call_parser(default=False)
-        if isinstance(project_parser, bool):
-            return False
-        self.log.info(f'Exporting project {project_name} from haros...')
-        print('[svROS] Exporting from haros...')
-        loading()
-        # project_parser.export(default=project_parser.default)
+        project_parser.export(default=True)
+        loading(txt=f'{color.color("RED", project_name)} directory in {color.color("UNDERLINE", f"{self._PROJECTS}{project_name}")}.')
         return True
     """ === Predefined functions === """
 
@@ -504,7 +482,6 @@ class Launcher:
         => svROS init [ , --reset]
         => svROS export -f $file [ , optional]
             '-> optional:
-                --haros      => Parse using HAROS                     
                 --force-init => Force creation of svROS dir           
                 --reset      => Reset project directory 
         => svROS run -p $project
@@ -516,7 +493,7 @@ class Launcher:
     ros_version : str
     # Remaining variables.
     if not os.path.expanduser("~"): 
-        raise Exception('ERROR: Failed to get home.')
+        raise Exception
     _DIR : str      = os.path.join(os.path.expanduser("~"), ".svROS")
     _BIN : str      = ''
     _LOG : str      = ''
@@ -614,7 +591,7 @@ class Launcher:
             try:
                 bin = str(subprocess.check_output(f'tree {self._BIN}', shell=True).decode())
             except OSError as error:
-                raise
+                raise svException(message='Argument parsing failed.')
         interpreter.add_argument("--bin", help=f"svROS bin directory -> default: $HOME/{self._BIN[len(os.path.expanduser('~'))+1:]}", action='store_true')
         # SUBSPARSERS: init, extract and run
         options = interpreter.add_subparsers(help='sub-command')
@@ -636,13 +613,13 @@ class Launcher:
         if not created:
             print("[svROS] Running directory setup operation...")
             self.log.info("Running directory setup operation...")
-            loading()
+            loading(txt="svROS directory setted.")
             return init._create()
         else:
             if reset == True or args.reset:
                 print(f"[svROS] Reseting svROS directory...")
                 self.log.info("Reseting svROS directory...")
-                loading()
+                loading(txt="svROS directory resetted.")
                 if init._restart_dir():
                     return True
                 else:
@@ -652,7 +629,7 @@ class Launcher:
             else:
                 print(f"[svROS] svROS directory already setted! Verification is running...")
                 self.log.info(f"svROS directory already setted! Verification is running...")
-                loading()
+                loading(txt="svROS directory verified.")
                 if init._ensure_dir():
                     return True
                 else:
@@ -699,15 +676,11 @@ class Launcher:
         export = svEXPORT(file=args.file, FILE_PATH=os.path.abspath(args.file), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_export=init, reset=args.reset, log=self.log, ros=rf'{self.ros_version}=\t={self.distro}=\t={self.workspace}')
         print(f"[svROS] Exporting file {args.file} into a project: Setup operation.")
         self.log.info(f"Exporting file {args.file} into a project: Setup operation.")
-        if args.haros:
-            return export._haros_export(haros=args.haros)
-        else:
-            return export._default_export()
+        return export._default_export()
         
-    # => svROS export -f (--file) $file [, --haros, --force-init, --reset] (optional)
+    # => svROS export -f (--file) $file [, --force-init, --reset] (optional)
     def _export(self, parser):
         parser.add_argument("-f", "--file",  help = "Provide yaml-based file.", required=True)
-        parser.add_argument("--haros", help = "Use haros export.")
         parser.add_argument("--force-init",  help = "Force creation of svROS directory, if not created.", action="store_true")
         parser.add_argument("--reset",  help = "Reset the project directory, if it already exists.", action="store_true")
         parser.set_defaults(func = self.command_export)
@@ -803,12 +776,12 @@ def validate(file, schema, file_is_a_dict=False):
 # Loading effect
 # Worth-Mention https://stackoverflow.com/a/61602308
 animation = ["■□□□□□□","■■□□□□□", "■■■□□□□", "■■■■□□□", "■■■■■□□", "■■■■■■□", "■■■■■■■"]
-def loading():
+def loading(txt=''):
     for i in range(len(animation)):
         time.sleep(0.2)
         sys.stdout.write("\r[svROS] " + animation[i % len(animation)])
         sys.stdout.flush()
-    print("\t=> Finished!")
+    print(f'\t=> {color.color("BOLD", color.color("GREEN", "FINISHED:"))} {txt}')
 
 # Load .yml file using yaml.safe_load
 def _load(FILE_PATH):
@@ -818,8 +791,8 @@ def _load(FILE_PATH):
     with open(FILE_PATH, 'r') as stream:
         try:
             content = safe_load(stream)
-        except yaml.YAMLError as exception:
-            raise exception
+        except yaml.YAMLError:
+            raise Exception
     return content
 
 # Check extension function

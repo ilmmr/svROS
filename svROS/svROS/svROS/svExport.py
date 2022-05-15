@@ -4,8 +4,7 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
-from tools.Loader import Loader
+from tools.InfoHandler import color, svException, svInfo
 # Needed for cpp nodes...
 from haros.cmake_parser import RosCMakeParser
 from haros.extractor    import RoscppExtractor, RospyExtractor
@@ -100,7 +99,7 @@ class ExporterPY:
                 topic_type = from_imports[topic_type].replace('.', '/')
             elif topic_type in imports:
                 pass
-            else: raise Exception
+            else: raise svException(message=f'Topic type {str(topic_type)} failed to be processed.')
         else: topic_type = resolve_reference(topic_type)
         return topic_type
 
@@ -178,8 +177,7 @@ class SourceFile:
             if self.iscpp: self.publishes, self.subscribes = svrosExport.cpp_export(self.path)
             else: self.publishes, self.subscribes = svrosExport.python_export(self.path)
         except Exception:
-            raise
-        # print("\nsource=>", self.path, self.publishes, self.subscribes)
+            raise svException(message=f'Failed to export/parse source file {self.path}.')
 
 @dataclass
 class NodeSource:
@@ -289,7 +287,7 @@ class PackageFinder:
             pkglist = subprocess.check_output(command).decode().split('\n')[:-1]
             svrosExport.remove_log_dir()
         except Exception:
-            raise
+            raise svException(message=f'Failed to load ROS2 packages.')
         pkgs={}
         for i in list(map(lambda info: info.split('\t'), pkglist)):
             if i[0] not in pkgs and len(i) >= 2:
@@ -314,11 +312,8 @@ class svrosExport:
     project       : str
     project_dir   : str
     last_workspace: ClassVar[str]
-    log           : str = None
 
     def __post_init__(self):
-        if self.log is None:
-            print('No logger provided.')
         if os.path.exists(f'/opt/ros2/{self.ros_distro}/'):
             self.ros_distro = f'/opt/ros2/{self.ros_distro}/'
         else:
@@ -351,7 +346,7 @@ class svrosExport:
         if not self.get_valid_nodes(VALID_PACKAGES=VALID_PACKAGES, NODES_PACKAGES=packages):
             return False
         # Retrieve information back to the PROJECT FOLDER!
-        if not export.generate_artifacts():
+        if not self.generate_artifacts():
             return False
         return True
     
@@ -370,7 +365,7 @@ class svrosExport:
             nodes_from_package   = dict(map(lambda _node: (_node, executables_from_package.get(_node)), map(lambda node: node.executable, NODES_PACKAGES[package])))
             nodes = list(map(lambda node: Node.init_node(**(node.__dict__)), NODES_PACKAGES[package]))
             if not svrosExport.process_source_files(package=cls_package, nodes_from_package=nodes_from_package, nodes=nodes, iscpp=iscpp):
-                raise Exception
+                raise svException(message=f'Failed to export source files.')
         return True
 
     @staticmethod
@@ -512,7 +507,7 @@ class svrosExport:
         template = Node.process_sros_file(template=template)
         try:
             validate = schema.validate(template)
-        except Exception: raise
+        except Exception: svException(message=f'Failed to validate SROS schema.')
         default  = Node.retrieve_sros_default_tag(template=template)
         return default
 

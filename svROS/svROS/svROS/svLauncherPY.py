@@ -7,8 +7,7 @@ from collections import defaultdict
 from lxml import etree
 from lark import Lark, tree, Token
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
-from tools.Loader import Loader
+from tools.InfoHandler import color, svException, svInfo
 # Python parser helper
 from bonsai.model import (
     CodeGlobalScope, CodeReference, CodeFunctionCall, pretty_str
@@ -34,7 +33,7 @@ class BaseCall(object):
     def process_code_reference(call):
         reference = resolve_reference(call)
         if reference == None:
-            raise
+            raise svException(message=f'Failed to resolve reference from Launch call.')
         return reference
     """ === Static Methods === """
 
@@ -237,10 +236,10 @@ class NodeCall(BaseCall):
             value = value.arguments[0]
             # Reference to argument already processed.
             if value not in ArgsCall.ARGS:
-                raise
+                raise svException(message=f'Not a valid Launch Arg.')
             value = ArgsCall.ARGS[value].value
         else:
-            raise
+            raise svException(message=f'Not a valid Launch Arg.')
 
         if isinstance(value, CodeReference):
             value = NodeCall.process_code_reference(value)
@@ -333,7 +332,7 @@ class NodeCall(BaseCall):
         inline_arguments = call.named_args
         arguments        = call.arguments
         if arguments:
-            raise
+            raise svException(message=f'Not a valid Launch Node call.')
             return None 
         node_arguments = NodeCall.process_node_arguments(arguments=inline_arguments)
         NodeCall.init_node(**node_arguments)

@@ -16,7 +16,6 @@
 ║         . extract node info and creates sros-based file              ║
 ║         -f (--file) file [ ,options]                                 ║
 ║            options:                                                  ║
-║                --haros plugin_file => Parse using HAROS              ║
 ║                --force-init        => Force creation of svROS dir    ║
 ║                --reset             => Reset project directory        ║
 ║     => svROS run [args]                                              ║

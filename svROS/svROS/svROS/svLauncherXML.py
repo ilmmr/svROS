@@ -7,8 +7,7 @@ from collections import defaultdict
 import xml.etree.ElementTree as ET
 from lark import Lark, tree, Token
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
-from tools.Loader import Loader
+from tools.InfoHandler import color, svException, svInfo
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -323,12 +322,11 @@ class ArgsTag(BaseLaunchTag):
     @staticmethod
     def process_value(arg, tag=None):
         if not tag:
-            raise Exception
+            raise svException(message=f'Failed to read Launch tag.')
   
         value = arg.get('value')
         if tag == 'arg':
             value = arg.get('default')
-        
         t,v = BaseLaunchTag._arg_grammar(value)
         if not (v == '' or t == ''):
             value = ReferenceVar(name=v, tag=t)
@@ -397,7 +395,7 @@ class ArgsTag(BaseLaunchTag):
             if (reference.name, reference.tag) not in ArgsTag.ARGS:
                 if reference.tag == 'arg':
                     if (reference.name, 'let') not in ArgsTag.ARGS:
-                        raise Exception
+                        raise svException(message=f'Not a valid Launch Arg.')
                     reference.tag = 'let'
             value = ArgsTag.process_var_reference(element=ArgsTag.ARGS[(reference.name, reference.tag)])
         else:

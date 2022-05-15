@@ -26,27 +26,24 @@ class color:
         return color.color("BOLD", function)
 
 # Class svROS for output handling
-class svROS_Exception(Exception):
-    # similair behaviour to raise exception
-    @color.bold
-    def exception(text='', bold=True):
-        if bold:
-            exception = color.color("RED", text)
-        else:
-            exception = color.color("RED", text)
-        return exception
+class svException(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
+    def __str__(self):
+        return f'[svROS] {color.color("BOLD", color.color("RED", "ERROR:"))} {self.message}'
+    
 # Class svROS for output handling
-class svROS_Info:
-    # info function     -> predefined color: blue
+class svInfo:
     def info(text=''):
         info = color.color("RED", text)
         pass
-    # warning function  -> predefined color: yellow
+
     def warn(text=''):
         warn = color.color("YELLOW", text)
         pass
-    # set text to bold
+
     def bold(text=''):
         bold = color.color("BOLD", text)
         pass

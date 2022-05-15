@@ -4,8 +4,7 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svROS_Exception as excp, svROS_Info as info
-from tools.Loader import Loader
+from tools.InfoHandler import color, svException
 # XML Parser
 import xml.etree.ElementTree as ET
 
