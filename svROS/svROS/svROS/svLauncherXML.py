@@ -183,10 +183,6 @@ class NodeTag(BaseLaunchTag):
         node_arguments['remaps'] = []
         for valid in SIMPLE_NODE_ARGUMENTS:
             node_arguments[valid] = NodeTag.process_node_argument(arg=arguments.get(valid))
-
-        for remap in NodeTag.process_remaps(node=arguments):
-            node_arguments['remaps'].append(remap)
-            RemapTag.init_remap(**remap)
         
         process_remaps = NodeTag.process_remaps(node=arguments)
         for remap in process_remaps:

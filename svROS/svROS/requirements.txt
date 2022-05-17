@@ -1,5 +1,5 @@
-jjcli
 argparse
-bonsai-code
-haros
+bonsai_code>=0.6.7
 xmlschema
+lark<=0.12.0
+lark-parser<=0.12.0

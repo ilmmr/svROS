@@ -22,7 +22,7 @@ class Package:
     def __init__(self, name: str, path: str, nodes: dict):
         self.name  = name
         self.path  = path
-        self.nodes = nodes
+        self.nodes       = nodes
         Package.PACKAGES.add(self)
 
 "ROS2-based Topic already parse for node handling."
@@ -74,7 +74,7 @@ class Node(object):
             ret_object[index]               = {}
             ret_object[index]['rosname']    = node.rosname
             ret_object[index]['executable'] = node.executable
-            ret_object[index]['enclave']    = node.enclave if node.enclave else ''
+            ret_object[index]['enclave']    = node.enclave if node.enclave else Node.namespace(tag=index)
             # Topic treatment.
             if node.source.publishes:  ret_object[index]['advertise'] = {}
             if node.source.subscribes: ret_object[index]['subscribe'] = {}
@@ -113,14 +113,14 @@ class Node(object):
                     enclaves.append(enclave)
             else:
                 enclave  = ET.Element('enclave')
-                enclave.set('path', str(node.rosname))
+                enclave.set('path', Node.namespace(tag=node.index).replace('::', '/'))
                 profiles = ET.Element('profiles')
                 enclave.append(profiles)
                 enclaves.append(enclave)
             # Process Node
             profile = ET.Element('profile')
-            if node.namespace: profile.set('ns', node.namespace)
-            else: profile.set('ns', '')
+            if node.namespace: profile.set('ns', Node.namespace(tag=node.namespace) + '/')
+            else: profile.set('ns', '/')
             profile.set('node', node.name)
             # Process Topic Publish
             pubs = ET.Element('topics')
@@ -156,6 +156,13 @@ class Node(object):
             profile.append(default_)
         return template
 
+    # Retrieve JSON-based dict information
+    @staticmethod
+    def to_json(node: str):
+        node   = Node.NODES[node]
+        topics = {'subscribe': list(map(lambda subs: subs.name, node.source.subscribes)), 'advertise': list(map(lambda pubs: pubs.name, node.source.publishes)), 'remaps': node.remaps}
+        return {'package': node.package, 'executable': node.executable, 'rosname': node.rosname, 'topics': topics, 'enclave': node.enclave if node.enclave else Node.namespace(tag=node.index).replace('::', '/')}
+
     @staticmethod
     def render_remap(topic, remaps):
         for r in remaps:
@@ -163,10 +170,42 @@ class Node(object):
                 topic = r['to'].strip()
                 break
         return topic
+
+    @staticmethod
+    def namespace(tag: str):
+        return tag if tag.startswith('/') else f'/{tag}'
     
     @classmethod
     def init_node(cls, **kwargs):
-        return cls(name=kwargs['_name'], namespace=kwargs['namespace'], package=kwargs['package'], executable=kwargs['executable'], remaps=kwargs['remaps'], enclave=kwargs.get('enclave'))
+        return cls(name=kwargs['_name'], namespace=kwargs['namespace'], package=kwargs['package'], executable=kwargs['executable'], remaps=Node.process_remaps(kwargs['remaps']), enclave=kwargs.get('enclave'))
+
+    @staticmethod
+    def process_remaps(remaps: list):
+        # Snub list
+        remap_temp = dict()
+        for remap in remaps:
+            remap_temp[remap.get('from')] = remap.get('to')
+        # Iter through temp dict
+        for remap in remap_temp:
+            value = remap_temp[remap]
+            value = Node.process_remap_value(remap=remap, value=value, remaps=remap_temp)
+            # Process after getting new value
+            if remap == value:
+                del remap_temp[remap]
+                continue
+            remap_temp[remap] = value
+        return list(map(lambda remap: {'from': remap, 'to': remap_temp[remap]}, remap_temp))
+
+    @staticmethod
+    def process_remap_value(remap, value, remaps):
+        if value in remaps:
+            current_value = remaps[value]
+            if list(remaps.keys()).index(value) > list(remaps.keys()).index(remap):
+                Node.process_remap_value(value, current_value, remaps)
+            else:
+                return value
+        else:
+            return value
 
     @property
     def rosname(self):
@@ -180,6 +219,9 @@ class Node(object):
         else: index_ = self.package + '::' + self.name
         return index_
 
+""" 
+    The remaining of this file contains the necessary classes and methods to retrieve and use information for analysis purposes. 
+"""
 "ROS2-based Node to be analyzed."
 class svROSNode(object):
     NODES               = {}

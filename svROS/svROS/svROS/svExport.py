@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, json
 from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
@@ -332,6 +332,9 @@ class svrosExport:
                 print(f'[svROS] {color.color("BOLD", color.color("RED", "EXPORTING ERROR"))} {color.color("BOLD", color.color("UNDERLINE", lf))}')
                 break
             print(f'[svROS] {color.color("BOLD", color.color("GREEN", "FINISHED"))} {color.color("BOLD", color.color("UNDERLINE", lf))}')
+        # Retrieve information back to the PROJECT FOLDER!
+        if not self.generate_artifacts():
+            return False
         return True
 
     def _export(self, LAUNCH_FILE, ALL_PACKAGES):
@@ -344,9 +347,6 @@ class svrosExport:
         __VALID_PACKAGES__ = {package for package in packages}
         VALID_PACKAGES     = dict(filter(lambda package: package[0] in __VALID_PACKAGES__, ALL_PACKAGES.items()))
         if not self.get_valid_nodes(VALID_PACKAGES=VALID_PACKAGES, NODES_PACKAGES=packages):
-            return False
-        # Retrieve information back to the PROJECT FOLDER!
-        if not self.generate_artifacts():
             return False
         return True
     
@@ -484,7 +484,7 @@ class svrosExport:
         # YAML-file
         data_yml  = self.generate_config_file()
         with open(f'{self.project_dir}/{self.project}.yml', 'w+') as config:
-            dump(data_yml, config, Dumper=DefaultDumper, sort_keys=False, default_flow_style=False, explicit_start=True, version=(1,1))
+            dump(data_yml, config, Dumper=DefaultDumper, sort_keys=False, default_flow_style=False, explicit_start=True, version=(1,1), indent=4)
         # SROS-file
         sros_root = self.generate_security_file()
         with open(f'{self.project_dir}/{self.project}-sros.xml', 'w+') as sros:
@@ -492,11 +492,21 @@ class svrosExport:
             ET.register_namespace('xi', 'http://www.w3.org/2001/XInclude')
             __xml__ = ET.tostring(sros_root, encoding='unicode')
             sros.write(__xml__)
+        # JSON-file
+        data_json = self.generate_data_file()
+        with open(f'{self.project_dir}/data/{self.project}.json', 'w+') as data:
+            json.dump(data_json, data, sort_keys=False, indent=4)
         return True
 
+    # Retrieve to a YAML-based file
     def generate_config_file(self):
         default_configuration = {'files': {'launch': self.launch, 'SROS': self.enclave_file}, 'analysis': {'scope': {'Message': 9, 'Value': 4}, 'unsecured_enclaves': [None]}}
         return {'project': self.project, 'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': Node.process_config_file(), 'configurations': default_configuration}
+
+    # Retrieve to a JSON-based file
+    def generate_data_file(self):
+        print(Node.NODES['turtle_random::randomxxx'].remaps, '===========')
+        return {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': dict(map(lambda node: (node.replace('::', '/'), Node.to_json(node)) , Node.NODES))}
     
     def generate_security_file(self):
         default_tag = '<xi:include href="common/node.xml" xpointer="xpointer(/profile/*)"/>'

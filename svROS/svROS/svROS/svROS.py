@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, json
 from yaml import *
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -97,7 +97,6 @@ class Configuration:
         return self.distro, self.workspace, self.domain_id, self.ros_version
     """ === Configuration functions === """
 
-
 "Project Parser class that through method-application helps the parsing of the user-provided files."
 @dataclass
 class ProjectParser:
@@ -154,7 +153,6 @@ class svINIT:
     ros  : str      = ''
     log  : logging.getLogger() = None
 
-    # After class __init__
     def __post_init__(self):
         if self.log is None:
             self.log = format_logger()
@@ -359,6 +357,7 @@ class svEXPORT:
     def _create_project_dir(self, project_name, project_path):
         try:
             os.mkdir(f'{project_path}', mode=0o777)
+            os.mkdir(f'{project_path}/data', mode=0o777)
             os.mkdir(f'{project_path}/models', mode=0o777)
             # Create .config file.
             if not self._config_file(project_name, f'{project_path}/.config', mode=True):
@@ -449,7 +448,6 @@ class svRUN:
     can_run   : bool     = False
     log       : logging.getLogger() = None
 
-    # After class __init__
     def __post_init__(self):
         if self.log is None:
             self.log = format_logger()
