@@ -18,46 +18,40 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 "ROS2-based Package class."
 class Package:
     PACKAGES = set()
-
+    """
+        Packages
+            \_ Valid nodes from packages
+    """
     def __init__(self, name: str, path: str, nodes: dict):
-        self.name  = name
-        self.path  = path
-        self.nodes       = nodes
+        self.name, self.path, self.nodes = name, path, nodes
         Package.PACKAGES.add(self)
 
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
-    TOPICS = {}
+    TOPICS = set()
     """
         Topic
             \__ Name
             \__ Type
     """
-    def __init__(self, _id, name, topic_type):
-        self.id   = _id
-        self.name = name
-        self.type = topic_type
-        Topic.TOPICS[self.id] = self
+    def __init__(self, name, topic_type):
+        self.name, self.type = name, topic_type
+        Topic.TOPICS.add(self)
 
     @classmethod
     def init_topic(cls, **kwargs):
-        return cls(_id=kwargs['_id'], name=kwargs['name'], type=kwargs['topic_type'])
+        return cls(name=kwargs['name'], type=kwargs['topic_type'])
 
 "ROS2-based Node already parse, with remaps and topic handling."
 class Node(object):
-    NODES               = {}
+    NODES = {}
     """
         Node
             \__ INFO FROM NODETAG OR NODECALL
             \__ Topic subscribing and publishing
     """
     def __init__(self, name, namespace, package, executable, remaps, enclave=None):
-        self.name       = name
-        self.namespace  = namespace
-        self.package    = package
-        self.executable = executable
-        self.remaps     = remaps
-        self.enclave    = enclave
+        self.name, self.namespace, self.package, self.executable, self.remaps, self.enclave  = name, namespace, package, executable, remaps, enclave
         # Associated source file.
         self.source     = None
         # Add to NODES class variable.
@@ -160,8 +154,9 @@ class Node(object):
     @staticmethod
     def to_json(node: str):
         node   = Node.NODES[node]
+        # Enclave is not needed at this point
         topics = {'subscribe': list(map(lambda subs: subs.name, node.source.subscribes)), 'advertise': list(map(lambda pubs: pubs.name, node.source.publishes)), 'remaps': node.remaps}
-        return {'package': node.package, 'executable': node.executable, 'rosname': node.rosname, 'topics': topics, 'enclave': node.enclave if node.enclave else Node.namespace(tag=node.index).replace('::', '/')}
+        return {'package': node.package, 'executable': node.executable, 'rosname': node.rosname, 'topics': topics}
 
     @staticmethod
     def render_remap(topic, remaps):
@@ -201,11 +196,8 @@ class Node(object):
         if value in remaps:
             current_value = remaps[value]
             if list(remaps.keys()).index(value) > list(remaps.keys()).index(remap):
-                Node.process_remap_value(value, current_value, remaps)
-            else:
-                return value
-        else:
-            return value
+                value = Node.process_remap_value(value, current_value, remaps)
+        return value
 
     @property
     def rosname(self):
@@ -224,9 +216,94 @@ class Node(object):
 """
 "ROS2-based Node to be analyzed."
 class svROSNode(object):
-    NODES               = {}
+    NODES = {}
     """
         svROSNode
-            \__ ALREADY PARSED NODE
-            \__ PROFILE FROM SROS
+            \__ Already parsed node
+            \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
+    def __init__(self, **kwargs):
+        # self            = super().init_node(**kwargs)
+        self.advertises, self.subscribes, self.profile = self.get_enclave_profile()
+        self.priveleges = self.update_node_with_profile()
+
+    def get_enclave_profile(self):
+        if self.enclave == '' or self.enclave is None:
+            return None
+        index = self.enclave + self.rosname
+        if not index in svROSProfile.PROFILES:
+            raise svException('Enclave Profile not found.')
+        return svROSProfile.PROFILES[index]
+
+    def update_node_with_profile(self):
+        pass
+
+    @staticmethod
+    def topic_handler(topics):
+        topic_list = []
+        for topic in topics:
+            topic = Topic(name=topic, topic_type=topics[topic])
+            topic_list.append(topic)
+        return topic_list
+
+    # This method will allow to check what the output might be when an unsecured enclave publishes something from one of its topics
+    @classmethod
+    def obsDetfromEnclave (cls, enclave: str):
+        if enclave not in svROSEnclave.ENCLAVES:
+            raise svException("Unsecured enclave not found.")
+        pass
+    
+    @property
+    def is_secure(self):
+        if self.profile is None: return False
+        else: return True
+
+"SROS2-based Enclave with associated profiles."
+class svROSEnclave(object):
+    ENCLAVES = set()
+    """
+        svROSEnclave
+            \_ path
+            \_ profiles
+    """
+    def __init__(self, path, profiles):
+        self.name, self.profiles = path, []
+        for profile in profiles:
+            profile         = svROSProfile.init_profile(profile)
+            profile.enclave = self
+            self.profiles.append(profile)
+        svROSEnclave.add(self)
+
+"SROS2-based Profile with associated priveleges."
+class svROSProfile(object):
+    PROFILES = {}
+    """
+        SROSProfile
+            \_ Associated with priveleges
+            \_ Later associated with a svROSNode
+    """
+    def __init__(self, name, namespace, can_advertise, can_subscribe):
+        self.name, self.namespace = name, namespace
+        self.privileges = dict()
+        self.privileges['advertise'], self.privileges['subscribe'] = can_advertise, can_subscribe
+        svROSProfile.PROFILES[self.index] = self
+
+    @classmethod
+    def init_profile(cls, profile):
+        pass
+
+    @property
+    def profile(self):
+        return self.namespace + self.name
+    
+    @property
+    def index(self):
+        return self.enclave.name + self.profile
+    
+    @property
+    def enclave(self):
+        return self._enclave
+    
+    @enclave.setter
+    def enclave(self, enclave):
+        self._enclave = enclave

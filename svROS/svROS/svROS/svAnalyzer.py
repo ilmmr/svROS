@@ -6,6 +6,8 @@ from collections import defaultdict
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svInfo
+# Node parser
+from svData import svROSNode, svROSProfile
 
 global WORKDIR
 WORKDIR = os.path.dirname(__file__)
@@ -53,10 +55,31 @@ class Analyzer(object):
             sros_meta_model = f.read()
         return ros_meta_model, sros_meta_model, scopes
 
-    # ALLOY => Runs Model Checking in ROS_MODEL.
+    # ALLOY => Runs Model Checking in ROS_MODEL
     def model_check(self):
     	pass
     
-    # ALLOY => Runs Structure Checking in SROS_MODEL.
+    # ALLOY => Runs Structure Checking in SROS_MODEL
     def security_verification(self):
         pass
+
+"Main exporter parser from current project's directory files: SROS and configuration file"
+@dataclass
+class ExtractorFromProject:
+    project       : str
+    MODELS_DIR    : str
+    PROJECT_DIR   : str
+
+    # Extract from SROS file
+    def extract_sros(self, sros_file=''):
+        if not sros_file:
+            sros_file = f'{self.PROJECT_DIR}{self.project.lower()}-sros.xml'
+        if not os.path.isfile(sros_file):
+            raise svException('SROS file could not be founded.')
+
+    # Extract from config file
+    def extract_config(self, config_file=''):
+        if not config_file:
+            config_file = f'{self.PROJECT_DIR}{self.project.lower()}.yml'
+        if not os.path.isfile(config_file):
+            raise svException('ROS file could not be founded.')

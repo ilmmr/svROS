@@ -69,7 +69,7 @@ class ExporterCPP:
             if not ExporterCPP.call_grammar(topic_call=call):
                 continue
             topic_type = topic_type.replace('::', '/')
-            topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
+            topic = Topic(name=name, topic_type=topic_type)
             pubs.append(topic)
         return pubs
     
@@ -81,7 +81,7 @@ class ExporterCPP:
             if not ExporterCPP.call_grammar(topic_call=call):
                 continue
             topic_type = topic_type.replace('::', '/')
-            topic      = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
+            topic      = Topic(name=name, topic_type=topic_type)
             subs.append(topic)
         return subs
 
@@ -118,7 +118,7 @@ class ExporterPY:
             else:
                 name       = ExporterPY.extract_topic_name(call=pub)
                 topic_type = ExporterPY.extract_topic_type(call=pub, imports=self.imports, from_imports=self.from_imports)
-            topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
+            topic = Topic(name=name, topic_type=topic_type)
             pubs.append(topic)
         return pubs
     
@@ -137,7 +137,7 @@ class ExporterPY:
             else:
                 name       = ExporterPY.extract_topic_name(call=sub)
                 topic_type = ExporterPY.extract_topic_type(call=sub, imports=self.imports, from_imports=self.from_imports)
-            topic = Topic(_id=len(Topic.TOPICS), name=name, topic_type=topic_type)
+            topic = Topic(name=name, topic_type=topic_type)
             subs.append(topic)
         return subs
 
@@ -505,7 +505,6 @@ class svrosExport:
 
     # Retrieve to a JSON-based file
     def generate_data_file(self):
-        print(Node.NODES['turtle_random::randomxxx'].remaps, '===========')
         return {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': dict(map(lambda node: (node.replace('::', '/'), Node.to_json(node)) , Node.NODES))}
     
     def generate_security_file(self):
