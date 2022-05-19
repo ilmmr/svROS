@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, json
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, json, pickle
 from yaml import *
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -8,6 +8,7 @@ from logging import FileHandler
 from tools.InfoHandler import color, svException, svInfo
 # Exporters
 from svExport import svrosExport
+from svAnalyzer import svProjectExtractor
 
 global WORKDIR, INIT_SCHEMA, _INIT_
 WORKDIR      = os.path.dirname(__file__)
@@ -297,6 +298,8 @@ class svEXPORT:
     def __post_init__(self):
         if self.log is None:
             self.log = format_logger()
+        if not self.can_export:
+            raise svException("Could not initiate exporting of file.")
         # FILE_PATH could either be a full extended path or a relative path.
         self.FILE_PATH = self.FILE_PATH if (os.path.expanduser("~") or r'\~') in self.FILE_PATH else os.path.join(f'{WORKDIR}', f'{self.file}')
 
@@ -305,10 +308,6 @@ class svEXPORT:
     def _get_ros_info(self):
         ros = self.ros.split(r'=\t=')
         return ros[0], ros[1], ros[2]
-
-    # Predefined bool to see if can export    
-    def _can_export(self):
-        return self.can_export
 
     # Check the existence of the .config file in the defined project directory => Additionally, its syntax must also be ensured
     def _config_file(self, project_name, config_file, mode=False):
@@ -449,16 +448,37 @@ class svRUN:
     log       : logging.getLogger() = None
 
     def __post_init__(self):
+        if not self.can_run:
+            raise svException("Could not initiate running of project.")
         if self.log is None:
             self.log = format_logger()
 
     """ === Predefined functions === """
-    def _can_run(self):
-        return self.run
-
     def _run(self):
-        self.log.info(f'Running svROS Project => {self.project}.')
-        print('[svROS] Running svROS...')
+        # File existance handling
+        if not os.path.exists(path=f'{self.project_path}config.yml'):
+            raise svException(f'Could not initiate running of project: Config file does not exist. Please create a file named {color.color("RED", "config.yml")} in the {self.project.capitalize()} directory or export a project.')
+        if not os.path.exists(path=f'{self.project_path}policies.xml'):
+            raise svException(f'Could not initiate running of project: SROS file does not exist. Please create a file named {color.color("RED", "policies.xml")} in the {self.project.capitalize()} directory or export a project.')
+        # Loading pre-existing data
+        existing_data     = self.load_data_files()
+        project_extractor = svProjectExtractor(project=self.project, MODELS_DIR=self._BIN, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
+        project_extractor.extract_sros()
+        project_extractor.extract_config()
+
+    def load_data_files(self):
+        DATADIR = f'{self.project_path}data/'
+        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Topics.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
+        if not (package_file and topic_file and node_file):
+            return {}
+        return {'packages': pickle.load(package_file), 'topics': pickle.load(topic_file), 'nodes': pickle.load(node_file)}
+    
+    @property
+    def project_path(self):
+        project_path = self._PROJECTS + self.project.capitalize() + '/'
+        if not os.path.exists(project_path):
+            raise svException("Could not initiate running of project.")
+        return project_path
     """ === Predefined functions === """
 
 #############################################
@@ -697,8 +717,9 @@ class Launcher:
             return False
         
         run = svRUN(project=args.project.capitalize(), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_run=init, log=self.log)
-        print(f"[svROS] Running project: {args.project}...")
-        self.log.info(f"Running project: {args.project}...")
+        project_name = args.project.capitalize()
+        self.log.info(f'Running svROS Project => {project_name}.')
+        print(f'[svROS] Running svROS :: Project {color.color("RED", project_name)}...')
         return run._run()
 
     # => svROS run -p (--project) $project

@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema
 from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
@@ -7,23 +7,25 @@ from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svInfo
 # Node parser
-from svData import svROSNode, svROSProfile
+from svData import svROSNode, svROSProfile, svROSEnclave
+import xml.etree.ElementTree as ET
 
-global WORKDIR
+global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
+SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 
 """ 
     This file contains the necessary classes and methods to translate from Python Structures into Alloy configuration model.
 """
 "Main class that implements the analyzing process while accounting the configuration."
 @dataclass
-class Analyzer(object):
+class svAnalyzer(object):
     project       : str
     MODELS_DIR    : str
     PROJECT_DIR   : str
     nodes         : dict = field(default_factory=dict)
     properties    : dict = None
-    configuration : Configuration = None
+    configuration : str  = None
     specification : str           = ''
 
     def __post_init__(self):
@@ -65,21 +67,59 @@ class Analyzer(object):
 
 "Main exporter parser from current project's directory files: SROS and configuration file"
 @dataclass
-class ExtractorFromProject:
+class svProjectExtractor:
     project       : str
     MODELS_DIR    : str
     PROJECT_DIR   : str
+    IMPORTED_DATA : dict
 
     # Extract from SROS file
     def extract_sros(self, sros_file=''):
         if not sros_file:
-            sros_file = f'{self.PROJECT_DIR}{self.project.lower()}-sros.xml'
-        if not os.path.isfile(sros_file):
-            raise svException('SROS file could not be founded.')
+            sros_file = f'{self.PROJECT_DIR}policies.xml'
+        if not svProjectExtractor.validate_sros(sros=sros_file):
+            raise svException('Failed to validate SROS file schema.')
+        tree = ET.parse(sros_file)
+        root = tree.getroot()
+        if not root.tag == "policy":
+            raise svException('Failed to validate SROS file schema.')
+        # Load SROS DATA.
+        enclaves = root.findall('.//enclave')
+        for enclave in enclaves:
+            path, profiles = enclave.get('path'), enclave.findall('.//profile')
+            enclave        = svROSEnclave(path=path, profiles=profiles)
+        print(svROSProfile.PROFILES['/multiplexer/lol/multiplexer'].privileges)
+        return True
 
+    @staticmethod
+    def validate_sros(sros):
+        sch      = f'{SCHEMAS}sros/sros.xsd'
+        schema   = xmlschema.XMLSchema(sch)
+        template = ET.parse(sros).getroot()
+        try:
+            validate = schema.validate(template)
+        except Exception: print('continue') # return False
+        return svProjectExtractor.retrieve_sros_default_tag(_file_=sros, template=template)
+
+    @staticmethod
+    def retrieve_sros_default_tag(_file_, template):
+        default_tag = '<xi:include href="path/to/common/node.xml" xpointer="xpointer(/profile/*)"/>'
+        default_    = ET.Element('{http://www.w3.org/2001/XInclude}include')
+        default_.set('href', f'{SCHEMAS}sros/common/node.xml')
+        default_.set('xpointer', 'xpointer(/profile/*)')
+        profiles = template.findall(f'.//profile')
+        for profile in profiles:
+            profile.append(default_)
+        with open(_file_, 'w+') as sros:
+            ET.indent(template)
+            ET.register_namespace('xi', 'http://www.w3.org/2001/XInclude')
+            __xml__ = ET.tostring(template, encoding='unicode')
+            sros.write(__xml__)
+        return True
+        
     # Extract from config file
     def extract_config(self, config_file=''):
         if not config_file:
-            config_file = f'{self.PROJECT_DIR}{self.project.lower()}.yml'
-        if not os.path.isfile(config_file):
-            raise svException('ROS file could not be founded.')
+            config_file = f'{self.PROJECT_DIR}config.yml'
+        config = safe_load(stream=open(config_file, 'r'))
+

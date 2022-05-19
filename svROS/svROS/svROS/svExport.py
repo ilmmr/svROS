@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, json
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, json, pickle
 from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
@@ -69,7 +69,7 @@ class ExporterCPP:
             if not ExporterCPP.call_grammar(topic_call=call):
                 continue
             topic_type = topic_type.replace('::', '/')
-            topic = Topic(name=name, topic_type=topic_type)
+            topic      = Topic(name=name, topic_type=topic_type)
             pubs.append(topic)
         return pubs
     
@@ -379,25 +379,10 @@ class svrosExport:
             node_source.process_calls()
             # Node processing.
             nodes_ = list(filter(lambda n: n.executable == n_source, nodes))
-            for node in nodes_: node.source = node_source
+            for node in nodes_: node.store_node_source(source=node_source)
             node_sources.append(node_source)
         package.nodes = node_sources
         return True
-
-    @staticmethod
-    def process_nodes(NODES):
-        for node in NODES:
-            info            = NODES[node]
-            multi_part_node = isinstance(info, list)
-            if multi_part_node:
-                svrosExport.process_multi_part_node(NODE=info)
-            else:
-                return False
-
-    @staticmethod
-    def process_multi_part_node(NODE):
-        for node_part in NODE:
-            return False
 
     @staticmethod
     def executables_from_package(cmake_path, srcdir, bindir, package_path, package):
@@ -483,18 +468,18 @@ class svrosExport:
         DIRECTORY = self.project_dir
         # YAML-file
         data_yml  = self.generate_config_file()
-        with open(f'{self.project_dir}/{self.project}.yml', 'w+') as config:
+        with open(f'{self.project_dir}/config.yml', 'w+') as config:
             dump(data_yml, config, Dumper=DefaultDumper, sort_keys=False, default_flow_style=False, explicit_start=True, version=(1,1), indent=4)
         # SROS-file
         sros_root = self.generate_security_file()
-        with open(f'{self.project_dir}/{self.project}-sros.xml', 'w+') as sros:
+        with open(f'{self.project_dir}/policies.xml', 'w+') as sros:
             ET.indent(sros_root)
             ET.register_namespace('xi', 'http://www.w3.org/2001/XInclude')
             __xml__ = ET.tostring(sros_root, encoding='unicode')
             sros.write(__xml__)
         # JSON-file
-        data_json = self.generate_data_file()
-        with open(f'{self.project_dir}/data/{self.project}.json', 'w+') as data:
+        data_json = self.generate_data_file(DATADIR=f'{self.project_dir}/data/')
+        with open(f'{self.project_dir}/data/configurations.json', 'w+') as data:
             json.dump(data_json, data, sort_keys=False, indent=4)
         return True
 
@@ -504,11 +489,16 @@ class svrosExport:
         return {'project': self.project, 'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': Node.process_config_file(), 'configurations': default_configuration}
 
     # Retrieve to a JSON-based file
-    def generate_data_file(self):
+    def generate_data_file(self, DATADIR):
+        # SAVE using PICKLE.
+        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'wb+'), open(f'{DATADIR}Topics.obj', 'wb+'), open(f'{DATADIR}Nodes.obj', 'wb+')
+        pickle.dump(Package.PACKAGES, package_file, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(Topic.TOPICS, topic_file, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(Node.NODES, node_file, pickle.HIGHEST_PROTOCOL)
+        # Returning object.
         return {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': dict(map(lambda node: (node.replace('::', '/'), Node.to_json(node)) , Node.NODES))}
     
     def generate_security_file(self):
-        default_tag = '<xi:include href="common/node.xml" xpointer="xpointer(/profile/*)"/>'
         sch      = f'{SCHEMAS}sros/sros.xsd'
         schema   = xmlschema.XMLSchema(sch) 
         tmp      = f'{SCHEMAS}sros/template.xml'
@@ -517,8 +507,8 @@ class svrosExport:
         try:
             validate = schema.validate(template)
         except Exception: svException(message=f'Failed to validate SROS schema.')
-        default  = Node.retrieve_sros_default_tag(template=template)
-        return default
+        # default  = Node.retrieve_sros_default_tag(template=template)
+        return template
 
     # Retrieve associated enclave file.
     @property

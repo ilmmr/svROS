@@ -35,12 +35,27 @@ class Topic(object):
             \__ Type
     """
     def __init__(self, name, topic_type):
-        self.name, self.type = name, topic_type
+        self.name, self.type, self.remap = name, topic_type, None
         Topic.TOPICS.add(self)
 
     @classmethod
     def init_topic(cls, **kwargs):
         return cls(name=kwargs['name'], type=kwargs['topic_type'])
+
+    @staticmethod
+    def namespace(tag: str):
+        return tag if tag.startswith('/') else f'/{tag}'
+    
+    @property
+    def rosname(self):
+        if self.node and self.node.namespace:
+            rosname = Topic.namespace(tag=self.node.namespace)
+            if self.remap: rosname += Topic.namespace(tag=self.remap)
+            else: rosname += Topic.namespace(tag=self.name)
+        else:
+            if self.remap: rosname = Topic.namespace(tag=self.remap)
+            else: rosname = Topic.namespace(tag=self.name)
+        return rosname
 
 "ROS2-based Node already parse, with remaps and topic handling."
 class Node(object):
@@ -58,30 +73,35 @@ class Node(object):
         index = self.index
         Node.NODES[index] = self
 
+    # Update node with its Source and Topic Handling
+    def store_node_source(self, source):
+        self.source, self.subscribes, self.publishes = source.name, source.subscribes, source.publishes
+        for pub in source.publishes : pub.node = self
+        for sub in source.subscribes: sub.node = self
+
     @classmethod
     def process_config_file(cls):
         # Returning object.
         ret_object = {}
         for index in cls.NODES:
             node  = cls.NODES[index]
-            index = index.replace('::', '/')
             ret_object[index]               = {}
             ret_object[index]['rosname']    = node.rosname
             ret_object[index]['executable'] = node.executable
             ret_object[index]['enclave']    = node.enclave if node.enclave else Node.namespace(tag=index)
             # Topic treatment.
-            if node.source.publishes:  ret_object[index]['advertise'] = {}
-            if node.source.subscribes: ret_object[index]['subscribe'] = {}
+            if node.publishes:  ret_object[index]['advertise'] = {}
+            if node.subscribes: ret_object[index]['subscribe'] = {}
             if not node.source:
                 continue
-            for adv in node.source.publishes:
+            for adv in node.publishes:
                 topic_type = adv.type
-                adv        = Node.render_remap(topic=adv.name, remaps=node.remaps)
-                ret_object[index]['advertise'][adv] = topic_type
-            for sub in node.source.subscribes:
+                name       = Node.render_remap(topic=adv, remaps=node.remaps).rosname
+                ret_object[index]['advertise'][name] = topic_type
+            for sub in node.subscribes:
                 topic_type = sub.type
-                sub        = Node.render_remap(topic=sub.name, remaps=node.remaps)
-                ret_object[index]['subscribe'][sub] = topic_type
+                name       = Node.render_remap(topic=sub, remaps=node.remaps).rosname
+                ret_object[index]['subscribe'][name] = topic_type
             # HPL Properties
             ret_object[index]['hpl'] = {'properties': ['']}
         return ret_object
@@ -107,7 +127,7 @@ class Node(object):
                     enclaves.append(enclave)
             else:
                 enclave  = ET.Element('enclave')
-                enclave.set('path', Node.namespace(tag=node.index).replace('::', '/'))
+                enclave.set('path', Node.namespace(tag=node.index))
                 profiles = ET.Element('profiles')
                 enclave.append(profiles)
                 enclaves.append(enclave)
@@ -119,18 +139,24 @@ class Node(object):
             # Process Topic Publish
             pubs = ET.Element('topics')
             pubs.set('publish', 'ALLOW')
-            for adv in node.source.publishes:
-                topic = ET.Element('topic')
-                adv        = Node.render_remap(topic=adv.name, remaps=node.remaps)
-                topic.text = str(adv)
+            pubs_names = []
+            for adv in node.publishes:
+                name       = Node.render_remap(topic=adv, remaps=node.remaps).name
+                if name in pubs_names: continue
+                pubs_names.append(name)
+                topic      = ET.Element('topic')
+                topic.text = str(name) if not name.startswith('/') else str(name[1:])
                 pubs.append(topic)
             # Process Topic Subscribe
             subs = ET.Element('topics')
             subs.set('subscribe', 'ALLOW')
-            for sub in node.source.subscribes:
-                topic = ET.Element('topic')
-                sub        = Node.render_remap(topic=sub.name, remaps=node.remaps)
-                topic.text = str(sub)
+            subs_names = []
+            for sub in node.subscribes:
+                name       = Node.render_remap(topic=sub, remaps=node.remaps).name
+                if name in subs_names: continue
+                subs_names.append(name)
+                topic      = ET.Element('topic')
+                topic.text = str(name) if not name.startswith('/') else str(name[1:])
                 subs.append(topic)
             # Processing Profile
             if subs.findall('./') != []: profile.append(subs)
@@ -139,30 +165,21 @@ class Node(object):
         # Retrieve XML
         return template
 
-    @staticmethod
-    def retrieve_sros_default_tag(template):
-        default_tag = '<xi:include href="path/to/common/node.xml" xpointer="xpointer(/profile/*)"/>'
-        default_    = ET.Element('{http://www.w3.org/2001/XInclude}include')
-        default_.set('href', f'{SCHEMAS}sros/common/node.xml')
-        default_.set('xpointer', 'xpointer(/profile/*)')
-        profiles = template.findall(f'.//profile')
-        for profile in profiles:
-            profile.append(default_)
-        return template
-
     # Retrieve JSON-based dict information
     @staticmethod
     def to_json(node: str):
         node   = Node.NODES[node]
         # Enclave is not needed at this point
-        topics = {'subscribe': list(map(lambda subs: subs.name, node.source.subscribes)), 'advertise': list(map(lambda pubs: pubs.name, node.source.publishes)), 'remaps': node.remaps}
+        topics = {'subscribe': list(map(lambda subs: subs.rosname, node.subscribes)), 'advertise': list(map(lambda pubs: pubs.rosname, node.publishes)), 'remaps': node.remaps}
         return {'package': node.package, 'executable': node.executable, 'rosname': node.rosname, 'topics': topics}
 
     @staticmethod
     def render_remap(topic, remaps):
+        name = Topic.namespace(tag=topic.name)
         for r in remaps:
-            if topic.strip() == r['to'].strip():
-                topic = r['to'].strip()
+            if name.strip() == r['from'].strip():
+                name        =  r['to'].strip()
+                topic.remap = name
                 break
         return topic
 
@@ -203,12 +220,12 @@ class Node(object):
     def rosname(self):
         if self.namespace: rsn_ = self.namespace + '/' + self.name
         else: rsn_ = self.name
-        return rsn_
+        return Node.namespace(tag=rsn_)
 
     @property
     def index(self):
-        if self.namespace: index_ = self.package + '::' + self.namespace + '/' + self.name
-        else: index_ = self.package + '::' + self.name
+        if self.namespace: index_ = self.package + '/' + self.namespace + '/' + self.name
+        else: index_ = self.package + '/' + self.name
         return index_
 
 """ 
@@ -269,10 +286,9 @@ class svROSEnclave(object):
     def __init__(self, path, profiles):
         self.name, self.profiles = path, []
         for profile in profiles:
-            profile         = svROSProfile.init_profile(profile)
-            profile.enclave = self
-            self.profiles.append(profile)
-        svROSEnclave.add(self)
+            p = svROSProfile.init_profile(profile, enclave=self)
+            self.profiles.append(p)
+        svROSEnclave.ENCLAVES.add(self)
 
 "SROS2-based Profile with associated priveleges."
 class svROSProfile(object):
@@ -282,15 +298,23 @@ class svROSProfile(object):
             \_ Associated with priveleges
             \_ Later associated with a svROSNode
     """
-    def __init__(self, name, namespace, can_advertise, can_subscribe):
-        self.name, self.namespace = name, namespace
+    def __init__(self, name, namespace, can_advertise, can_subscribe, enclave):
+        self.name, self.namespace, self.enclave = name, namespace, enclave
         self.privileges = dict()
         self.privileges['advertise'], self.privileges['subscribe'] = can_advertise, can_subscribe
         svROSProfile.PROFILES[self.index] = self
 
     @classmethod
-    def init_profile(cls, profile):
-        pass
+    def init_profile(cls, profile, enclave):
+        namespace, name, topics = profile.get('ns'), profile.get('node'), profile.findall('./topics')
+        allow_publish   = list(filter(lambda topic: topic.get('publish').strip()=='ALLOW' , list(filter(lambda t: t.get('publish'), topics))))
+        allow_subscribe = list(filter(lambda topic: topic.get('subscribe').strip()=='ALLOW' , list(filter(lambda t: t.get('subscribe'), topics))))
+
+        if allow_publish: advertise = list(map(lambda pub: pub.text, allow_publish[0].findall('./topic')))
+        else: advertise = None
+        if allow_subscribe: subscribe = list(map(lambda sub: sub.text, allow_subscribe[0].findall('./topic')))
+        else: subscribe = None
+        return cls(name=name, namespace=namespace, can_advertise=advertise, can_subscribe=subscribe, enclave=enclave)
 
     @property
     def profile(self):
@@ -299,11 +323,3 @@ class svROSProfile(object):
     @property
     def index(self):
         return self.enclave.name + self.profile
-    
-    @property
-    def enclave(self):
-        return self._enclave
-    
-    @enclave.setter
-    def enclave(self, enclave):
-        self._enclave = enclave
