@@ -77,7 +77,7 @@ class svProjectExtractor:
     def extract_sros(self, sros_file=''):
         if not sros_file:
             sros_file = f'{self.PROJECT_DIR}policies.xml'
-        if not svProjectExtractor.validate_sros(sros=sros_file):
+        if not self.validate_sros(sros=sros_file):
             raise svException('Failed to validate SROS file schema.')
         tree = ET.parse(sros_file)
         root = tree.getroot()
@@ -88,18 +88,16 @@ class svProjectExtractor:
         for enclave in enclaves:
             path, profiles = enclave.get('path'), enclave.findall('.//profile')
             enclave        = svROSEnclave(path=path, profiles=profiles)
-        print(svROSProfile.PROFILES['/multiplexer/lol/multiplexer'].privileges)
         return True
 
-    @staticmethod
-    def validate_sros(sros):
+    def validate_sros(self, sros):
         sch      = f'{SCHEMAS}sros/sros.xsd'
         schema   = xmlschema.XMLSchema(sch)
         template = ET.parse(sros).getroot()
         try:
             validate = schema.validate(template)
-        except Exception: print('continue') # return False
-        return svProjectExtractor.retrieve_sros_default_tag(_file_=sros, template=template)
+        except Exception: return False
+        return svProjectExtractor.retrieve_sros_default_tag(_file_=f'{self.PROJECT_DIR}data/policies.xml', template=template)
 
     @staticmethod
     def retrieve_sros_default_tag(_file_, template):
@@ -122,4 +120,28 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
+        nodes, unsecured_enclaves = config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured_enclaves')
+        if not (nodes and unsecured_enclaves):
+            raise svException(f'Failed to import config file of project.')
+        if not self.load_nodes_profiles(nodes=nodes, unsecured_enclaves=unsecured_enclaves):
+            raise svException(f'Failed to import config file of project.')
 
+    def load_nodes_profiles(self, nodes, unsecured_enclaves):
+        if svROSEnclave.ENCLAVES is {}:
+            raise svException("No enclaves found, security in ROS is yet to be defined.")
+        for node in nodes:
+            name, node = node, nodes[node]
+            unsecured, enclave = False, None
+            if node.get('enclave') == '' or node.get('enclave') in unsecured_enclaves: unsecured = True
+            elif node.get('enclave') not in svROSEnclave.ENCLAVES:
+                raise svException(f"{node.get('rosname')} enclave is not defined.")
+            else:
+                enclave = svROSEnclave.ENCLAVES[node.get('enclave')]
+            if not unsecured:
+                rosname = node.get('rosname')
+                profile = enclave.profiles.get(rosname)
+                if not profile: raise svException(f"{node.get('rosname')} profile is not defined.")
+                node         = svROSNode(profile=profile, **node)
+                profile.node = node
+            else: node       = svROSNode(**node, profile=None)
+        return True

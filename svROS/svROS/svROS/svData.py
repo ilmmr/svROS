@@ -239,10 +239,12 @@ class svROSNode(object):
             \__ Already parsed node
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
-    def __init__(self, **kwargs):
-        # self            = super().init_node(**kwargs)
-        self.advertises, self.subscribes, self.profile = self.get_enclave_profile()
-        self.priveleges = self.update_node_with_profile()
+    def __init__(self, profile, **kwargs):
+        self.rosname, self.executable, self.enclave, self.advertise, self.subscribe, self.properties, self.profile = kwargs.get('rosname'), kwargs.get('executable'), kwargs.get('enclave'), kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
+        # Constrain topic allowance.
+        self.topic_allowance = self._constrain_topics() if self.secure else None
+        # GET from Pickle.
+        self.remaps = svROSNode._load_remaps()
 
     def get_enclave_profile(self):
         if self.enclave == '' or self.enclave is None:
@@ -271,24 +273,24 @@ class svROSNode(object):
         pass
     
     @property
-    def is_secure(self):
+    def secure(self):
         if self.profile is None: return False
         else: return True
 
 "SROS2-based Enclave with associated profiles."
 class svROSEnclave(object):
-    ENCLAVES = set()
+    ENCLAVES = {}
     """
         svROSEnclave
             \_ path
             \_ profiles
     """
     def __init__(self, path, profiles):
-        self.name, self.profiles = path, []
+        self.name, self.profiles = path, {}
         for profile in profiles:
             p = svROSProfile.init_profile(profile, enclave=self)
-            self.profiles.append(p)
-        svROSEnclave.ENCLAVES.add(self)
+            self.profiles[p.profile] = p
+        svROSEnclave.ENCLAVES[self.name] = self
 
 "SROS2-based Profile with associated priveleges."
 class svROSProfile(object):
