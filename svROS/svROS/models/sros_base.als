@@ -8,30 +8,28 @@ abstract sig Enclave {
 } { some profiles }
 abstract sig Profile {
 	privileges: set Privilege,
-	access: set Privelege
+	access: set Privilege
 }
 abstract sig Privilege {
 	role : one Role,
-	object: one Object,
-	value: one Value
+	object: one Object
 }
-enum Role {Publish, Subscribe}
-enum Value {Alloy, Deny}
+enum Role {Advertise, Subscribe}
 abstract sig Object {}
 /* --- SROS basics configuration template --- */
 
 /* --- Some basic assumptions --- */
 fact sros_assumptions {
-	/* A profile can not have different priveleges to the same object */
+	/* A profile can not have different privileges to the same object */
 	all p: Profile | some p1, p2 : p.privileges | p1.role = p2.role and p1.object = p2.object implies p1 = p2
 }
 /* --- Some basic assumptions --- */
 
 /* --- Assumptions --- */
-pred rule_different_priveleges {
+pred rule_different_privileges {
 	all p: Profile | some p1, p2 : p.privileges | p1.role = p2.role and p1.object = p2.object implies p1 = p2
 }
-pred access_in_priveleges {
-	all p: Profile | p.access in p.priveleges
+pred access_in_privileges {
+	all p: Profile | p.access in p.privileges
 }
 /* --- Assumptions --- */

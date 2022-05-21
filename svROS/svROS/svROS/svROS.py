@@ -8,7 +8,9 @@ from logging import FileHandler
 from tools.InfoHandler import color, svException, svInfo
 # Exporters
 from svExport import svrosExport
-from svAnalyzer import svProjectExtractor
+from svAnalyzer import svProjectExtractor, svAnalyzer
+from svData import svROSEnclave, svROSNode
+from svAlloyExporter import svAlloyEnclave, svAlloyProfile
 
 global WORKDIR, INIT_SCHEMA, _INIT_
 WORKDIR      = os.path.dirname(__file__)
@@ -462,9 +464,17 @@ class svRUN:
             raise svException(f'Could not initiate running of project: SROS file does not exist. Please create a file named {color.color("RED", "policies.xml")} in the {self.project.capitalize()} directory or export a project.')
         # Loading pre-existing data
         existing_data     = self.load_pickle_files()
-        project_extractor = svProjectExtractor(project=self.project, MODELS_DIR=self._BIN, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
-        project_extractor.extract_sros()
-        project_extractor.extract_config()
+        project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
+        if not (project_extractor.extract_sros() and project_extractor.extract_config()):
+            raise svException('Could not initiate running of project.')
+        # Analyzer!
+        for enclave in svROSEnclave.ENCLAVES:
+            enclave = svROSEnclave.ENCLAVES[enclave]
+            print(svAlloyEnclave(ENCLAVE=enclave))
+        for node in svROSNode.NODES:
+            node = svROSNode.NODES[node]
+            print(svAlloyProfile(NODE=node))
+        # analyzer = svAnalyzer(project=self.project, MODELS_DIR=self._BIN, PROJECT_DIR=self.project_path)
 
     def load_pickle_files(self):
         DATADIR = f'{self.project_path}data/'

@@ -23,10 +23,6 @@ class svAnalyzer(object):
     project       : str
     MODELS_DIR    : str
     PROJECT_DIR   : str
-    nodes         : dict = field(default_factory=dict)
-    properties    : dict = None
-    configuration : str  = None
-    specification : str           = ''
 
     def __post_init__(self):
         module_name = "module " + str(project) + "\n/* === PROJECT " + str(project).upper() + " ===*/"
@@ -69,7 +65,6 @@ class svAnalyzer(object):
 @dataclass
 class svProjectExtractor:
     project       : str
-    MODELS_DIR    : str
     PROJECT_DIR   : str
     IMPORTED_DATA : dict
 
@@ -129,6 +124,7 @@ class svProjectExtractor:
             raise svException(f'Failed to import config file of project.')
         if not self.load_nodes_profiles(nodes=nodes, unsecured_enclaves=unsecured_enclaves):
             raise svException(f'Failed to import config file of project.')
+        return True
 
     def load_nodes_profiles(self, nodes, unsecured_enclaves):
         if svROSEnclave.ENCLAVES is {}:

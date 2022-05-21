@@ -8,7 +8,6 @@ from tools.InfoHandler import color, svException
 # XML Parser
 import xml.etree.ElementTree as ET
 # svROS HPL Exporter
-from svAlloyExporter import Configuration
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
