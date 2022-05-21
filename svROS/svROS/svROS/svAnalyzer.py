@@ -7,7 +7,7 @@ from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svInfo
 # Node parser
-from svData import svROSNode, svROSProfile, svROSEnclave
+from svData import svROSNode, svROSProfile, svROSEnclave, Package
 import xml.etree.ElementTree as ET
 
 global WORKDIR, SCHEMAS
@@ -120,7 +120,11 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
-        nodes, unsecured_enclaves = config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured_enclaves')
+        packages, nodes, unsecured_enclaves = list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured_enclaves')
+        # LOAD PICKLE.
+        if not self.IMPORTED_DATA == {}: svROSNode.LOADED_NODES = self.IMPORTED_DATA['nodes']
+        for package in packages: 
+            Package.init_package_name(name=package, index=packages.index(package))
         if not (nodes and unsecured_enclaves):
             raise svException(f'Failed to import config file of project.')
         if not self.load_nodes_profiles(nodes=nodes, unsecured_enclaves=unsecured_enclaves):
@@ -141,7 +145,7 @@ class svProjectExtractor:
                 rosname = node.get('rosname')
                 profile = enclave.profiles.get(rosname)
                 if not profile: raise svException(f"{node.get('rosname')} profile is not defined.")
-                node         = svROSNode(profile=profile, **node)
+                node         = svROSNode(full_name=name, profile=profile, **node)
                 profile.node = node
-            else: node       = svROSNode(**node, profile=None)
+            else: node       = svROSNode(full_name=name, profile=None, **node)
         return True

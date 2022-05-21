@@ -7,6 +7,8 @@ from typing import ClassVar
 from tools.InfoHandler import color, svException
 # XML Parser
 import xml.etree.ElementTree as ET
+# svROS HPL Exporter
+from svAlloyExporter import Configuration
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -25,6 +27,12 @@ class Package:
     def __init__(self, name: str, path: str, nodes: dict):
         self.name, self.path, self.nodes = name, path, nodes
         Package.PACKAGES.add(self)
+
+    @classmethod
+    def init_package_name(cls, name, index):
+        # Only clear if its the first package.
+        if index == 0: cls.PACKAGES.clear()
+        return cls(name=name, path='', nodes=None)
 
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
@@ -87,7 +95,6 @@ class Node(object):
             node  = cls.NODES[index]
             ret_object[index]               = {}
             ret_object[index]['rosname']    = node.rosname
-            ret_object[index]['executable'] = node.executable
             ret_object[index]['enclave']    = node.enclave if node.enclave else Node.namespace(tag=index)
             # Topic treatment.
             if node.publishes:  ret_object[index]['advertise'] = {}
@@ -171,7 +178,7 @@ class Node(object):
         node   = Node.NODES[node]
         # Enclave is not needed at this point
         topics = {'subscribe': list(map(lambda subs: subs.rosname, node.subscribes)), 'advertise': list(map(lambda pubs: pubs.rosname, node.publishes)), 'remaps': node.remaps}
-        return {'package': node.package, 'executable': node.executable, 'rosname': node.rosname, 'topics': topics}
+        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'topics': topics}
 
     @staticmethod
     def render_remap(topic, remaps):
@@ -233,18 +240,62 @@ class Node(object):
 """
 "ROS2-based Node to be analyzed."
 class svROSNode(object):
-    NODES = {}
+    NODES        = {}
+    LOADED_NODES = {}
     """
         svROSNode
             \__ Already parsed node
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
-    def __init__(self, profile, **kwargs):
-        self.rosname, self.executable, self.enclave, self.advertise, self.subscribe, self.properties, self.profile = kwargs.get('rosname'), kwargs.get('executable'), kwargs.get('enclave'), kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
+    def __init__(self, full_name, profile, **kwargs):
+        self.index, self.rosname, self.namespace, self.executable, self.enclave, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('enclave'), kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
+        # Process node-package
+        self.package = self.index.replace(self.rosname, '') 
+        if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
+            print(Package.PACKAGES)
+            raise svException(f'Package {self.package} defined in node {self.index} not defined.')
         # Constrain topic allowance.
-        self.topic_allowance = self._constrain_topics() if self.secure else None
-        # GET from Pickle.
-        self.remaps = svROSNode._load_remaps()
+        self.topic_allowance = self.constrain_topics() if self.secure else None
+        # GET from Pickle classes.
+        if svROSNode.LOADED_NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
+        # LOAD properties.
+        if self.properties: self.properties = svROSNode.parse_hpl_properties(properties=self.properties)
+        # Store in class variable.
+        svROSNode.NODES[self.index] = self
+
+    def constrain_topics(self):
+        topic_allowance = {method: set() for method in ['advertise', 'subscribe']}
+        profile         = self.profile
+        privileges, namespace            = profile.privileges, profile.namespace
+        allow_subscribe, allow_advertise = privileges.get('subscribe'), privileges.get('advertise')
+        # Advertise.
+        if not allow_advertise:
+            if self.advertise:
+                for adv in self.advertise:
+                    name, adv  = adv, adv.replace(namespace, '').strip()
+                    if adv in allow_advertise:
+                        topic_allowance['advertise'].add(name)
+        else: topic_allowance['advertise'].clear()
+        # Subscribe
+        if not allow_subscribe:
+            if self.subscribe:
+                for sub in self.subscribe:
+                    name, sub  = sub, sub.replace(namespace, '').strip()
+                    if sub in allow_subscribe:
+                        topic_allowance['subscribe'].add(name)
+        else: topic_allowance['subscribe'].clear()
+        return topic_allowance
+
+    @classmethod
+    def load_remaps(cls, node_name):
+        if node_name in cls.LOADED_NODES:
+            node = cls.LOADED_NODES[node_name]
+            return node.remaps
+        else: return list()
+
+    @staticmethod
+    def parse_hpl_properties(properties):
+        pass
 
     def get_enclave_profile(self):
         if self.enclave == '' or self.enclave is None:

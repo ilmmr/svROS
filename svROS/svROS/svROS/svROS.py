@@ -461,12 +461,12 @@ class svRUN:
         if not os.path.exists(path=f'{self.project_path}policies.xml'):
             raise svException(f'Could not initiate running of project: SROS file does not exist. Please create a file named {color.color("RED", "policies.xml")} in the {self.project.capitalize()} directory or export a project.')
         # Loading pre-existing data
-        existing_data     = self.load_data_files()
+        existing_data     = self.load_pickle_files()
         project_extractor = svProjectExtractor(project=self.project, MODELS_DIR=self._BIN, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
         project_extractor.extract_sros()
         project_extractor.extract_config()
 
-    def load_data_files(self):
+    def load_pickle_files(self):
         DATADIR = f'{self.project_path}data/'
         package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Topics.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
         if not (package_file and topic_file and node_file):
