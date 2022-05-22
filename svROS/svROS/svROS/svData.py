@@ -265,8 +265,7 @@ class svROSNode(object):
     def constrain_topics(self):
         topic_allowance = {method: set() for method in ['advertise', 'subscribe']}
         profile         = self.profile
-        privileges, namespace            = profile.privileges, profile.namespace
-        allow_subscribe, allow_advertise = privileges.get('subscribe'), privileges.get('advertise')
+        namespace, allow_subscribe, allow_advertise = profile.subscribe, profile.advertise
         # Advertise.
         if not allow_advertise:
             if self.advertise:
@@ -327,6 +326,9 @@ class svROSNode(object):
         if self.profile is None: return False
         else: return True
 
+""" 
+    The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
+"""
 "SROS2-based Enclave with associated profiles."
 class svROSEnclave(object):
     ENCLAVES = {}
@@ -336,11 +338,17 @@ class svROSEnclave(object):
             \_ profiles
     """
     def __init__(self, path, profiles):
-        self.name, self.profiles = path, {}
+        self.name, self.profiles, self.signature = path, {}, self.abstract(tag=path)
         for profile in profiles:
             p = svROSProfile.init_profile(profile, enclave=self)
             self.profiles[p.profile] = p
         svROSEnclave.ENCLAVES[self.name] = self
+
+    def abstract(self, tag): return tag.lower().replace('/', '_')
+
+    def __str__(self):
+        profiles = "none" if (self.ENCLAVE.profiles == {}) else ' + '.join(list(map(lambda profile: self.abstract(tag=profile), self.ENCLAVE.profiles)))
+        return f"""one sig {self.signature} extends Enclave {{}} {{profiles = {profiles}}}\n"""
 
 "SROS2-based Profile with associated priveleges."
 class svROSProfile(object):
@@ -353,7 +361,7 @@ class svROSProfile(object):
     def __init__(self, name, namespace, can_advertise, can_subscribe, enclave):
         self.name, self.namespace, self.enclave = name, namespace, enclave
         self.privileges = dict()
-        self.privileges['advertise'], self.privileges['subscribe'] = can_advertise, can_subscribe
+        self.advertise, self.subscribe = can_advertise, can_subscribe
         svROSProfile.PROFILES[self.index] = self
 
     @classmethod
@@ -361,11 +369,23 @@ class svROSProfile(object):
         namespace, name, topics = profile.get('ns'), profile.get('node'), profile.findall('./topics')
         allow_publish   = list(filter(lambda topic: topic.get('publish').strip()=='ALLOW' , list(filter(lambda t: t.get('publish'), topics))))
         allow_subscribe = list(filter(lambda topic: topic.get('subscribe').strip()=='ALLOW' , list(filter(lambda t: t.get('subscribe'), topics))))
-
+        deny_publish    = list(filter(lambda topic: topic.get('publish').strip()=='DENY' , list(filter(lambda t: t.get('publish'), topics))))
+        deny_subscribe  = list(filter(lambda topic: topic.get('subscribe').strip()=='DENY' , list(filter(lambda t: t.get('subscribe'), topics))))
+        # Process ALLOWS.
         if allow_publish: advertise = list(map(lambda pub: pub.text, allow_publish[0].findall('./topic')))
         else: advertise = None
         if allow_subscribe: subscribe = list(map(lambda sub: sub.text, allow_subscribe[0].findall('./topic')))
         else: subscribe = None
+        # Process DENYS.
+        if deny_publish: 
+            deny_publish = list(map(lambda pub: pub.text, allow_publish[0].findall('./topic')))
+            for deny in deny_publish:
+                if deny in advertise: raise svException(f'Failed to load profile since privilege {deny} is either defiend as ALLOW and DENY.')
+        if deny_subscribe: 
+            deny_subscribe = list(map(lambda sub: sub.text, allow_subscribe[0].findall('./topic')))
+            for deny in deny_subscribe:
+                if deny in subscribe: raise svException(f'Failed to load profile since privilege {deny} is either defiend as ALLOW and DENY.')
+        # Return instance created.
         return cls(name=name, namespace=namespace, can_advertise=advertise, can_subscribe=subscribe, enclave=enclave)
 
     @property
@@ -375,3 +395,60 @@ class svROSProfile(object):
     @property
     def index(self):
         return self.enclave.name + self.profile
+
+    @property
+    def node(self):
+        return self._node
+
+    # NEEDED FOR ALLOY DEFINITION
+    @node.setter
+    def node(self, node):
+        if not isinstance(node, svROSNode):
+            raise svException('Failed to load node into profile.')
+        self.abstract, self.privileges, self.access  = self.abstract(tag=node.rosname), [], []
+        # Process topic access.
+        if node.advertise:
+            for adv in node.advertise: self.access.append(svROSPrivilege(signature=f'{rosname}_access_{len(self.access)}', role='advertise', rosname=adv))
+        if node.subscribe:
+            for sub in node.subscribe: self.access.append(svROSPrivilege(signature=f'{rosname}_access_{len(self.access)}', role='subscribe', rosname=sub))
+        # Process topic privilege
+        if node.topic_allowance.get('advertise', {}):
+            for adv in node.topic_allowance.get('advertise', {}): self.privileges.append(svROSPrivilege(signature=f'{rosname}_privilege_{len(self.privileges)}', role='advertise', rosname=adv))
+        if node.topic_allowance.get('subscribe', {}):
+            for sub in node.topic_allowance.get('subscribe', {}): self.privileges.append(svROSPrivilege(signature=f'{rosname}_privilege_{len(self.privileges)}', role='subscribe', rosname=sub))
+
+    def abstract(self, tag): return tag.lower().replace('/', '_')
+
+    def profile_declaration(self):
+        privileges = "none" if (self.privileges == []) else ' + '.join(list(map(lambda p: p.signature, self.privileges)))
+        access     = "none" if (self.access == [])     else ' + '.join(list(map(lambda p: p.signature, self.access)))
+        return f"""one sig {self.signature} extends Profile {{}} {{privileges = {privileges}, access = {access}}}\n"""
+
+    def privilege_declaration(self):
+        _str_return_ = ""
+        for privilege in self.privileges: _str_return_ += str(privilege)
+        for access    in self.access:     _str_return_ += str(access)
+        return _str_return_
+
+    def __str__(self):
+        return self.profile_declaration() + self.privilege_declaration()
+
+class svROSObject(object):
+    def __init__(self, name):
+        self.name = name
+    
+    def __str__(self):
+        return f'one sig {self.name} extends Object {{}}\n'
+
+class svROSPrivilege(object):
+    PRIVILEGES = {'Advertise', 'Subscribe'}
+    def __init__(self, signature, role, rosname):
+        self.signature = self.abstract(tag=signature)
+        self.role      = role.capitalize()
+        if not self.role in svROSPrivilege.PRIVILEGES: raise svException('Not identified role.')
+        self.object    = svROSObject(name=self.abstract(tag=rosname))
+
+    def abstract(self, tag): return tag.lower().replace('/', '_')
+
+    def __str__(self):
+        return f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}, object = {self.object.name}, value = ALLOW}}\n""" + str(self.object)

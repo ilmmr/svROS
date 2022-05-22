@@ -16,17 +16,43 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 
 """ 
     This file contains the necessary classes and methods to translate from Python Structures into Alloy configuration model.
+    Additionally some methods were implemented to approprietally retrieve text-based structures into Alloy.
 """
+@dataclass
+class svHPLParser(object):
+    node      : svROSNode
+    properties: list = field(default_factory=list)
+
+@dataclass
+class svSROSAlloy(object):
+    """
+        - GET ENCLAVES
+        - GET NODES that have associated profiles
+    """
+    PROJECT_DIR : str
+    SROS_MODEL  : str
+    NODES       : dict
+    ENCLAVES    : dict
+
+    def generate(self):
+        model, file_path = self.SROS_MODEL, f'{self.PROJECT_DIR}/models/sros-concrete.als'
+        if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating SROS file.')
+        model += ' '.join(list(map(lambda enclave: str(self.ENCLAVES[enclave]), self.ENCLAVES)))
+        model += ' '.join(list(map(lambda node: str(self.NODES[node].profile), self.NODES)))
+        with open(file_path, 'w+') as sros: sros.write(model)
+        return file_path
+
 "Main class that implements the analyzing process while accounting the configuration."
 @dataclass
 class svAnalyzer(object):
-    project       : str
+    EXTRACTOR     : svProjectExtractor
     MODELS_DIR    : str
-    PROJECT_DIR   : str
 
     def __post_init__(self):
-        module_name = "module " + str(project) + "\n/* === PROJECT " + str(project).upper() + " ===*/"
-        meta_model, sros_model, scopes = self.load_configuration(MODELS_DIR=self.MODELS_DIR, PROJECT_DIR=self.PROJECT_DIR, name=self.project.lower())
+        # GET FROM EXTRACTOR
+        project, PROJECT_DIR, scopes = self.EXTRACTOR.project, self.EXTRACTOR.PROJECT_DIR, self.EXTRACTOR.scopes
+        module_name, sros_module_name = "module " + str(project) + "\n/* === PROJECT " + str(project).upper() + " ===*/", "module sros-" + str(project) + "\n/* === PROJECT " + str(project).upper() + " ===*/"
+        self.meta_model, self.sros_model = self.load_configuration(MODELS_DIR=self.MODELS_DIR, PROJECT_DIR=PROJECT_DIR, name=project.lower())
         # self.configuration = Configuration(c_name, self.nodes, self.topics, scopes, properties=self.properties)
         # self.specification = (self.module_name + meta_model + self.configuration.specification())
 	
@@ -36,22 +62,13 @@ class svAnalyzer(object):
 	
     @staticmethod
     def load_configuration(MODELS_DIR, PROJECT_DIR, name):
-        CONFIG_FILE = f'{PROJECT_DIR}/{name}.yaml'
-        if not os.path.isfile(CONFIG_FILE):
-                raise Exception
-        with open(CONFIG_FILE) as f:
-            data   = f.read()
-            data   = yaml.load(data)
-            # LOAD from configuration file.
-            scopes     = data['configurations']['scope']
-            self.nodes = data['nodes']
         # ROS META-MODEL
         with open(f'{MODELS_DIR}/ros_base.als') as f:
             ros_meta_model = f.read()
         # SROS META-MODEL
         with open(f'{MODELS_DIR}/sros_base.als') as f:
             sros_meta_model = f.read()
-        return ros_meta_model, sros_meta_model, scopes
+        return ros_meta_model, sros_meta_model
 
     # ALLOY => Runs Model Checking in ROS_MODEL
     def model_check(self):
@@ -59,7 +76,9 @@ class svAnalyzer(object):
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
     def security_verification(self):
-        pass
+        NODES, ENCLAVES = dict(filter(lambda node: node[1].profile is not None, svROSNode.NODES.items())), svROSEnclave.ENCLAVES
+        parser    = svSROSAlloy(PROJECT_DIR=self.EXTRACTOR.PROJECT_DIR, SROS_MODEL=self.sros_model, NODES=NODES, ENCLAVES=ENCLAVES)
+        SROS_FILE = parser.generate()
 
 "Main exporter parser from current project's directory files: SROS and configuration file"
 @dataclass
@@ -79,7 +98,7 @@ class svProjectExtractor:
         if not root.tag == "policy":
             raise svException('Failed to validate SROS file schema.')
         # Load SROS DATA.
-        enclaves = root.findall('.//enclave')
+        self.sros, enclaves = root, root.findall('.//enclave')
         for enclave in enclaves:
             path, profiles = enclave.get('path'), enclave.findall('.//profile')
             enclave        = svROSEnclave(path=path, profiles=profiles)
@@ -115,7 +134,7 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
-        packages, nodes, unsecured_enclaves = list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured_enclaves')
+        self.config, packages, nodes, unsecured_enclaves = config, list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured_enclaves')
         # LOAD PICKLE.
         if not self.IMPORTED_DATA == {}: svROSNode.LOADED_NODES = self.IMPORTED_DATA['nodes']
         for package in packages: 
@@ -145,3 +164,10 @@ class svProjectExtractor:
                 profile.node = node
             else: node       = svROSNode(full_name=name, profile=None, **node)
         return True
+
+    @property
+    def scopes(self):
+        scopes = self.config.get('configurations', {}).get('analysis', {}).get('scopes')
+        if not scopes:
+            raise svException('Failed to retrieve scopes.')
+        return scopes

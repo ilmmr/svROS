@@ -443,9 +443,9 @@ class svEXPORT:
 @dataclass
 class svRUN:
     project   : str
+    _BIN      : str
+    _PROJECTS : str
     _DIR      : str      = os.path.join(os.path.expanduser("~"), ".svROS")
-    _BIN      : str      = ''
-    _PROJECTS : str      = ''
     can_run   : bool     = False
     log       : logging.getLogger() = None
 
@@ -467,14 +467,9 @@ class svRUN:
         project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
         if not (project_extractor.extract_sros() and project_extractor.extract_config()):
             raise svException('Could not initiate running of project.')
-        # Analyzer!
-        for enclave in svROSEnclave.ENCLAVES:
-            enclave = svROSEnclave.ENCLAVES[enclave]
-            print(svAlloyEnclave(ENCLAVE=enclave))
-        for node in svROSNode.NODES:
-            node = svROSNode.NODES[node]
-            print(svAlloyProfile(NODE=node))
-        # analyzer = svAnalyzer(project=self.project, MODELS_DIR=self._BIN, PROJECT_DIR=self.project_path)
+        project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
+        if not (project_analyzer.security_verification()):
+            raise svException('Could not initiate running of project => ANALYZER FAILED.')
 
     def load_pickle_files(self):
         DATADIR = f'{self.project_path}data/'
