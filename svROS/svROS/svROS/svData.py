@@ -53,15 +53,14 @@ class Topic(object):
     def namespace(tag: str):
         return tag if tag.startswith('/') else f'/{tag}'
     
-    @property
-    def rosname(self):
-        if self.node and self.node.namespace:
-            rosname = Topic.namespace(tag=self.node.namespace)
+    def rosname(self, node):
+        if node and node.namespace:
+            rosname = Topic.namespace(tag=node.namespace)
             if self.remap: rosname += Topic.namespace(tag=self.remap)
-            else: rosname += Topic.namespace(tag=self.name)
+            else:          rosname += Topic.namespace(tag=self.name)
         else:
             if self.remap: rosname = Topic.namespace(tag=self.remap)
-            else: rosname = Topic.namespace(tag=self.name)
+            else:          rosname = Topic.namespace(tag=self.name)
         return rosname
 
 "ROS2-based Node already parse, with remaps and topic handling."
@@ -83,8 +82,6 @@ class Node(object):
     # Update node with its Source and Topic Handling
     def store_node_source(self, source):
         self.source, self.subscribes, self.publishes = source.name, source.subscribes, source.publishes
-        for pub in source.publishes : pub.node = self
-        for sub in source.subscribes: sub.node = self
 
     @classmethod
     def process_config_file(cls):
@@ -102,11 +99,11 @@ class Node(object):
                 continue
             for adv in node.publishes:
                 topic_type = adv.type
-                name       = Node.render_remap(topic=adv, remaps=node.remaps).rosname
+                name       = Node.render_remap(topic=adv, remaps=node.remaps).rosname(node=node)
                 ret_object[index]['advertise'][name] = topic_type
             for sub in node.subscribes:
                 topic_type = sub.type
-                name       = Node.render_remap(topic=sub, remaps=node.remaps).rosname
+                name       = Node.render_remap(topic=sub, remaps=node.remaps).rosname(node=node)
                 ret_object[index]['subscribe'][name] = topic_type
             # HPL Properties
             ret_object[index]['hpl'] = {'properties': ['']}
@@ -147,7 +144,9 @@ class Node(object):
             pubs.set('publish', 'ALLOW')
             pubs_names = []
             for adv in node.publishes:
-                name       = Node.render_remap(topic=adv, remaps=node.remaps).name
+                topic = Node.render_remap(topic=adv, remaps=node.remaps)
+                if topic.remap: name = topic.remap 
+                else:           name = topic.name
                 if name in pubs_names: continue
                 pubs_names.append(name)
                 topic      = ET.Element('topic')
@@ -158,7 +157,9 @@ class Node(object):
             subs.set('subscribe', 'ALLOW')
             subs_names = []
             for sub in node.subscribes:
-                name       = Node.render_remap(topic=sub, remaps=node.remaps).name
+                topic = Node.render_remap(topic=sub, remaps=node.remaps)
+                if topic.remap: name = topic.remap 
+                else:           name = topic.name
                 if name in subs_names: continue
                 subs_names.append(name)
                 topic      = ET.Element('topic')
@@ -176,7 +177,7 @@ class Node(object):
     def to_json(node: str):
         node   = Node.NODES[node]
         # Enclave is not needed at this point
-        topics = {'subscribe': list(map(lambda subs: subs.rosname, node.subscribes)), 'advertise': list(map(lambda pubs: pubs.rosname, node.publishes)), 'remaps': node.remaps}
+        topics = {'subscribe': list(map(lambda subs: subs.rosname(node=node), node.subscribes)), 'advertise': list(map(lambda pubs: pubs.rosname(node=node), node.publishes)), 'remaps': node.remaps}
         return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'topics': topics}
 
     @staticmethod
@@ -251,7 +252,6 @@ class svROSNode(object):
         # Process node-package
         self.package = self.index.replace(self.rosname, '') 
         if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
-            print(Package.PACKAGES)
             raise svException(f'Package {self.package} defined in node {self.index} not defined.')
         # Constrain topic allowance.
         self.topic_allowance = self.constrain_topics() if self.secure else None
@@ -265,9 +265,9 @@ class svROSNode(object):
     def constrain_topics(self):
         topic_allowance = {method: set() for method in ['advertise', 'subscribe']}
         profile         = self.profile
-        namespace, allow_subscribe, allow_advertise = profile.subscribe, profile.advertise
+        namespace, allow_subscribe, allow_advertise = profile.namespace, profile.subscribe, profile.advertise
         # Advertise.
-        if not allow_advertise:
+        if allow_advertise:
             if self.advertise:
                 for adv in self.advertise:
                     name, adv  = adv, adv.replace(namespace, '').strip()
@@ -275,7 +275,7 @@ class svROSNode(object):
                         topic_allowance['advertise'].add(name)
         else: topic_allowance['advertise'].clear()
         # Subscribe
-        if not allow_subscribe:
+        if allow_subscribe:
             if self.subscribe:
                 for sub in self.subscribe:
                     name, sub  = sub, sub.replace(namespace, '').strip()
@@ -347,8 +347,10 @@ class svROSEnclave(object):
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
     def __str__(self):
-        profiles = "none" if (self.ENCLAVE.profiles == {}) else ' + '.join(list(map(lambda profile: self.abstract(tag=profile), self.ENCLAVE.profiles)))
-        return f"""one sig {self.signature} extends Enclave {{}} {{profiles = {profiles}}}\n"""
+        profiles = None if (self.profiles == {}) else ' + '.join(list(map(lambda profile: 'profile' + self.abstract(tag=profile), self.profiles)))
+        if not profiles: profiles = "no profiles"
+        else:            profiles = f"profiles = {profiles}"
+        return f"""one sig enclave{self.signature} extends Enclave {{}} {{{profiles}}}\n"""
 
 "SROS2-based Profile with associated priveleges."
 class svROSProfile(object):
@@ -405,50 +407,88 @@ class svROSProfile(object):
     def node(self, node):
         if not isinstance(node, svROSNode):
             raise svException('Failed to load node into profile.')
-        self.abstract, self.privileges, self.access  = self.abstract(tag=node.rosname), [], []
+        self.signature, self.privileges, self.access  = self.abstract(tag=node.rosname), [], []
+        rosname = self.signature
         # Process topic access.
         if node.advertise:
-            for adv in node.advertise: self.access.append(svROSPrivilege(signature=f'{rosname}_access_{len(self.access)}', role='advertise', rosname=adv))
+            for adv in node.advertise: 
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv,method='access', len=len(self.access))
+                if privilege not in self.access: self.access.append(privilege)
         if node.subscribe:
-            for sub in node.subscribe: self.access.append(svROSPrivilege(signature=f'{rosname}_access_{len(self.access)}', role='subscribe', rosname=sub))
+            for sub in node.subscribe: 
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=adv,method='access', len=len(self.access))
+                if privilege not in self.access: self.access.append(privilege)
         # Process topic privilege
         if node.topic_allowance.get('advertise', {}):
-            for adv in node.topic_allowance.get('advertise', {}): self.privileges.append(svROSPrivilege(signature=f'{rosname}_privilege_{len(self.privileges)}', role='advertise', rosname=adv))
+            for adv in node.topic_allowance.get('advertise', {}):
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv,method='privilege', len=len(self.privileges))
+                if privilege not in self.privileges: self.privileges.append(privilege)
         if node.topic_allowance.get('subscribe', {}):
-            for sub in node.topic_allowance.get('subscribe', {}): self.privileges.append(svROSPrivilege(signature=f'{rosname}_privilege_{len(self.privileges)}', role='subscribe', rosname=sub))
+            for sub in node.topic_allowance.get('subscribe', {}): 
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=adv,method='privilege', len=len(self.privileges))
+                if privilege not in self.privileges: self.privileges.append(privilege)
 
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
     def profile_declaration(self):
-        privileges = "none" if (self.privileges == []) else ' + '.join(list(map(lambda p: p.signature, self.privileges)))
-        access     = "none" if (self.access == [])     else ' + '.join(list(map(lambda p: p.signature, self.access)))
-        return f"""one sig {self.signature} extends Profile {{}} {{privileges = {privileges}, access = {access}}}\n"""
+        privileges = None if (self.privileges == []) else ' + '.join(list(map(lambda p: p.signature, self.privileges)))
+        access     = None if (self.access == [])     else ' + '.join(list(map(lambda p: p.signature, self.access)))
+        if not privileges: privileges = "no privileges"
+        else:              privileges = f"privileges = {privileges}"
+        if not access:     access     = "no access"
+        else:              access     = f"access = {access}"
+        return f"""one sig profile{self.signature} extends Profile {{}} {{{privileges}\n{access}}}\n"""
 
     def privilege_declaration(self):
         _str_return_ = ""
-        for privilege in self.privileges: _str_return_ += str(privilege)
-        for access    in self.access:     _str_return_ += str(access)
+        privileges   = list(set(self.privileges + self.access))
+        for privilege in privileges: _str_return_ += str(privilege)
         return _str_return_
 
     def __str__(self):
         return self.profile_declaration() + self.privilege_declaration()
 
 class svROSObject(object):
+    OBJECTS = {}
     def __init__(self, name):
         self.name = name
+        svROSObject.OBJECTS[name] = self
+
+    @classmethod
+    def init_object(cls, name):
+        if name in cls.OBJECTS: return cls.OBJECTS[name]
+        return cls(name=name)
     
     def __str__(self):
         return f'one sig {self.name} extends Object {{}}\n'
 
 class svROSPrivilege(object):
-    PRIVILEGES = {'Advertise', 'Subscribe'}
-    def __init__(self, signature, role, rosname):
+    PRIVILEGES       = {'Advertise', 'Subscribe'}
+    METHODS          = {'Privilege', 'Access'}
+    PRIVILEGES_SET   = {}
+    OBJECTS_DECLARED = set()
+    def __init__(self, index, signature, role, rosname):
         self.signature = self.abstract(tag=signature)
         self.role      = role.capitalize()
         if not self.role in svROSPrivilege.PRIVILEGES: raise svException('Not identified role.')
-        self.object    = svROSObject(name=self.abstract(tag=rosname))
+        self.object                          = svROSObject.init_object(name=self.abstract(tag=rosname))
+        svROSPrivilege.PRIVILEGES_SET[index] = self
+
+    @classmethod
+    def init_privilege(cls, node, role, rosname, method, len):
+        if not role.capitalize() in svROSPrivilege.PRIVILEGES: raise svException('Not identified role.')
+        if not method.capitalize() in svROSPrivilege.METHODS:  raise svException('Not identified method.')
+        index = node + rosname
+        if index in cls.PRIVILEGES_SET:
+            return cls.PRIVILEGES_SET[index]
+        else:
+            return cls(index=index, signature=f'{rosname}_{method}_{len}', role=role, rosname=rosname)
 
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
     def __str__(self):
-        return f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}, object = {self.object.name}, value = ALLOW}}\n""" + str(self.object)
+        _str_ = f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}\nobject = {self.object.name}}}\n""" 
+        if not self.object in svROSPrivilege.OBJECTS_DECLARED:
+            _str_ += str(self.object)
+            svROSPrivilege.OBJECTS_DECLARED.add(self.object)
+        return _str_

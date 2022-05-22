@@ -10,7 +10,6 @@ from tools.InfoHandler import color, svException, svInfo
 from svExport import svrosExport
 from svAnalyzer import svProjectExtractor, svAnalyzer
 from svData import svROSEnclave, svROSNode
-from svAlloyExporter import svAlloyEnclave, svAlloyProfile
 
 global WORKDIR, INIT_SCHEMA, _INIT_
 WORKDIR      = os.path.dirname(__file__)

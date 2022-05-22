@@ -11,8 +11,8 @@ abstract sig Profile {
 	access: set Privilege
 }
 abstract sig Privilege {
-	role : one Role,
-	object: one Object
+	object: one Object,
+	role  : one Role
 }
 enum Role {Advertise, Subscribe}
 abstract sig Object {}
@@ -33,3 +33,13 @@ pred access_in_privileges {
 	all p: Profile | p.access in p.privileges
 }
 /* --- Assumptions --- */
+assert valid_configuration_1 {
+	rule_different_privileges and not access_in_privileges
+} check valid_configuration_1
+assert valid_configuration_2 {
+	access_in_privileges and not rule_different_privileges
+} check valid_configuration_2
+assert valid_configuration {
+	access_in_privileges and rule_different_privileges
+} check valid_configuration
+/* --- Specification --- */

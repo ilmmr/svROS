@@ -37,15 +37,15 @@ class svSROSAlloy(object):
     def generate(self):
         model, file_path = self.SROS_MODEL, f'{self.PROJECT_DIR}/models/sros-concrete.als'
         if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating SROS file.')
-        model += ' '.join(list(map(lambda enclave: str(self.ENCLAVES[enclave]), self.ENCLAVES)))
-        model += ' '.join(list(map(lambda node: str(self.NODES[node].profile), self.NODES)))
+        model += ''.join(list(map(lambda enclave: str(self.ENCLAVES[enclave]), self.ENCLAVES)))
+        model += ''.join(list(map(lambda node: str(self.NODES[node].profile), self.NODES)))
         with open(file_path, 'w+') as sros: sros.write(model)
         return file_path
 
 "Main class that implements the analyzing process while accounting the configuration."
 @dataclass
 class svAnalyzer(object):
-    EXTRACTOR     : svProjectExtractor
+    EXTRACTOR     : object
     MODELS_DIR    : str
 
     def __post_init__(self):
@@ -79,6 +79,8 @@ class svAnalyzer(object):
         NODES, ENCLAVES = dict(filter(lambda node: node[1].profile is not None, svROSNode.NODES.items())), svROSEnclave.ENCLAVES
         parser    = svSROSAlloy(PROJECT_DIR=self.EXTRACTOR.PROJECT_DIR, SROS_MODEL=self.sros_model, NODES=NODES, ENCLAVES=ENCLAVES)
         SROS_FILE = parser.generate()
+        if os.path.isfile(path=SROS_FILE): return True
+        else: return False
 
 "Main exporter parser from current project's directory files: SROS and configuration file"
 @dataclass
@@ -167,7 +169,7 @@ class svProjectExtractor:
 
     @property
     def scopes(self):
-        scopes = self.config.get('configurations', {}).get('analysis', {}).get('scopes')
+        scopes = self.config.get('configurations', {}).get('analysis', {}).get('scope')
         if not scopes:
             raise svException('Failed to retrieve scopes.')
         return scopes
