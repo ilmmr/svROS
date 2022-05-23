@@ -12,16 +12,18 @@ abstract sig Profile {
 }
 abstract sig Privilege {
 	object: one Object,
-	role  : one Role
+	role  : one Role,
+	rule  : one Rule
 }
 enum Role {Advertise, Subscribe}
+enum Rule {Allow, Deny}
 abstract sig Object {}
 /* --- SROS basics configuration template --- */
 
 /* --- Some basic assumptions --- */
 fact sros_assumptions {
 	/* A profile can not have different privileges to the same object */
-	all p: Profile | some p1, p2 : p.privileges | p1.role = p2.role and p1.object = p2.object implies p1 = p2
+	all p: Profile | some disj p1, p2 : p.privileges | p1.role = p2.role and p1.object = p2.object implies p1 = p2
 }
 /* --- Some basic assumptions --- */
 

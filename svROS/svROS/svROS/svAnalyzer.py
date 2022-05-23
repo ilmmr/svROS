@@ -23,25 +23,6 @@ class svHPLParser(object):
     node      : svROSNode
     properties: list = field(default_factory=list)
 
-@dataclass
-class svSROSAlloy(object):
-    """
-        - GET ENCLAVES
-        - GET NODES that have associated profiles
-    """
-    PROJECT_DIR : str
-    SROS_MODEL  : str
-    NODES       : dict
-    ENCLAVES    : dict
-
-    def generate(self):
-        model, file_path = self.SROS_MODEL, f'{self.PROJECT_DIR}/models/sros-concrete.als'
-        if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating SROS file.')
-        model += ''.join(list(map(lambda enclave: str(self.ENCLAVES[enclave]), self.ENCLAVES)))
-        model += ''.join(list(map(lambda node: str(self.NODES[node].profile), self.NODES)))
-        with open(file_path, 'w+') as sros: sros.write(model)
-        return file_path
-
 "Main class that implements the analyzing process while accounting the configuration."
 @dataclass
 class svAnalyzer(object):
@@ -71,16 +52,34 @@ class svAnalyzer(object):
         return ros_meta_model, sros_meta_model
 
     # ALLOY => Runs Model Checking in ROS_MODEL
-    def model_check(self):
-    	pass
+    def ros_verification(self):
+        NODES    = svROSNode.NODES
+        ROS_FILE = self.generate_ros_model(NODES=NODES)
+        if not os.path.isfile(path=ROS_FILE): return False
+        else: return True
+
+    def generate_ros_model(self, NODES):
+        model, file_path = self.meta_model, f'{self.PROJECT_DIR}/models/ros-concrete.als'
+        if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating ROS file.')
+        model += ''.join(list(map(lambda node: str(NODES[node]), NODES)))
+        with open(file_path, 'w+') as ros: ros.write(model)
+        return file_path
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
     def security_verification(self):
         NODES, ENCLAVES = dict(filter(lambda node: node[1].profile is not None, svROSNode.NODES.items())), svROSEnclave.ENCLAVES
-        parser    = svSROSAlloy(PROJECT_DIR=self.EXTRACTOR.PROJECT_DIR, SROS_MODEL=self.sros_model, NODES=NODES, ENCLAVES=ENCLAVES)
-        SROS_FILE = parser.generate()
-        if os.path.isfile(path=SROS_FILE): return True
-        else: return False
+        SROS_FILE = self.generate_sros_model(NODES=NODES, ENCLAVES=ENCLAVES)
+        if not os.path.isfile(path=SROS_FILE): return False
+        else: return True
+        # RUN ALLOY.
+    
+    def generate_sros_model(self, NODES, ENCLAVES):
+        model, file_path = self.sros_model, f'{self.PROJECT_DIR}/models/sros-concrete.als'
+        if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating SROS file.')
+        model += ''.join(list(map(lambda enclave: str(ENCLAVES[enclave]), ENCLAVES)))
+        model += ''.join(list(map(lambda node: str(NODES[node].profile), NODES)))
+        with open(file_path, 'w+') as sros: sros.write(model)
+        return file_path
 
 "Main exporter parser from current project's directory files: SROS and configuration file"
 @dataclass
