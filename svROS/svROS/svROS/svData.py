@@ -33,9 +33,28 @@ class Package:
         if index == 0: cls.PACKAGES.clear()
         return cls(name=name, path='', nodes=None)
 
+"ROS2-based for message topic_type as this tool focus on Topic-Message processing."
+class MessageType(object):
+    TYPES = {}
+    def __init__(self, name):
+        self.name = name
+        MessageType.TYPES[name] = self
+
+    @classmethod
+    def init_message_type(cls, name):
+        if name in cls.TYPES: return cls.TYPES[name]
+        return cls(name=name)
+    
+    def declaration(self, values):
+        values     = None if (values == [])     else ' + '.join(list(map(lambda value: value, values)))
+        if not values: values = "no values"
+        else:          values = f"values = {values}"
+        return f'one sig {self.name} extends Message {{}} {{{values}}}\n'
+
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
-    TOPICS = set()
+    TOPICS   = {}
+    TYPES    = set()
     """
         Topic
             \__ Name
@@ -43,11 +62,15 @@ class Topic(object):
     """
     def __init__(self, name, topic_type):
         self.name, self.type, self.remap = name, topic_type, None
-        Topic.TOPICS.add(self)
-
+        Topic.TOPICS[name] = self
+        
     @classmethod
-    def init_topic(cls, **kwargs):
-        return cls(name=kwargs['name'], type=kwargs['topic_type'])
+    def init_topic(cls, name, topic_type):
+        if name in Topic.TOPICS:
+            topic = Topic.TOPICS[name]
+            if topic_type != topic.type: raise svException(f'Same topic ({name}) with different types ({topic_type, topic.type}).')
+            else: return topic
+        return cls(name=name, topic_type=topic_type)
 
     @staticmethod
     def namespace(tag: str):
@@ -62,6 +85,18 @@ class Topic(object):
             if self.remap: rosname = Topic.namespace(tag=self.remap)
             else:          rosname = Topic.namespace(tag=self.name)
         return rosname
+
+    def abstract(self, tag): return tag.lower().replace('/', '_')
+
+    def declaration(self, node_rosname):
+        self.signature, abstract_type = self.abstract(tag=node_rosname + self.name), self.abstract(tag=self.type)
+        declaration                   = f"""one sig {self.signature} extends Topic {{}} {{box = {abstract_type}}}\n"""
+        if not abstract_type in Topic.TYPES:
+            message      = MessageType.init_message_type(name=abstract_type)
+            # GET VALUES FROM HPL PROPERTIES
+            declaration += message.declaration(values=[])
+            Topic.TYPES.add(message.name)
+        return declaration
 
 "ROS2-based Node already parse, with remaps and topic handling."
 class Node(object):
@@ -256,15 +291,16 @@ class svROSNode(object):
         # Constrain topic allowance.
         self.can_subscribe = profile.advertise if self.secure else None 
         self.can_publish   = profile.advertise if self.secure else None
-        self.topic_allowance = self.constrain_topics() if self.secure else None
         # GET from Pickle classes.
         if svROSNode.LOADED_NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
         # LOAD properties.
         if self.properties: self.properties = svROSNode.parse_hpl_properties(properties=self.properties)
         # Store in class variable.
         svROSNode.NODES[self.index] = self
-
+    
+    # Constrain TOPIC ALLOWANCE.
     def constrain_topics(self):
+        if not self.secure: svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
         topic_allowance = {method: set() for method in ['advertise', 'subscribe']}
         profile         = self.profile
         namespace, allow_subscribe, allow_advertise = profile.namespace, profile.subscribe, profile.advertise
@@ -272,17 +308,17 @@ class svROSNode(object):
         if allow_advertise:
             if self.advertise:
                 for adv in self.advertise:
-                    if adv in allow_advertise:
+                    if adv.name in allow_advertise:
                         topic_allowance['advertise'].add(adv)
         else: topic_allowance['advertise'].clear()
         # Subscribe
         if allow_subscribe:
             if self.subscribe:
                 for sub in self.subscribe:
-                    if sub in allow_subscribe:
+                    if sub.name in allow_subscribe:
                         topic_allowance['subscribe'].add(sub)
         else: topic_allowance['subscribe'].clear()
-        return topic_allowance
+        return topic_allowance['advertise'], topic_allowance['subscribe']
 
     @classmethod
     def load_remaps(cls, node_name):
@@ -294,14 +330,6 @@ class svROSNode(object):
     @staticmethod
     def parse_hpl_properties(properties):
         pass
-
-    def get_enclave_profile(self):
-        if self.enclave == '' or self.enclave is None:
-            return None
-        index = self.enclave + self.rosname
-        if not index in svROSProfile.PROFILES:
-            raise svException('Enclave Profile not found.')
-        return svROSProfile.PROFILES[index]
 
     def update_node_with_profile(self):
         pass
@@ -323,8 +351,12 @@ class svROSNode(object):
     
     @property
     def secure(self):
-        if self.profile is None: return False
-        else: return True
+        return bool(self.profile is None)
+
+    def __str__(self):
+        declaration  = '' if (self.advertise is None) else '\n'.join(list(map(lambda adv: adv.declaration(node_rosname=self.rosname), self.advertise)))
+        declaration += '' if (self.subscribe is None) else '\n'.join(list(map(lambda sub: sub.declaration(node_rosname=self.rosname), self.subscribe)))
+        return declaration
 
 """ 
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
@@ -361,7 +393,6 @@ class svROSProfile(object):
             \_ Later associated with a svROSNode
     """
     def __init__(self, name, namespace, can_advertise, can_subscribe, deny_advertise, deny_subscribe, enclave):
-        print(name, can_advertise, can_subscribe, '==profiles')
         self.name, self.namespace, self.enclave = name, namespace, enclave
         self.privileges = dict()
         self.advertise, self.subscribe, self.deny_advertise, self.deny_subscribe = can_advertise, can_subscribe, deny_advertise, deny_subscribe
@@ -412,13 +443,27 @@ class svROSProfile(object):
         rosname = self.signature
         # Process topic access.
         if node.advertise:
-            for adv in node.advertise: 
+            topic_advertises = set()
+            for adv in node.advertise:
+                name, topic_type = adv, node.advertise[adv]
+                # LOAD PRIVILEGE 
                 privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv, method='access', len=len(self.access))
                 self.access.append(privilege)
+                # LOAD TOPIC
+                topic = Topic.init_topic(name=name, topic_type=topic_type)
+                topic_advertises.add(topic)
+            node.advertise = topic_advertises
         if node.subscribe:
-            for sub in node.subscribe: 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=adv, method='access', len=len(self.access))
+            topic_subscribes = set()
+            for sub in node.subscribe:
+                name, topic_type = sub, node.subscribe[sub]
+                # LOAD PRIVILEGE 
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=sub, method='access', len=len(self.access))
                 self.access.append(privilege)
+                # LOAD TOPIC
+                topic = Topic.init_topic(name=name, topic_type=topic_type)
+                topic_subscribes.add(topic)
+            node.subscribe = topic_subscribes
         # Process topic privilege
         if self.advertise:
             for adv in self.advertise:
@@ -426,7 +471,7 @@ class svROSProfile(object):
                 self.privileges.append(privilege)
         if self.subscribe:
             for sub in self.subscribe: 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=adv, method='privilege', len=len(self.privileges))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=sub, method='privilege', len=len(self.privileges))
                 self.privileges.append(privilege)
         if self.deny_advertise:
             for deny in self.deny_advertise:
@@ -501,7 +546,6 @@ class svROSPrivilege(object):
     def __str__(self):
         _str_ = f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}\nrule = {self.rule}\nobject = {self.object.name}}}\n""" 
         if not self.object in svROSPrivilege.OBJECTS_DECLARED:
-            print(self.object.name)
             _str_ += str(self.object)
             svROSPrivilege.OBJECTS_DECLARED.add(self.object)
         return _str_

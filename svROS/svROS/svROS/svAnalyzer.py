@@ -59,7 +59,7 @@ class svAnalyzer(object):
         else: return True
 
     def generate_ros_model(self, NODES):
-        model, file_path = self.meta_model, f'{self.PROJECT_DIR}/models/ros-concrete.als'
+        model, file_path = self.meta_model, f'{self.EXTRACTOR.PROJECT_DIR}/models/ros-concrete.als'
         if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating ROS file.')
         model += ''.join(list(map(lambda node: str(NODES[node]), NODES)))
         with open(file_path, 'w+') as ros: ros.write(model)
@@ -74,7 +74,7 @@ class svAnalyzer(object):
         # RUN ALLOY.
     
     def generate_sros_model(self, NODES, ENCLAVES):
-        model, file_path = self.sros_model, f'{self.PROJECT_DIR}/models/sros-concrete.als'
+        model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}/models/sros-concrete.als'
         if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating SROS file.')
         model += ''.join(list(map(lambda enclave: str(ENCLAVES[enclave]), ENCLAVES)))
         model += ''.join(list(map(lambda node: str(NODES[node].profile), NODES)))
@@ -162,7 +162,9 @@ class svProjectExtractor:
                 profile = enclave.profiles.get(rosname)
                 if not profile: raise svException(f"{node.get('rosname')} profile is not defined.")
                 node         = svROSNode(full_name=name, profile=profile, **node)
-                profile.node = node
+                # Update NODE and PROFILE.
+                profile.node                   = node
+                node.advertise, node.subscribe = node.constrain_topics()
             else: node       = svROSNode(full_name=name, profile=None, **node)
         return True
 
