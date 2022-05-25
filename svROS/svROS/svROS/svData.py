@@ -280,7 +280,7 @@ class svROSNode(object):
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
     def __init__(self, full_name, profile, **kwargs):
-        self.index, self.rosname, self.namespace, self.executable, self.enclave, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('enclave'), kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
+        self.index, self.rosname, self.namespace, self.executable, self.enclave, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), profile.enclave, kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
         # Process node-package
         self.package = self.index.replace(self.rosname, '') 
         if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
@@ -345,17 +345,17 @@ class svROSNode(object):
     @classmethod
     def observalDeterminism(cls):
         unsecured_nodes = list(filter(lambda node: (not node.secure) or (not node.enclave.secure if isinstance(node.enclave, svROSEnclave) else True), list(map(lambda n: n[1], cls.NODES.items()))))
-        for unsecured in unsecured_nodes:
-            paths = dict()
-            for topic in unsecured.connection:
-                observable_outputs = cls.obsdet_paths(connections=unsecured.connection[topic], output=[])
-                paths[topic] = observable_outputs
-            unsecured._node_observable_determinism = paths
+        # for unsecured in unsecured_nodes:
+        #     paths = dict()
+        #     for topic in unsecured.connection:
+        #         observable_outputs = cls.obsdet_paths(connections=unsecured.connection[topic], output=[])
+        #         paths[topic] = observable_outputs
+        #     unsecured._node_observable_determinism = paths
 
     @staticmethod
     def obsdet_paths(connections, output):
         for c in connections:
-            if c.advertises is None: output.append(c)
+            if c.advertise is None: output.append(c)
             else:
                 for t in c.connection:
                     output = svROSNode.obsdet_paths(connections=c.connection[t], output=output)
@@ -367,9 +367,9 @@ class svROSNode(object):
         for node_name in svROSNode.NODES:
             node = svROSNode.NODES[node_name]
             if node == self: continue
-            subscribes_in = list(filter(lambda sub_: sub_ in access_to, list(map(lambda sub: sub.rosname, node.subscribe))))
+            subscribes_in = list(filter(lambda sub_: sub_ in access_to, list(map(lambda sub: sub.name, node.subscribe))))
             if subscribes_in != []: 
-                for sub in subcribes_in:
+                for sub in subscribes_in:
                     if (not node.secure and self.secure):
                         print(svWarning(f'Connection through {sub} is not well supported. {node.rosname.capitalize()} is not secure, while {self.rosname.capitalize()} is secure.'))
                     elif (not self.secure and node.secure):
