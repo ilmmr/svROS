@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svInfo
+from tools.InfoHandler import color, svException, svWarning
 # Needed for cpp nodes...
 from haros.cmake_parser import RosCMakeParser
 from haros.extractor    import RoscppExtractor, RospyExtractor

@@ -4,10 +4,11 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException
+from tools.InfoHandler import color, svException, svWarning
 # XML Parser
 import xml.etree.ElementTree as ET
-# svROS HPL Exporter
+# HAROS HPL Exporter
+from hpl.parser import HplParser, parse_property, parse_specification, parse_predicate, HplPredicate, HplEventDisjunction, HplSimpleEvent, HplBinaryOperator
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -284,6 +285,8 @@ class svROSNode(object):
         self.package = self.index.replace(self.rosname, '') 
         if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
             raise svException(f'Package {self.package} defined in node {self.index} not defined.')
+        # TOPIC handler.
+        self.subscribe, self.advertise = svROSNode.topic_handler(topics=self.subscribe), svROSNode.topic_handler(topics=self.advertise)
         # Constrain topic allowance.
         self.can_subscribe = profile.subscribe if self.secure else None 
         self.can_publish   = profile.advertise if self.secure else None
@@ -325,26 +328,71 @@ class svROSNode(object):
 
     @staticmethod
     def parse_hpl_properties(properties):
-        pass
-
-    def update_node_with_profile(self):
-        pass
+        properties = list(map(lambda prop: svProperty.create_prop(text=prop), properties))
+        return properties
 
     @staticmethod
     def topic_handler(topics):
-        topic_list = []
+        returning_topics = set()
+        if not topics: return None
         for topic in topics:
-            topic = Topic(name=topic, topic_type=topics[topic])
-            topic_list.append(topic)
-        return topic_list
+            name, topic_type = topic, topics[topic]
+            topic = Topic.init_topic(name=name, topic_type=topic_type)
+            returning_topics.add(topic)
+        return returning_topics
 
     # This method will allow to check what the output might be when an unsecured enclave publishes something from one of its topics
     @classmethod
-    def obsDetfromEnclave (cls, enclave: str):
-        if enclave not in svROSEnclave.ENCLAVES:
-            raise svException("Unsecured enclave not found.")
-        pass
-    
+    def observalDeterminism(cls):
+        unsecured_nodes = list(filter(lambda node: (not node.secure) or (not node.enclave.secure if isinstance(node.enclave, svROSEnclave) else True), list(map(lambda n: n[1], cls.NODES.items()))))
+        for unsecured in unsecured_nodes:
+            paths = dict()
+            for topic in unsecured.connection:
+                observable_outputs = cls.obsdet_paths(connections=unsecured.connection[topic], output=[])
+                paths[topic] = observable_outputs
+            unsecured._node_observable_determinism = paths
+
+    @staticmethod
+    def obsdet_paths(connections, output):
+        for c in connections:
+            if c.advertises is None: output.append(c)
+            else:
+                for t in c.connection:
+                    output = svROSNode.obsdet_paths(connections=c.connection[t], output=output)
+        return output
+
+    def set_connection(self):
+        if not self.advertise: return None
+        access_to = {topic.name: set() for topic in self.advertise}
+        for node_name in svROSNode.NODES:
+            node = svROSNode.NODES[node_name]
+            if node == self: continue
+            subscribes_in = list(filter(lambda sub_: sub_ in access_to, list(map(lambda sub: sub.rosname, node.subscribe))))
+            if subscribes_in != []: 
+                for sub in subcribes_in:
+                    if (not node.secure and self.secure):
+                        print(svWarning(f'Connection through {sub} is not well supported. {node.rosname.capitalize()} is not secure, while {self.rosname.capitalize()} is secure.'))
+                    elif (not self.secure and node.secure):
+                        print(svWarning(f'Connection through {sub} is not well supported. {self.rosname.capitalize()} is not secure, while {node.rosname.capitalize()} is secure.'))
+                    access_to[sub].add(node)
+        return access_to
+
+    @classmethod
+    def handle_connections(cls):
+        if cls.NODES is {}: raise svException("No nodes found, can not process handling of connections.")
+        for node_name in cls.NODES:
+            node            = cls.NODES[node_name]
+            node.connection = node.set_connection()
+
+    @property
+    def node_observable_determinism(self):
+        return self._node_observable_determinism
+        
+    @node_observable_determinism.setter
+    def node_observable_determinism(self, value):
+        if self.secure or self.enclave.secure: svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
+        self._node_observable_determinism = value
+
     @property
     def secure(self):
         return bool(self.profile is not None)
@@ -366,7 +414,7 @@ class svROSEnclave(object):
             \_ profiles
     """
     def __init__(self, path, profiles):
-        self.name, self.profiles, self.signature = path, {}, self.abstract(tag=path)
+        self.name, self.profiles, self.signature, self.secure = path, {}, self.abstract(tag=path), True
         for profile in profiles:
             p = svROSProfile.init_profile(profile, enclave=self)
             self.profiles[p.profile] = p
@@ -439,27 +487,17 @@ class svROSProfile(object):
         rosname = self.signature
         # Process topic access.
         if node.advertise:
-            topic_advertises = set()
             for adv in node.advertise:
-                name, topic_type = adv, node.advertise[adv]
+                name, topic_type = adv.name, adv.type
                 # LOAD PRIVILEGE 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv, method='access', len=len(self.access))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=name, method='access', len=len(self.access))
                 self.access.append(privilege)
-                # LOAD TOPIC
-                topic = Topic.init_topic(name=name, topic_type=topic_type)
-                topic_advertises.add(topic)
-            node.advertise = topic_advertises
         if node.subscribe:
-            topic_subscribes = set()
             for sub in node.subscribe:
-                name, topic_type = sub, node.subscribe[sub]
+                name, topic_type = sub.name, sub.type
                 # LOAD PRIVILEGE 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=sub, method='access', len=len(self.access))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=name, method='access', len=len(self.access))
                 self.access.append(privilege)
-                # LOAD TOPIC
-                topic = Topic.init_topic(name=name, topic_type=topic_type)
-                topic_subscribes.add(topic)
-            node.subscribe = topic_subscribes
         # Process topic privilege
         if self.advertise:
             for adv in self.advertise:
@@ -540,3 +578,14 @@ class svROSPrivilege(object):
     def __str__(self):
         _str_ = f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}\nrule = {self.rule}\nobject = {self.object.name}}}\n""" 
         return _str_
+
+class svProperty(object):
+    """
+        HPL PROPERTY => svPROPERTY
+    """
+    @staticmethod
+    def create_prop(text):
+        try:
+            hpl_prop = parse_property(text)
+        except Exception:
+            svException(f'Failed to parse HPL-property {text}.')

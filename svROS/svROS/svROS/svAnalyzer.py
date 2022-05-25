@@ -5,7 +5,7 @@ from logging import FileHandler
 from collections import defaultdict
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svInfo
+from tools.InfoHandler import color, svException, svWarning
 # Node parser
 from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, Package
 import xml.etree.ElementTree as ET
@@ -157,10 +157,14 @@ class svProjectExtractor:
     def load_nodes_profiles(self, nodes, unsecured_enclaves):
         if svROSEnclave.ENCLAVES is {}:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
+        else:
+            for un_enclave in unsecured_enclaves:
+                if un_enclave not in svROSEnclave.ENCLAVES: svException(f"Unsecured enclave {un_enclave} is not defined.")
+                else: svROSEnclave.ENCLAVES[un_enclave].secure = False
         for node in nodes:
             name, node = node, nodes[node]
             unsecured, enclave = False, None
-            if node.get('enclave') == '' or node.get('enclave') in unsecured_enclaves: unsecured = True
+            if node.get('enclave') == '': unsecured = True
             elif node.get('enclave') not in svROSEnclave.ENCLAVES:
                 raise svException(f"{node.get('rosname')} enclave is not defined.")
             else:
@@ -174,6 +178,9 @@ class svProjectExtractor:
                 profile.node                   = node
                 node.advertise, node.subscribe = node.constrain_topics()
             else: node       = svROSNode(full_name=name, profile=None, **node)
+        # HANDLE class methods.
+        svROSNode.handle_connections()  # Set connections up.
+        svROSNode.observalDeterminism() # Observable determinism in Unsecured Nodes.
         return True
 
     @property

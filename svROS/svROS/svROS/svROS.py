@@ -5,7 +5,7 @@ from datetime import datetime
 from cerberus import Validator
 from logging import FileHandler
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svInfo
+from tools.InfoHandler import color, svException, svWarning
 # Exporters
 from svExport import svrosExport
 from svAnalyzer import svProjectExtractor, svAnalyzer
@@ -404,7 +404,7 @@ class svEXPORT:
         # Project directory validater.
         exists, valid_config = self._exists_project_dir(project_name)
         if exists:
-            print(f'[svROS] Project directory {color.color("RED", project_name)} already exists...', end=' ')
+            print(f'[svROS] Project directory {color.color("ORANGE", project_name)} already exists...', end=' ')
             self.log.info(f'Project directory {project_name} already exists.')
             if not valid_config:
                 # Valid config :: if not valid => RESET
@@ -469,10 +469,10 @@ class svRUN:
         project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
         if not (project_analyzer.security_verification()):
             raise svException('Could not initiate running of project => ANALYZER FAILED.')
-        print(svROSNode.NODES)
-        for n in svROSNode.NODES:
-            node = svROSNode.NODES[n]
-            print(node.index, [(sub.name, sub.type) for sub in node.subscribe], [(adv.name, adv.type) for adv in node.advertise], node.remaps, node.can_subscribe, node.can_publish)
+        # print(svROSNode.NODES)
+        # for n in svROSNode.NODES:
+        #     node = svROSNode.NODES[n]
+        #     print(node.index, [(sub.name, sub.type) for sub in node.subscribe], [(adv.name, adv.type) for adv in node.advertise], node.remaps, node.can_subscribe, node.can_publish)
 
 
     def load_pickle_files(self):
@@ -701,7 +701,7 @@ class Launcher:
             return False
 
         export = svEXPORT(file=args.file, FILE_PATH=os.path.abspath(args.file), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_export=init, reset=args.reset, log=self.log, ros=rf'{self.ros_version}=\t={self.distro}=\t={self.workspace}')
-        print(f"[svROS] Exporting file {args.file} into a project: Setup operation.")
+        print(f'[svROS] Exporting file {color.color("BOLD", color.color("ORANGE", args.file))} into a project: Setup operation.')
         self.log.info(f"Exporting file {args.file} into a project: Setup operation.")
         return export._default_export()
         
@@ -728,7 +728,7 @@ class Launcher:
         run = svRUN(project=args.project.capitalize(), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_run=init, log=self.log)
         project_name = args.project.capitalize()
         self.log.info(f'Running svROS Project => {project_name}.')
-        print(f'[svROS] Running svROS :: Project {color.color("RED", project_name)}...')
+        print(f'[svROS] Running svROS :: Project {color.color("BOLD", color.color("ORANGE", project_name))}')
         return run._run()
 
     # => svROS run -p (--project) $project

@@ -5,6 +5,7 @@ import inspect
 class color:
     PURPLE = '\033[95m'
     CYAN = '\033[96m'
+    ORANGE = '\033[38;5;208m'
     DARKCYAN = '\033[36m'
     BLUE = '\033[94m'
     GREEN = '\033[92m'
@@ -35,15 +36,9 @@ class svException(Exception):
         return f'[svROS] {color.color("BOLD", color.color("RED", "ERROR:"))} {self.message}'
     
 # Class svROS for output handling
-class svInfo:
-    def info(text=''):
-        info = color.color("RED", text)
-        pass
+class svWarning(object):
+    def __init__(self, message):
+        self.message = message
 
-    def warn(text=''):
-        warn = color.color("YELLOW", text)
-        pass
-
-    def bold(text=''):
-        bold = color.color("BOLD", text)
-        pass
+    def __str__(self):
+        return f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING:"))} {self.message}'

@@ -7,7 +7,7 @@ from collections import defaultdict
 import xml.etree.ElementTree as ET
 from lark import Lark, tree, Token
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svInfo
+from tools.InfoHandler import color, svException, svWarning
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
