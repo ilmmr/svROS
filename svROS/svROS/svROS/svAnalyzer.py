@@ -7,7 +7,7 @@ from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svInfo
 # Node parser
-from svData import svROSNode, svROSProfile, svROSEnclave, Package
+from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, Package
 import xml.etree.ElementTree as ET
 
 global WORKDIR, SCHEMAS
@@ -67,17 +67,25 @@ class svAnalyzer(object):
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
     def security_verification(self):
-        NODES, ENCLAVES = dict(filter(lambda node: node[1].profile is not None, svROSNode.NODES.items())), svROSEnclave.ENCLAVES
-        SROS_FILE = self.generate_sros_model(NODES=NODES, ENCLAVES=ENCLAVES)
+        NODES, ENCLAVES, OBJECTS = dict(filter(lambda node: node[1].profile is not None, svROSNode.NODES.items())), svROSEnclave.ENCLAVES, svROSObject.OBJECTS
+        SROS_FILE = self.generate_sros_model(NODES=NODES, ENCLAVES=ENCLAVES, OBJECTS=OBJECTS)
         if not os.path.isfile(path=SROS_FILE): return False
         else: return True
         # RUN ALLOY.
     
-    def generate_sros_model(self, NODES, ENCLAVES):
+    def generate_sros_model(self, NODES, ENCLAVES, OBJECTS):
         model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}/models/sros-concrete.als'
         if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating SROS file.')
+        # ENCLAVES.
+        model += '/* === ENCLAVES === */\n'
         model += ''.join(list(map(lambda enclave: str(ENCLAVES[enclave]), ENCLAVES)))
+        # NODES.
+        model += '/* === ENCLAVES === */\n\n/* === PROFILES === */\n'
         model += ''.join(list(map(lambda node: str(NODES[node].profile), NODES)))
+        # OBJECTS.
+        model += '/* === PROFILES === */\n\n/* === OBJECTS === */\n'
+        model += ''.join(list(map(lambda obj: str(OBJECTS[obj]), OBJECTS)))
+        model += '/* === OBJECTS === */'
         with open(file_path, 'w+') as sros: sros.write(model)
         return file_path
 

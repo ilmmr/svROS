@@ -45,16 +45,17 @@ class MessageType(object):
         if name in cls.TYPES: return cls.TYPES[name]
         return cls(name=name)
     
+    def abstract(self, tag): return tag.lower()[(tag.rfind('_'))+1:].capitalize()
+    
     def declaration(self, values):
         values     = None if (values == [])     else ' + '.join(list(map(lambda value: value, values)))
         if not values: values = "no values"
         else:          values = f"values = {values}"
-        return f'one sig {self.name} extends Message {{}} {{{values}}}\n'
+        return f'one sig {self.abstract(tag=self.name)} extends Message {{}} {{{values}}}\n'
 
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
     TOPICS   = {}
-    TYPES    = set()
     """
         Topic
             \__ Name
@@ -89,13 +90,8 @@ class Topic(object):
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
     def declaration(self, node_rosname):
-        self.signature, abstract_type = self.abstract(tag=node_rosname + self.name), self.abstract(tag=self.type)
-        declaration                   = f"""one sig {self.signature} extends Topic {{}} {{box = {abstract_type}}}\n"""
-        if not abstract_type in Topic.TYPES:
-            message      = MessageType.init_message_type(name=abstract_type)
-            # GET VALUES FROM HPL PROPERTIES
-            declaration += message.declaration(values=[])
-            Topic.TYPES.add(message.name)
+        self.signature, abstract_type, self.message_type = self.abstract(tag=node_rosname + self.name), self.abstract(tag=self.type), MessageType.TYPES[abstract_type]
+        declaration = f"""one sig {self.signature} extends Topic {{}} {{box = {abstract_type}}}\n"""
         return declaration
 
 "ROS2-based Node already parse, with remaps and topic handling."
@@ -289,7 +285,7 @@ class svROSNode(object):
         if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
             raise svException(f'Package {self.package} defined in node {self.index} not defined.')
         # Constrain topic allowance.
-        self.can_subscribe = profile.advertise if self.secure else None 
+        self.can_subscribe = profile.subscribe if self.secure else None 
         self.can_publish   = profile.advertise if self.secure else None
         # GET from Pickle classes.
         if svROSNode.LOADED_NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
@@ -351,7 +347,7 @@ class svROSNode(object):
     
     @property
     def secure(self):
-        return bool(self.profile is None)
+        return bool(self.profile is not None)
 
     def __str__(self):
         declaration  = '' if (self.advertise is None) else '\n'.join(list(map(lambda adv: adv.declaration(node_rosname=self.rosname), self.advertise)))
@@ -520,12 +516,10 @@ class svROSPrivilege(object):
     PRIVILEGES       = {'Advertise', 'Subscribe'}
     METHODS          = {'Privilege', 'Access', 'Deny'}
     PRIVILEGES_SET   = {}
-    OBJECTS_DECLARED = set()
     def __init__(self, index, signature, role, rosname, rule):
         self.signature       = self.abstract(tag=signature)
-        self.role, self.rule = role.capitalize(), rule.capitalize()
+        self.role, self.rule, self.object = role.capitalize(), rule.capitalize(), svROSObject.init_object(name=self.abstract(tag=rosname))
         if not self.role in svROSPrivilege.PRIVILEGES: raise svException('Not identified role.')
-        self.object                          = svROSObject.init_object(name=self.abstract(tag=rosname))
         svROSPrivilege.PRIVILEGES_SET[index] = self
 
     @classmethod
@@ -545,7 +539,4 @@ class svROSPrivilege(object):
 
     def __str__(self):
         _str_ = f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}\nrule = {self.rule}\nobject = {self.object.name}}}\n""" 
-        if not self.object in svROSPrivilege.OBJECTS_DECLARED:
-            _str_ += str(self.object)
-            svROSPrivilege.OBJECTS_DECLARED.add(self.object)
         return _str_
