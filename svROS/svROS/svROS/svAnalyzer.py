@@ -183,12 +183,13 @@ class svProjectExtractor:
             else: node       = svROSNode(full_name=name, profile=None, **node)
         # HANDLE class methods.
         svROSNode.handle_connections()  # Set connections up.
-        svROSNode.observalDeterminism() # Observable determinism in Unsecured Nodes.
+        svROSNode.observalDeterminism(scopes=self.scopes) # Observable determinism in Unsecured Nodes.
         return True
 
     @property
     def scopes(self):
         scopes = self.config.get('configurations', {}).get('analysis', {}).get('scope')
-        if not scopes:
-            raise svException('Failed to retrieve scopes.')
+        messages, steps = scopes.get('Message'), scopes.get('Steps') 
+        if not (messages and steps):
+            raise svException('Failed to retrieve scopes. Either Message or Steps scopes are not defined.')
         return scopes
