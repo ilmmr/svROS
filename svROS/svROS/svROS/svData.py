@@ -294,7 +294,7 @@ class svROSNode(object):
         if Node.NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
         # HANDLE node properties.
         if self.properties.__len__() == 1 and self.properties.pop() == '': self.properties = None
-        if self.properties: self.properties = svROSNode.parse_hpl_properties(properties=self.properties)
+        if self.properties: self.properties = self.parse_hpl_properties() 
         # Store in class variable.
         svROSNode.NODES[self.index] = self
     
@@ -320,6 +320,7 @@ class svROSNode(object):
         else: topic_allowance['subscribe'].clear()
         return topic_allowance['advertise'], topic_allowance['subscribe']
 
+    # Get loaded Nodes from PICKLE.
     @classmethod
     def load_remaps(cls, node_name):
         if node_name in Node.NODES:
@@ -327,10 +328,13 @@ class svROSNode(object):
             return node.remaps
         else: return list()
 
-    @staticmethod
-    def parse_hpl_properties(properties):
-        properties = list(map(lambda prop: svProperty.create_prop(text=prop), properties))
-        return properties
+    def abstract(self, tag): return tag.lower().replace('/', '_')
+
+    def parse_hpl_properties(self):
+        properties = list(map(lambda prop: svProperty.create_prop(text=prop), self.properties))
+        properties = '\n\t'.join(properties)
+        alloy      = f'fact node_{self.abstract(tag=self.rosname)} {{\n\t{properties}\n}}'
+        return alloy
 
     @staticmethod
     def topic_handler(topics):
@@ -405,7 +409,21 @@ class svROSNode(object):
     def __str__(self):
         declaration  = '' if (self.advertise is None) else '\n'.join(list(map(lambda adv: adv.declaration(node_rosname=self.rosname), self.advertise)))
         declaration += '' if (self.subscribe is None) else '\n'.join(list(map(lambda sub: sub.declaration(node_rosname=self.rosname), self.subscribe)))
-        return declaration
+        if self.properties is None:
+            if self.advertise is None:
+                self.properties = ''
+            else:
+                properties = [f'fact {self.abstract(tag=self.rosname)} {{']
+                for adv in self.advertise:
+                    prop  = f'always (eventually some {adv.signature}.inbox0 & {adv.abstract(tag=adv.type)})\n\t'
+                    prop += f'always (eventually some {adv.signature}.inbox1 & {adv.abstract(tag=adv.type)})'
+                    properties.append(prop)
+                self.properties = ('\n\t'.join(properties)) + f'\n}}'
+        elif isinstance(self.properties, str):
+            pass
+        else:
+            raise svException(f'Failed to load {self.rosname} properties.')
+        return declaration + self.properties
 
     # Return predicates such as pred LowSync {low requires alarm}
     def sync_obs_det(self):

@@ -469,10 +469,9 @@ class svRUN:
         project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
         if not (project_analyzer.security_verification()):
             raise svException('Could not initiate running of project => ANALYZER FAILED.')
-        for n in svROSNode.NODES:
-            node = svROSNode.NODES[n]
-            print(node.index, [(sub.name, sub.type) for sub in node.subscribe], [(adv.name, adv.type) for adv in node.advertise], node.remaps, node.can_subscribe, node.can_publish, 'NODE_CONNECTION:', node.connection)
-
+        # for n in svROSNode.NODES:
+        #     node = svROSNode.NODES[n]
+        #     print(node.index, [(sub.name, sub.type) for sub in node.subscribe], [(adv.name, adv.type) for adv in node.advertise], node.remaps, node.can_subscribe, node.# can_publish, 'NODE_CONNECTION:', node.connection)
 
     def load_pickle_files(self):
         DATADIR = f'{self.project_path}data/'
