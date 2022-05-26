@@ -7,7 +7,7 @@ from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svWarning
 # Node parser
-from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, Package
+from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, Node, Package
 import xml.etree.ElementTree as ET
 
 global WORKDIR, SCHEMAS
@@ -60,7 +60,7 @@ class svAnalyzer(object):
 
     def generate_ros_model(self, NODES):
         model, file_path = self.meta_model, f'{self.EXTRACTOR.PROJECT_DIR}/models/ros-concrete.als'
-        if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating ROS file.')
+        if not os.path.isfile(path=file_path): raise svException('Unexpected error happend while creating ROS file.')
         model += ''.join(list(map(lambda node: str(NODES[node]), NODES)))
         with open(file_path, 'w+') as ros: ros.write(model)
         return file_path
@@ -75,7 +75,7 @@ class svAnalyzer(object):
     
     def generate_sros_model(self, NODES, ENCLAVES, OBJECTS):
         model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}/models/sros-concrete.als'
-        if not os.path.isfile(path=file_path): svException('Unexpected error happend while creating SROS file.')
+        if not os.path.isfile(path=file_path): raise svException('Unexpected error happend while creating SROS file.')
         # ENCLAVES.
         model += '/* === ENCLAVES === */\n'
         model += ''.join(list(map(lambda enclave: str(ENCLAVES[enclave]), ENCLAVES)))
@@ -145,7 +145,7 @@ class svProjectExtractor:
         config = safe_load(stream=open(config_file, 'r'))
         self.config, packages, nodes, unsecured_enclaves = config, list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured_enclaves')
         # LOAD PICKLE.
-        if not self.IMPORTED_DATA == {}: svROSNode.LOADED_NODES = self.IMPORTED_DATA['nodes']
+        if not self.IMPORTED_DATA == {}: Node.NODES = self.IMPORTED_DATA['nodes']
         for package in packages: 
             Package.init_package_name(name=package, index=packages.index(package))
         if not (nodes and unsecured_enclaves):
@@ -159,8 +159,11 @@ class svProjectExtractor:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
         else:
             for un_enclave in unsecured_enclaves:
-                if un_enclave not in svROSEnclave.ENCLAVES: svException(f"Unsecured enclave {un_enclave} is not defined.")
-                else: svROSEnclave.ENCLAVES[un_enclave].secure = False
+                un_enclave = un_enclave if un_enclave.startswith('/') else '/' + un_enclave
+                if un_enclave not in svROSEnclave.ENCLAVES: 
+                    raise svException(f"Unsecured enclave {un_enclave} is not defined.")
+                else:
+                    svROSEnclave.ENCLAVES[un_enclave].secure = False
         for node in nodes:
             name, node = node, nodes[node]
             unsecured, enclave = False, None

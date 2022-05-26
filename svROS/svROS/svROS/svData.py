@@ -63,7 +63,7 @@ class Topic(object):
             \__ Type
     """
     def __init__(self, name, topic_type):
-        self.name, self.type, self.remap = name, topic_type, None
+        self.name, self.type, self.remap, self.signature = name, topic_type, None, self.abstract(tag=name)
         Topic.TOPICS[name] = self
         
     @classmethod
@@ -91,7 +91,7 @@ class Topic(object):
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
     def declaration(self, node_rosname):
-        self.signature, abstract_type, self.message_type = self.abstract(tag=node_rosname + self.name), self.abstract(tag=self.type), MessageType.TYPES[abstract_type]
+        abstract_type, self.message_type = self.abstract(tag=self.type), MessageType.TYPES[abstract_type]
         declaration = f"""one sig {self.signature} extends Topic {{}} {{box = {abstract_type}}}\n"""
         return declaration
 
@@ -273,7 +273,7 @@ class Node(object):
 "ROS2-based Node to be analyzed."
 class svROSNode(object):
     NODES        = {}
-    LOADED_NODES = {}
+    DECLS        = set()
     """
         svROSNode
             \__ Already parsed node
@@ -281,7 +281,7 @@ class svROSNode(object):
     """
     def __init__(self, full_name, profile, **kwargs):
         self.index, self.rosname, self.namespace, self.executable, self.enclave, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), profile.enclave, kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
-        # Process node-package
+        # Process node-package.
         self.package = self.index.replace(self.rosname, '') 
         if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
             raise svException(f'Package {self.package} defined in node {self.index} not defined.')
@@ -291,15 +291,16 @@ class svROSNode(object):
         self.can_subscribe = profile.subscribe if self.secure else None 
         self.can_publish   = profile.advertise if self.secure else None
         # GET from Pickle classes.
-        if svROSNode.LOADED_NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
-        # LOAD properties.
+        if Node.NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
+        # HANDLE node properties.
+        if self.properties.__len__() == 1 and self.properties.pop() == '': self.properties = None
         if self.properties: self.properties = svROSNode.parse_hpl_properties(properties=self.properties)
         # Store in class variable.
         svROSNode.NODES[self.index] = self
     
     # Constrain TOPIC ALLOWANCE.
     def constrain_topics(self):
-        if not self.secure: svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
+        if not self.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
         topic_allowance = {method: set() for method in ['advertise', 'subscribe']}
         profile         = self.profile
         namespace, allow_subscribe, allow_advertise = profile.namespace, profile.subscribe, profile.advertise
@@ -321,8 +322,8 @@ class svROSNode(object):
 
     @classmethod
     def load_remaps(cls, node_name):
-        if node_name in cls.LOADED_NODES:
-            node = cls.LOADED_NODES[node_name]
+        if node_name in Node.NODES:
+            node = Node.NODES[node_name]
             return node.remaps
         else: return list()
 
@@ -345,20 +346,24 @@ class svROSNode(object):
     @classmethod
     def observalDeterminism(cls):
         unsecured_nodes = list(filter(lambda node: (not node.secure) or (not node.enclave.secure if isinstance(node.enclave, svROSEnclave) else True), list(map(lambda n: n[1], cls.NODES.items()))))
-        # for unsecured in unsecured_nodes:
-        #     paths = dict()
-        #     for topic in unsecured.connection:
-        #         observable_outputs = cls.obsdet_paths(connections=unsecured.connection[topic], output=[])
-        #         paths[topic] = observable_outputs
-        #     unsecured._node_observable_determinism = paths
+        for unsecured in unsecured_nodes:
+            paths = dict()
+            for topic in unsecured.connection:
+                observable_outputs = cls.obsdet_paths(node=None, connections=unsecured.connection[topic], output=[], path_nodes=[unsecured])
+                paths[topic] = observable_outputs
+            unsecured._node_observable_determinism = paths
+            cls.DECLS.add(unsecured.sync_obs_det())
 
     @staticmethod
-    def obsdet_paths(connections, output):
+    def obsdet_paths(node, connections, output, path_nodes):
+        if connections == set() and node is not None: output.append(*[adv for adv in node.advertise])
         for c in connections:
-            if c.advertise is None: output.append(c)
-            else:
-                for t in c.connection:
-                    output = svROSNode.obsdet_paths(connections=c.connection[t], output=output)
+            # Revoke possible loops.
+            if c in path_nodes: continue
+            else: path_nodes.append(c)
+            # Process connections.
+            for t in c.connection:
+                svROSNode.obsdet_paths(node=c, connections=c.connection[t], output=output, path_nodes=path_nodes)
         return output
 
     def set_connection(self):
@@ -390,7 +395,7 @@ class svROSNode(object):
         
     @node_observable_determinism.setter
     def node_observable_determinism(self, value):
-        if self.secure or self.enclave.secure: svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
+        if self.secure and self.enclave.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
         self._node_observable_determinism = value
 
     @property
@@ -401,6 +406,23 @@ class svROSNode(object):
         declaration  = '' if (self.advertise is None) else '\n'.join(list(map(lambda adv: adv.declaration(node_rosname=self.rosname), self.advertise)))
         declaration += '' if (self.subscribe is None) else '\n'.join(list(map(lambda sub: sub.declaration(node_rosname=self.rosname), self.subscribe)))
         return declaration
+
+    # Return predicates such as pred LowSync {low requires alarm}
+    def sync_obs_det(self):
+        if self.secure and self.enclave.secure: 
+            print(self.secure, self.enclave.secure)
+            raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
+        signatures, topic_output = [], self._node_observable_determinism
+        for topic_name in topic_output:
+            topic, outputs = Topic.TOPICS.get(topic_name), topic_output[topic_name]
+            if (not topic) or (not topic.signature): raise svException(f'Topic {topic_name} does not exist.')
+            for out in outputs:
+                pred_signature = f'{topic.signature}_Sync_{outputs.index(out)}' 
+                depd_signature = f'{topic.signature}_Depd_{outputs.index(out)}'
+                comments       = f'/* === OD: {topic.signature} => {out.signature} === */\n'
+                signature      = f'{comments}pred {pred_signature} {{ historically (all m : Message | (publish0[{topic.signature},m] iff publish1[{topic.signature},m]) and (publish0[{out.signature},m] iff publish1[{out.signature},m]))}}\ncheck {depd_signature} {{ always {pred_signature} implies all m0, m1 : Message | publish0[{out.signature},m0] and publish1[{out.signature},m1] implies m0.value = m1.value)}} for 0 but 1..20 Message, 1..20 steps'
+                signatures.append(signature)
+        return '\n\n'.join(signatures)
 
 """ 
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
@@ -588,4 +610,4 @@ class svProperty(object):
         try:
             hpl_prop = parse_property(text)
         except Exception:
-            svException(f'Failed to parse HPL-property {text}.')
+            raise svException(f'Failed to parse HPL-property {text}.')
