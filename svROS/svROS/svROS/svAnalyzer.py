@@ -7,7 +7,7 @@ from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svWarning
 # Node parser
-from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, Node, Package
+from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, Node, Package, Topic
 import xml.etree.ElementTree as ET
 
 global WORKDIR, SCHEMAS
@@ -53,15 +53,22 @@ class svAnalyzer(object):
 
     # ALLOY => Runs Model Checking in ROS_MODEL
     def ros_verification(self):
-        NODES    = svROSNode.NODES
-        ROS_FILE = self.generate_ros_model(NODES=NODES)
+        NODES, TOPICS = svROSNode.NODES, Topic.TOPICS
+        ROS_FILE = self.generate_ros_model(NODES=NODES, TOPICS=TOPICS)
         if not os.path.isfile(path=ROS_FILE): return False
         else: return True
 
-    def generate_ros_model(self, NODES):
-        model, file_path = self.meta_model, f'{self.EXTRACTOR.PROJECT_DIR}/models/ros-concrete.als'
+    def generate_ros_model(self, NODES, TOPICS):
+        model, file_path = self.meta_model, f'{self.EXTRACTOR.PROJECT_DIR}models/ros-concrete.als'
+        if not os.path.exists(path=file_path): open(file_path, 'w+').close()
         if not os.path.isfile(path=file_path): raise svException('Unexpected error happend while creating ROS file.')
+        # NODES.
+        model += '/* === NODES === */\n'
         model += ''.join(list(map(lambda node: str(NODES[node]), NODES)))
+        # TOPICS.
+        model += '/* === NODES === */\n\n/* === TOPICS === */\n'
+        model += Topic.topic_declaration()
+        model += '/* === TOPICS === */'
         with open(file_path, 'w+') as ros: ros.write(model)
         return file_path
     
@@ -74,7 +81,8 @@ class svAnalyzer(object):
         # RUN ALLOY.
     
     def generate_sros_model(self, NODES, ENCLAVES, OBJECTS):
-        model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}/models/sros-concrete.als'
+        model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
+        if not os.path.exists(path=file_path): open(file_path, 'w+').close()
         if not os.path.isfile(path=file_path): raise svException('Unexpected error happend while creating SROS file.')
         # ENCLAVES.
         model += '/* === ENCLAVES === */\n'
