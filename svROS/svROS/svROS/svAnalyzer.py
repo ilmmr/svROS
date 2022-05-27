@@ -68,7 +68,11 @@ class svAnalyzer(object):
         # TOPICS.
         model += '/* === NODES === */\n\n/* === TOPICS === */\n'
         model += Topic.topic_declaration()
-        model += '/* === TOPICS === */'
+        model +=  '/* === TOPICS === */\n\n/* === NODE BEHAVIOUR === */\n'
+        #model += svROSNode.node_property_behaviour()
+        model += '/* === NODE BEHAVIOUR === */\n\n/* === OBSERVABLE DETERMINISM === */\n'
+        model += svROSNode.observable_determinism()
+        model += '\n/* === OBSERVABLE DETERMINISM === */'
         with open(file_path, 'w+') as ros: ros.write(model)
         return file_path
     

@@ -24,9 +24,10 @@ fact ros_assumptions {
 }
 
 pred topic_behaviour [box : Topic -> Message] {
-	all m : Message, t: Topic | always { m in t.box implies before once (m in (advertises.t).outbox) }
-	all m : Message, n: Node  | always { m in n.inbox implies before once (m in (n.subscribes).box) } 
-	all m : Message, t: Topic | always { m in t.box implies after (m in (subscribes.t).inbox) }
+	all m : Message, t: Topic | always { m in t.box   implies ( one n : advertises.t | m in n.outbox ) }
+	all m : Message, n: Node  | always { m in n.inbox implies ( m in (n.subscribes).box ) }
+	all m : Message, t: Topic | always { m in t.box   implies ( all n : subscribes.t | m in n.inbox ) }
+	all m : Message, t: Topic | always { m in t.box   implies after m not in t.box }
 }
 
 pred publish0[t : Topic, m : Message] {

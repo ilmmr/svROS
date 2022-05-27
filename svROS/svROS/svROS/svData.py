@@ -80,8 +80,8 @@ class Topic(object):
             \__ Name
             \__ Type
     """
-    def __init__(self, name, topic_type):
-        self.name, self.type, self.remap, self.signature = name, topic_type, None, self.abstract(tag=name)
+    def __init__(self, name, topic_type, message_type=None):
+        self.name, self.type, self.remap, self.signature, self.message_type = name, topic_type, None, self.abstract(tag=name), message_type
         Topic.TOPICS[name] = self
         
     @classmethod
@@ -90,8 +90,8 @@ class Topic(object):
             topic = Topic.TOPICS[name]
             if topic_type != topic.type: raise svException(f'Same topic ({name}) with different types ({topic_type, topic.type}).')
             else: return topic
-        MessageType.init_message_type(name=topic_type.lower().replace('/', '_'), signature=MessageType.abstract(tag=topic_type))
-        return cls(name=name, topic_type=topic_type)
+        message_type = MessageType.init_message_type(name=topic_type.lower().replace('/', '_'), signature=MessageType.abstract(tag=topic_type))
+        return cls(name=name, topic_type=topic_type, message_type=message_type)
 
     @staticmethod
     def namespace(tag: str):
@@ -301,7 +301,8 @@ class Node(object):
 "ROS2-based Node to be analyzed."
 class svROSNode(object):
     NODES        = {}
-    DECLS        = set()
+    OBSDT        = {}
+    PROPT        = {}
     """
         svROSNode
             \__ Already parsed node
@@ -384,7 +385,7 @@ class svROSNode(object):
                 observable_outputs = cls.obsdet_paths(node=unsecured, current=None, connections=unsecured.connection[topic], output=[], path_nodes=[unsecured])
                 paths[topic] = observable_outputs
             unsecured._node_observable_determinism = paths
-            cls.DECLS.add(unsecured.sync_obs_det(scopes=scopes))
+            cls.OBSDT[unsecured] = unsecured.sync_obs_det(scopes=scopes)
 
     @staticmethod
     def obsdet_paths(node, current, connections, output, path_nodes):
@@ -441,7 +442,7 @@ class svROSNode(object):
         else:              advertises = f"advertises = {advertises}"
         if not subscribes: subscribes = "no subscribes"
         else:              subscribes = f"subscribes = {subscribes}"
-        declaration  = f'one sig {self.abstract(tag=self.rosname)} extends Node {{}} {{\n\t{advertises}\n\t{subscribes}\n}}\n'
+        declaration  = f'one sig node_{self.abstract(tag=self.rosname)} extends Node {{}} {{\n\t{advertises}\n\t{subscribes}\n}}\n'
         return declaration
         # if self.properties is None:
         #     if self.advertise is None:
@@ -464,17 +465,21 @@ class svROSNode(object):
         scope_message, scope_steps = scopes.get('Message'), scopes.get('Steps') 
         if self.secure and self.enclave.secure: 
             raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
-        signatures, topic_output = [], self._node_observable_determinism
+        signatures, topic_output = {}, self._node_observable_determinism
         for topic_name in topic_output:
             topic, outputs = Topic.TOPICS.get(topic_name), topic_output[topic_name]
             if (not topic) or (not topic.signature): raise svException(f'Topic {topic_name} does not exist.')
+            tmp = {}
             for out in outputs:
-                pred_signature = f'{topic.signature}_Sync_{outputs.index(out)}' 
-                depd_signature = f'{topic.signature}_Depd_{outputs.index(out)}'
+                pred_signature = f'OD{topic.signature}_Sync_{outputs.index(out)}' 
+                depd_signature = f'OD{topic.signature}_Depd_{outputs.index(out)}'
                 comments       = f'/* === OD: {topic.name} => {out.name} === */\n'
-                signature      = f'{comments}pred {pred_signature} {{ historically (all m : Message | (publish0[{topic.signature},m] iff publish1[{topic.signature},m]) and (publish0[{out.signature},m] iff publish1[{out.signature},m]))}}\ncheck {depd_signature} {{ always {pred_signature} implies all m0, m1 : Message | publish0[{out.signature},m0] and publish1[{out.signature},m1] implies m0.value = m1.value)}} for 0 but 1..{scope_message} Message, 1..{scope_steps} steps'
-                signatures.append(signature)
-        return '\n\n'.join(signatures)
+                signature      = f'{comments}pred {pred_signature} {{ historically (all m : Message | (publish0[{topic.signature},m] iff publish1[{topic.signature},m]) and (publish0[{out.signature},m] iff publish1[{out.signature},m]))}}\ncheck {depd_signature} {{ always {pred_signature} implies (all m0, m1 : Message | publish0[{out.signature},m0] and publish1[{out.signature},m1] implies m0.value = m1.value)}} for 0 but 1..{scope_message} Message, 1..{scope_steps} steps'
+                svROSNode.PROPT[depd_signature] = signature
+                tmp[out.name] = depd_signature
+
+            signatures[topic_name] = tmp
+        return signatures
 
     @classmethod
     def node_behaviour_topic(cls):
@@ -482,6 +487,17 @@ class svROSNode(object):
         declaration = f'fact node_dependecy {{\n'
         for node_name in cls.NODES:
             node = cls.NODES[node]
+
+    @classmethod
+    def observable_determinism(cls):
+        if cls.NODES is {}: raise svException("No nodes found, can not process handling of topic behaviour.")
+        signatures = []
+        for property_check in cls.PROPT.items():
+            if property_check[0].startswith('OD'):
+                signatures.append(property_check[1])
+            else:
+                continue
+        return '\n\n'.join(signatures)
 
 """ 
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
