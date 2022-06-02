@@ -155,31 +155,25 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
-        self.config, packages, nodes, unsecured_enclaves = config, list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured_enclaves')
+        self.config, packages, nodes, unsecured_nodes = config, list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured')
         # LOAD PICKLE.
         if not self.IMPORTED_DATA == {}: Node.NODES = self.IMPORTED_DATA['nodes']
         for package in packages: 
             Package.init_package_name(name=package, index=packages.index(package))
-        if not (nodes and unsecured_enclaves):
+        if not (nodes and unsecured_nodes):
             raise svException(f'Failed to import config file of project.')
-        if not self.load_nodes_profiles(nodes=nodes, unsecured_enclaves=unsecured_enclaves):
+        if not self.load_nodes_profiles(nodes=nodes, unsecured_nodes=unsecured_nodes):
             raise svException(f'Failed to import config file of project.')
         return True
 
-    def load_nodes_profiles(self, nodes, unsecured_enclaves):
+    def load_nodes_profiles(self, nodes, unsecured_nodes):
         if svROSEnclave.ENCLAVES is {}:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
-        else:
-            for un_enclave in unsecured_enclaves:
-                un_enclave = un_enclave if un_enclave.startswith('/') else '/' + un_enclave
-                if un_enclave not in svROSEnclave.ENCLAVES: 
-                    raise svException(f"Unsecured enclave {un_enclave} is not defined.")
-                else:
-                    svROSEnclave.ENCLAVES[un_enclave].secure = False
+        # Processing nodes.
         for node in nodes:
             name, node = node, nodes[node]
             unsecured, enclave = False, None
-            if node.get('enclave') == '': unsecured = True
+            if node.get('enclave') == '' or node.get('enclave') == 'None': unsecured = True
             elif node.get('enclave') not in svROSEnclave.ENCLAVES:
                 raise svException(f"{node.get('rosname')} enclave is not defined.")
             else:
@@ -192,7 +186,17 @@ class svProjectExtractor:
                 # Update NODE and PROFILE.
                 profile.node                   = node
                 node.advertise, node.subscribe = node.constrain_topics()
-            else: node       = svROSNode(full_name=name, profile=None, **node)
+            else: 
+                node['enclave'] = None
+                node            = svROSNode(full_name=name, profile=None, **node)
+        for un_node in unsecured_nodes:
+                un_node = un_node[1:] if un_node.startswith('/') else un_node
+                if un_node not in svROSNode.NODES: 
+                    raise svException(f"Unsecured node {un_node} is not defined.")
+                else:
+                    node = svROSNode.NODES[un_node]
+                    if node.secure: print(svWarning(f'Node is SROS secured, but its identified as an outsider to the determinism of the program.'))
+                    svROSNode.OBSDT[node] = str()
         # HANDLE class methods.
         svROSNode.handle_connections()  # Set connections up.
         svROSNode.observalDeterminism(scopes=self.scopes) # Observable determinism in Unsecured Nodes.

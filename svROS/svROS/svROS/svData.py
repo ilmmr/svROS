@@ -8,7 +8,7 @@ from tools.InfoHandler import color, svException, svWarning
 # XML Parser
 import xml.etree.ElementTree as ET
 # HAROS HPL Exporter
-from hpl.parser import HplParser, parse_property, parse_specification, parse_predicate, HplPredicate, HplEventDisjunction, HplSimpleEvent, HplBinaryOperator
+from hpl.parser import HplProperty, HplParser, parse_property, parse_specification, parse_predicate, HplPredicate, HplEventDisjunction, HplSimpleEvent, HplBinaryOperator
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -309,7 +309,8 @@ class svROSNode(object):
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
     def __init__(self, full_name, profile, **kwargs):
-        self.index, self.rosname, self.namespace, self.executable, self.enclave, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), profile.enclave, kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
+        self.index, self.rosname, self.namespace, self.executable, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
+        self.enclave = self.profile.enclave if self.profile else None
         # Process node-package.
         self.package = self.index.replace(self.rosname, '') 
         if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
@@ -360,9 +361,9 @@ class svROSNode(object):
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
     def parse_hpl_properties(self):
-        properties = list(map(lambda prop: svProperty.create_prop(text=prop), self.properties))
-        properties = '\n\t'.join(properties)
-        alloy      = f'fact node_{self.abstract(tag=self.rosname)} {{\n\t{properties}\n}}'
+        property_parser = svProperty.parser(node=self, properties=self.properties)
+        properties = '\n\t'.join(property_parser.convert_properties())
+        alloy      = f'fact node_behaviour{self.abstract(tag=self.rosname)} {{\n\t{properties}\n}}'
         return alloy
 
     @staticmethod
@@ -378,8 +379,8 @@ class svROSNode(object):
     # This method will allow to check what the output might be when an unsecured enclave publishes something from one of its topics
     @classmethod
     def observalDeterminism(cls, scopes):
-        unsecured_nodes = list(filter(lambda node: (not node.secure) or (not node.enclave.secure if isinstance(node.enclave, svROSEnclave) else True), list(map(lambda n: n[1], cls.NODES.items()))))
-        for unsecured in unsecured_nodes:
+        # unsecured_nodes = list(filter(lambda node: (not node.secure) or (not node.enclave.secure if isinstance(node.enclave, svROSEnclave) else True), list(map(lambda n: n[1], cls.NODES.items()))))
+        for unsecured in cls.OBSDT:
             paths = dict()
             for topic in unsecured.connection:
                 observable_outputs = cls.obsdet_paths(node=unsecured, current=None, connections=unsecured.connection[topic], output=[], path_nodes=[unsecured])
@@ -404,7 +405,7 @@ class svROSNode(object):
         access_to = {topic.name: set() for topic in self.advertise}
         for node_name in svROSNode.NODES:
             node = svROSNode.NODES[node_name]
-            if node == self: continue
+            if node == self or not node.subscribe: continue
             subscribes_in = list(filter(lambda sub_: sub_ in access_to, list(map(lambda sub: sub.name, node.subscribe))))
             if subscribes_in != []: 
                 for sub in subscribes_in:
@@ -428,7 +429,7 @@ class svROSNode(object):
         
     @node_observable_determinism.setter
     def node_observable_determinism(self, value):
-        if self.secure and self.enclave.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
+        if self.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
         self._node_observable_determinism = value
 
     @property
@@ -463,8 +464,7 @@ class svROSNode(object):
     # Return predicates such as pred LowSync {low requires alarm}
     def sync_obs_det(self, scopes):
         scope_message, scope_steps = scopes.get('Message'), scopes.get('Steps') 
-        if self.secure and self.enclave.secure: 
-            raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
+        if self.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
         signatures, topic_output = {}, self._node_observable_determinism
         for topic_name in topic_output:
             topic, outputs = Topic.TOPICS.get(topic_name), topic_output[topic_name]
@@ -511,7 +511,7 @@ class svROSEnclave(object):
             \_ profiles
     """
     def __init__(self, path, profiles):
-        self.name, self.profiles, self.signature, self.secure = path, {}, self.abstract(tag=path), True
+        self.name, self.profiles, self.signature = path, {}, self.abstract(tag=path)
         for profile in profiles:
             p = svROSProfile.init_profile(profile, enclave=self)
             self.profiles[p.profile] = p
@@ -680,9 +680,21 @@ class svProperty(object):
     """
         HPL PROPERTY => svPROPERTY
     """
+    def __init__(node, properties):
+        if not isinstance(node, svROSNode):
+            raise svException('Failed to create property parser since given node is not a Node.')
+        self.node, self.properties = node, list(map(lambda prop: svProperty.create_prop(text=prop), self.properties))
+
+    @classmethod
+    def parse(cls, node, properties):
+        return cls(node=node, properties=properties)
+
     @staticmethod
     def create_prop(text):
-        try:
-            hpl_prop = parse_property(text)
-        except Exception:
-            raise svException(f'Failed to parse HPL-property {text}.')
+        try: hpl_prop = parse_property(text)
+        except Exception: raise svException(f'Failed to parse HPL-property {text}.')
+
+    def convert_properties(self):
+        for prop in self.properties:
+            if not isinstance(prop, HplProperty): raise svException('Not a HPL-based property.')
+            
