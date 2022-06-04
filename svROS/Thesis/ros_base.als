@@ -7,6 +7,7 @@ abstract sig Node {
 }
 abstract sig Value {}
 abstract sig Message {
+	topic : one Topic,
 	value : one Value
 }
 abstract sig Topic {
@@ -20,14 +21,18 @@ fact ros_assumptions {
 	no inbox + outbox
 	no box0  + box1
 	topic_behaviour[box0] and topic_behaviour[box1]
-	always { all m : Node.outbox | eventually m not in Node.outbox }
+	all n : Node | always { n.inbox.topic in n.subscribes and n.outbox.topic in n.advertises }
+	always { all m : Node.outbox | after m not in Node.outbox }
 }
 
 pred topic_behaviour [box : Topic -> Message] {
-	all m : Message, t: Topic | always { m in t.box   implies ( one n : advertises.t | m in n.outbox ) }
-	all m : Message, n: Node  | always { m in n.inbox implies ( m in (n.subscribes).box ) }
-	all m : Message, t: Topic | always { m in t.box   implies ( all n : subscribes.t | m in n.inbox ) }
-	all m : Message, t: Topic | always { m in t.box   implies after m not in t.box }
+	always { box.~box in iden }
+	all m : Message | always {  
+		m in Node.inbox  implies { (m in (m.topic).box) and (one n : advertises.(m.topic) | m in n.outbox) }
+		m in Node.outbox implies { (m in (m.topic).box) and (all n : subscribes.(m.topic) | m in n.inbox ) }
+		m in Topic.box	  implies { (one n : advertises.(m.topic) | m in n.outbox) and (all n : subscribes.(m.topic) | m in n.inbox ) }
+	}
+	all m : Message, t: Topic | always { m in t.box implies after m not in t.box }
 }
 
 pred publish0[t : Topic, m : Message] {

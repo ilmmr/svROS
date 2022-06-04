@@ -49,20 +49,24 @@ class MessageValue(object):
     
     def __str__(self):
         values     = None if (self.values == set()) else ','.join(self.values)
-        return f'sig {self.signature} extends Value {{}}\none sig {values} extends {self.signature} {{}}\n'
+        return f'sig {self.signature} extends Value {{}}\none sig {values} extends {self.signature} {{}}'
 
 "ROS2-based for message topic_type as this tool focus on Topic-Message processing."
 class MessageType(object):
     TYPES = {}
-    def __init__(self, name, signature):
-        self.name, self.signature = name, signature
-        self.value = MessageValue.init_message_value(name=self.abstract(tag=self.name))
+    def __init__(self, name, signature, topic):
+        self.name, self.signature, self.topics = name, signature, set()
+        self.value  = MessageValue.init_message_value(name=self.abstract(tag=self.name))
+        self.topics.add(topic)
         MessageType.TYPES[name]   = self
 
     @classmethod
-    def init_message_type(cls, name, signature):
-        if name in cls.TYPES: return cls.TYPES[name]
-        return cls(name=name, signature=signature)
+    def init_message_type(cls, name, signature, topic):
+        if name in cls.TYPES:
+            _type = cls.TYPES[name]
+            _type.topics.add(topic)
+            return _type
+        return cls(name=name, signature=signature, topic=topic)
     
     @staticmethod
     def abstract(tag): 
@@ -70,7 +74,7 @@ class MessageType(object):
         return tag.lower()[(tag.rfind('_'))+1:].capitalize()
     
     def __str__(self):
-        return f'one sig {self.signature} extends Message {{}} {{value in {self.value.signature}}}\n'
+        return f'sig {self.signature} extends Message {{}} {{\n\tvalue in {self.value.signature}\n\ttopic in {" + ".join(self.topics)}\n}}\n'
 
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
@@ -90,7 +94,7 @@ class Topic(object):
             topic = Topic.TOPICS[name]
             if topic_type != topic.type: raise svException(f'Same topic ({name}) with different types ({topic_type, topic.type}).')
             else: return topic
-        message_type = MessageType.init_message_type(name=topic_type.lower().replace('/', '_'), signature=MessageType.abstract(tag=topic_type))
+        message_type = MessageType.init_message_type(name=topic_type.lower().replace('/', '_'), signature=MessageType.abstract(tag=topic_type), topic=name.lower().replace('/', '_'))
         return cls(name=name, topic_type=topic_type, message_type=message_type)
 
     @staticmethod
@@ -116,11 +120,10 @@ class Topic(object):
     @classmethod
     def topic_declaration(cls):
         TOPICS       = cls.TOPICS
-        declaration  = ''.join(list(map(lambda topic: TOPICS[topic].declaration(), TOPICS)))
+        declaration  = ''.join(list(map(lambda topic: TOPICS[topic].declaration(), TOPICS))) + '\n'
         TYPES        = MessageType.TYPES
-        declaration += ''.join(list(map(lambda msgtp: str(TYPES[msgtp]) , TYPES )))
-        VALUES       = MessageValue.VALUES
-        declaration += ''.join(list(map(lambda value: str(VALUES[value]), VALUES)))
+        declaration += '\n'.join(list(map(lambda msgtp: str(TYPES[msgtp]) , TYPES )))
+        # VALUES?
         return declaration
 
 "ROS2-based Node already parse, with remaps and topic handling."
@@ -443,7 +446,7 @@ class svROSNode(object):
         else:              advertises = f"advertises = {advertises}"
         if not subscribes: subscribes = "no subscribes"
         else:              subscribes = f"subscribes = {subscribes}"
-        declaration  = f'one sig node_{self.abstract(tag=self.rosname)} extends Node {{}} {{\n\t{advertises}\n\t{subscribes}\n}}\n'
+        declaration  = f'one sig node{self.abstract(tag=self.rosname)} extends Node {{}} {{\n\t{advertises}\n\t{subscribes}\n}}\n'
         return declaration
         # if self.properties is None:
         #     if self.advertise is None:
@@ -474,7 +477,7 @@ class svROSNode(object):
                 pred_signature = f'OD{topic.signature}_Sync_{outputs.index(out)}' 
                 depd_signature = f'OD{topic.signature}_Depd_{outputs.index(out)}'
                 comments       = f'/* === OD: {topic.name} => {out.name} === */\n'
-                signature      = f'{comments}pred {pred_signature} {{ historically (all m : Message | (publish0[{topic.signature},m] iff publish1[{topic.signature},m]) and (publish0[{out.signature},m] iff publish1[{out.signature},m]))}}\ncheck {depd_signature} {{ always {pred_signature} implies (all m0, m1 : Message | publish0[{out.signature},m0] and publish1[{out.signature},m1] implies m0.value = m1.value)}} for 0 but 1..{scope_message} Message, 1..{scope_steps} steps'
+                signature      = f'{comments}pred {pred_signature} {{ historically (all m : Message | (publish0[{topic.signature},m] iff publish1[{topic.signature},m]) and (publish0[{out.signature},m] iff publish1[{out.signature},m])) }}\ncheck {depd_signature} {{ always (before {pred_signature} implies (all m0, m1 : Message | publish0[{out.signature},m0] and publish1[{out.signature},m1] implies m0.value = m1.value)) }} for 0 but {scope_message} Message, 1..{scope_steps} steps'
                 svROSNode.PROPT[depd_signature] = signature
                 tmp[out.name] = depd_signature
 
