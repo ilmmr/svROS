@@ -7,7 +7,7 @@ from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svWarning
 # Node parser
-from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, Node, Package, Topic
+from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, svState, Node, Package, Topic
 import xml.etree.ElementTree as ET
 
 global WORKDIR, SCHEMAS
@@ -78,13 +78,14 @@ class svAnalyzer(object):
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
     def security_verification(self):
-        NODES, ENCLAVES, OBJECTS = dict(filter(lambda node: node[1].profile is not None, svROSNode.NODES.items())), svROSEnclave.ENCLAVES, svROSObject.OBJECTS
-        SROS_FILE = self.generate_sros_model(NODES=NODES, ENCLAVES=ENCLAVES, OBJECTS=OBJECTS)
+        # NODES = dict(filter(lambda node: node[1].profile is not None, svROSNode.NODES.items())) ==> NOT NEEDED. 
+        ENCLAVES, OBJECTS, PROFILES = svROSEnclave.ENCLAVES, svROSObject.OBJECTS, svROSProfile.PROFILES
+        SROS_FILE = self.generate_sros_model(PROFILES=PROFILES, ENCLAVES=ENCLAVES, OBJECTS=OBJECTS)
         if not os.path.isfile(path=SROS_FILE): return False
         else: return True
         # RUN ALLOY.
     
-    def generate_sros_model(self, NODES, ENCLAVES, OBJECTS):
+    def generate_sros_model(self, PROFILES, ENCLAVES, OBJECTS):
         model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
         if not os.path.exists(path=file_path): open(file_path, 'w+').close()
         if not os.path.isfile(path=file_path): raise svException('Unexpected error happend while creating SROS file.')
@@ -93,7 +94,7 @@ class svAnalyzer(object):
         model += ''.join(list(map(lambda enclave: str(ENCLAVES[enclave]), ENCLAVES)))
         # NODES.
         model += '/* === ENCLAVES === */\n\n/* === PROFILES === */\n'
-        model += ''.join(list(map(lambda node: str(NODES[node].profile), NODES)))
+        model += ''.join(list(map(lambda profile: str(PROFILES[profile]), PROFILES)))
         # OBJECTS.
         model += '/* === PROFILES === */\n\n/* === OBJECTS === */\n'
         model += ''.join(list(map(lambda obj: str(OBJECTS[obj]), OBJECTS)))
@@ -155,18 +156,18 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
-        self.config, packages, nodes, unsecured_nodes = config, list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('unsecured')
+        self.config, packages, nodes, observable_determinism = config, list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('observable determinism')
         # LOAD PICKLE.
         if not self.IMPORTED_DATA == {}: Node.NODES = self.IMPORTED_DATA['nodes']
         for package in packages: 
             Package.init_package_name(name=package, index=packages.index(package))
-        if not (nodes and unsecured_nodes):
+        if not (nodes and observable_determinism):
             raise svException(f'Failed to import config file of project.')
-        if not self.load_nodes_profiles(nodes=nodes, unsecured_nodes=unsecured_nodes):
+        if not self.load_nodes_profiles(nodes=nodes, observable_determinism=observable_determinism):
             raise svException(f'Failed to import config file of project.')
         return True
 
-    def load_nodes_profiles(self, nodes, unsecured_nodes):
+    def load_nodes_profiles(self, nodes, observable_determinism):
         if svROSEnclave.ENCLAVES is {}:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
         # Processing nodes.
@@ -189,14 +190,34 @@ class svProjectExtractor:
             else: 
                 node['enclave'] = None
                 node            = svROSNode(full_name=name, profile=None, **node)
-        for un_node in unsecured_nodes:
-                un_node = un_node[1:] if un_node.startswith('/') else un_node
-                if un_node not in svROSNode.NODES: 
-                    raise svException(f"Unsecured node {un_node} is not defined.")
-                else:
-                    node = svROSNode.NODES[un_node]
-                    if node.secure: print(svWarning(f'Node is SROS secured, but its identified as an outsider to the determinism of the program.'))
-                    svROSNode.OBSDT[node] = str()
+        for od in observable_determinism:
+            # PARSING OBSERVABLE DETERMINISM.
+            if not bool(re.match(pattern=r'(.*?)=>(.*?)', string=od)): raise svException(f"Failed to parse Observable Determinism rule.")
+            else: 
+                pattern = re.match(pattern=r'(.*?)=>(.*?)$', string=od)
+                un_node, od_output = pattern.groups()[0].strip(), pattern.groups()[1].strip()
+            # OD involving nodes.
+            un_node   = un_node[1:] if un_node.startswith('/') else un_node
+            if un_node not in svROSNode.NODES: 
+                raise svException(f"Unsecured node {un_node} is not defined.")
+            if not od_output.startswith('$'):
+                od_output = od_output[1:] if od_output.startswith('/') else od_output 
+                if od_output not in svROSNode.NODES:
+                    raise svException(f"Observable node {od_output} is not defined.")
+                od_output = svROSNode.NODES[od_output]
+                # Is it observable ?
+                if od_output.secure: raise svException(f"Node {od_output.rosname} is not observable, as it is secured.")
+            else:
+                if od_output[1:] not in svState.STATES:
+                    raise svException(f"Observable state {od_output} is not defined.")
+                od_output = svState.STATES[od_output[1:]]
+
+            node = svROSNode.NODES[un_node]
+            # Connections and NODE => OBSERVABLE
+            if node.secure: print(svWarning(f'Node is SROS secured, but its identified as an outsider to the determinism of the program.'))
+            if node not in svROSNode.OBSDT: 
+                svROSNode.OBSDT[node] = set()
+            svROSNode.OBSDT[node].add(od_output)
         # HANDLE class methods.
         svROSNode.handle_connections()  # Set connections up.
         svROSNode.observalDeterminism(scopes=self.scopes) # Observable determinism in Unsecured Nodes.

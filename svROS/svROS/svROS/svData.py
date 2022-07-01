@@ -169,7 +169,7 @@ class Node(object):
                 name       = Node.render_remap(topic=sub, remaps=node.remaps).rosname(node=node)
                 ret_object[index]['subscribe'][name] = topic_type
             # HPL Properties
-            ret_object[index]['hpl'] = {'properties': ['']}
+            ret_object[index]['analysis'] = {'states': None, 'properties': ['']}
         return ret_object
 
     @classmethod
@@ -312,7 +312,7 @@ class svROSNode(object):
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
     def __init__(self, full_name, profile, **kwargs):
-        self.index, self.rosname, self.namespace, self.executable, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('hpl', {}).get('properties'), profile
+        self.index, self.rosname, self.namespace, self.executable, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('analysis', {}).get('properties'), profile
         self.enclave = self.profile.enclave if self.profile else None
         # Process node-package.
         self.package = self.index.replace(self.rosname, '') 
@@ -330,6 +330,11 @@ class svROSNode(object):
         if self.properties: self.properties = self.parse_hpl_properties() 
         # Store in class variable.
         svROSNode.NODES[self.index] = self
+
+        # PROCESS INNER STATES.
+        states = kwargs.get('analysis', {}).get('states')
+        if states:
+            for state in states: svState.init_state(name=state, values=states[state])
     
     # Constrain TOPIC ALLOWANCE.
     def constrain_topics(self):
@@ -384,16 +389,32 @@ class svROSNode(object):
     def observalDeterminism(cls, scopes):
         # unsecured_nodes = list(filter(lambda node: (not node.secure) or (not node.enclave.secure if isinstance(node.enclave, svROSEnclave) else True), list(map(lambda n: n[1], cls.NODES.items()))))
         for unsecured in cls.OBSDT:
-            paths = dict()
+            paths            = dict()
+            channels_outputs, state_outputs = set(filter(lambda x: isinstance(x, svROSNode), cls.OBSDT[unsecured])), list(filter(lambda x: isinstance(x, svState), cls.OBSDT[unsecured]))
+    
             for topic in unsecured.connection:
                 observable_outputs = cls.obsdet_paths(node=unsecured, current=None, connections=unsecured.connection[topic], output=[], path_nodes=[unsecured])
-                paths[topic] = observable_outputs
+                # FILTER and check!
+                if not (channels_outputs <= set(map(lambda obs: obs[0], observable_outputs))):
+                    raise svException(f'Failed to check observable determinism in {unsecured.rosname}: Some connections are not observable!')
+                else:
+                    paths[topic] = []
+                    for obs in observable_outputs:
+                        if obs[0] in channels_outputs:
+                            svWarning(message=f'OD {unsecured.rosname} => {obs[0].rosname} :: {topic} --> {str(obs[1])}')
+                        if isinstance(obs[1], list): paths[topic] += obs[1]
+                        else: paths[topic].append(obs[1])
+                    # States.
+                    paths[topic] += state_outputs
             unsecured._node_observable_determinism = paths
             cls.OBSDT[unsecured] = unsecured.sync_obs_det(scopes=scopes)
 
     @staticmethod
     def obsdet_paths(node, current, connections, output, path_nodes):
-        if connections == set() and current is not None: output.append(*[adv for adv in current.advertise])
+        if connections == set() and current is not None: 
+            temp_output = list(map(lambda o: o[0], output))
+            if current not in temp_output:
+                output.append((current, [adv for adv in current.advertise]))
         for c in connections:
             # Revoke possible loops.
             if (c in path_nodes and c is not node): continue
@@ -502,6 +523,21 @@ class svROSNode(object):
                 continue
         return '\n\n'.join(signatures)
 
+class svState(object):
+    STATES = {}
+
+    def __init__(self, name, default, values):
+        self.name, self.signature, self.default, self.values = name, self.signature(tag=name), default, values
+        svState.STATES[self.name] = self
+    
+    def signature(self, tag): return 'state_' + tag.lower()
+
+    @classmethod
+    def init_state(cls, name, values):
+        values  = values.split('/')
+        default = values[0]
+        return cls(name=name, default=default, values=values)
+
 """ 
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
 """
@@ -540,6 +576,10 @@ class svROSProfile(object):
         self.name, self.namespace, self.enclave = name, namespace, enclave
         self.privileges = dict()
         self.advertise, self.subscribe, self.deny_advertise, self.deny_subscribe = can_advertise, can_subscribe, deny_advertise, deny_subscribe
+        # ERROR if this function not defined: Some profiles have no corresponding node and vice-versa!!
+        self.signature, self.privileges, self.access  = self.abstract(tag=namespace + name), [], []
+        self.profile_privileges()
+        # INDEX processing.
         svROSProfile.PROFILES[self.index] = self
 
     @classmethod
@@ -583,37 +623,40 @@ class svROSProfile(object):
     def node(self, node):
         if not isinstance(node, svROSNode):
             raise svException('Failed to load node into profile.')
-        self.signature, self.privileges, self.access  = self.abstract(tag=node.rosname), [], []
         rosname = self.signature
         # Process topic access.
         if node.advertise:
             for adv in node.advertise:
                 name, topic_type = adv.name, adv.type
                 # LOAD PRIVILEGE 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=name, method='access', len=len(self.access))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=name, method='access')
                 self.access.append(privilege)
         if node.subscribe:
             for sub in node.subscribe:
                 name, topic_type = sub.name, sub.type
                 # LOAD PRIVILEGE 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=name, method='access', len=len(self.access))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=name, method='access')
                 self.access.append(privilege)
+    
+    # ASIDE FROM NODE DEFINITION
+    def profile_privileges(self):
+        rosname = self.signature
         # Process topic privilege
         if self.advertise:
             for adv in self.advertise:
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv, method='privilege', len=len(self.privileges))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv, method='privilege')
                 self.privileges.append(privilege)
         if self.subscribe:
             for sub in self.subscribe: 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=sub, method='privilege', len=len(self.privileges))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=sub, method='privilege')
                 self.privileges.append(privilege)
         if self.deny_advertise:
             for deny in self.deny_advertise:
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=deny, method='deny', len=len(self.privileges))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=deny, method='deny')
                 self.privileges.append(privilege)
         if self.deny_subscribe:
             for deny in self.deny_subscribe:
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=deny, method='deny', len=len(self.privileges))
+                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=deny, method='deny')
                 self.privileges.append(privilege)
         
     def abstract(self, tag): return tag.lower().replace('/', '_')
@@ -639,7 +682,7 @@ class svROSProfile(object):
 class svROSObject(object):
     OBJECTS = {}
     def __init__(self, name):
-        self.name = name
+        self.name = 'object' + name if name.startswith('_') else '_' + name
         svROSObject.OBJECTS[name] = self
 
     @classmethod
@@ -661,17 +704,18 @@ class svROSPrivilege(object):
         svROSPrivilege.PRIVILEGES_SET[index] = self
 
     @classmethod
-    def init_privilege(cls, node, role, rosname, method, len):
+    def init_privilege(cls, node, role, rosname, method):
         if not role.capitalize() in svROSPrivilege.PRIVILEGES: raise svException('Not identified role.')
         if not method.capitalize() in svROSPrivilege.METHODS:  raise svException('Not identified method.')
         if method.capitalize().strip() == 'Deny': rule = 'Deny' 
         else: rule = 'Allow'
         # INDEX PROCESSING.
-        index = node + rosname + rule.lower()
+        index = node + rosname + '_' + rule.lower()
+        index = index if not index.startswith('_') else index[1:]
         if index in cls.PRIVILEGES_SET:
             return cls.PRIVILEGES_SET[index]
         else:
-            return cls(index=index, signature=f'{rosname}_{method}_{len}', role=role, rosname=rosname, rule=rule)
+            return cls(index=index, signature=f'{index}', role=role, rosname=rosname, rule=rule)
 
     def abstract(self, tag): return tag.lower().replace('/', '_')
 

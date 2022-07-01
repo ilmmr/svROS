@@ -1,18 +1,22 @@
 module sros_base
 
 /* === SIGNATURE DECLARATION ==== */
+-- ENCLAVE --
 abstract sig Enclave {
 	profiles: set Profile
 } { some profiles }
+-- PROFILE --
 abstract sig Profile {
 	privileges: set Privilege,
 	access: set Privilege
 }
+-- PRIVILEGE: Can either be a SROS privilege or a ROS call. --
 abstract sig Privilege {
 	object: one Object,
 	role  : one Role,
 	rule  : one Rule
 }
+-- OBJECT n RULES --
 enum Role {Advertise, Subscribe}
 enum Rule {Allow, Deny}
 abstract sig Object {}
@@ -38,4 +42,3 @@ assert valid_configuration_2 {
 assert valid_configuration {
 	access_in_privileges and rule_different_privileges
 } check valid_configuration
-
