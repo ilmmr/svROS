@@ -283,7 +283,7 @@ class svINIT:
         return True
         """ === Predefined functions === """
 
-"=> if $ svROS export"
+"=> if $ svROS import"
 @dataclass
 class svEXPORT:
     file       : str      = ''
@@ -425,7 +425,7 @@ class svEXPORT:
         project_parser.project_path = path
         return project_parser, project_name
 
-    # svROS export
+    # svROS import
     def _default_export(self):
         project_parser, project_name = self._call_parser(default=True)
         if isinstance(project_parser, bool):
@@ -438,7 +438,7 @@ class svEXPORT:
         return True
     """ === Predefined functions === """
 
-"=> if $ svROS run"
+"=> if $ svROS launch"
 @dataclass
 class svRUN:
     project   : str
@@ -499,8 +499,8 @@ class svRUN:
 """ 
     This works as an application-launcher parser, that will eventually call up one of these classes:
         => svINIT,   if $ svROS init
-        => svEXPORT, if $ svROS export
-        => svRUN,    if $ svROS run
+        => svEXPORT, if $ svROS import
+        => svRUN,    if $ svROS launch
 """
 @dataclass
 class Launcher:
@@ -510,11 +510,11 @@ class Launcher:
 
     OPTIONS:
         => svROS init [ , --reset]
-        => svROS export -f $file [ , optional]
+        => svROS import -f $file [ , optional]
             '-> optional:
                 --force-init => Force creation of svROS dir           
                 --reset      => Reset project directory 
-        => svROS run -p $project
+        => svROS launch -p $project
     """
     # ROS2 environment variables.
     distro      : str
@@ -626,8 +626,8 @@ class Launcher:
         # SUBSPARSERS: init, extract and run
         options = interpreter.add_subparsers(help='sub-command')
         init    = options.add_parser('init')
-        export  = options.add_parser('export')
-        run     = options.add_parser('run')
+        export  = options.add_parser('import')
+        run     = options.add_parser('launch')
         # Handling functions
         self._init(parser=init)
         self._export(parser=export)
@@ -672,7 +672,7 @@ class Launcher:
         parser.add_argument("--reset",  help = "Reset the svROS directory and all the directory subdirectories.", action="store_true")
         parser.set_defaults(func = self.setup)
 
-    # Handler svROS export
+    # Handler svROS import
     def command_export(self, args):
         # Check if init file exists.
         exists, init = self._check_file(f'{self._DIR}/.init', mode=False)
@@ -708,14 +708,14 @@ class Launcher:
         self.log.info(f"Exporting file {args.file} into a project: Setup operation.")
         return export._default_export()
         
-    # => svROS export -f (--file) $file [, --force-init, --reset] (optional)
+    # => svROS import -f (--file) $file [, --force-init, --reset] (optional)
     def _export(self, parser):
         parser.add_argument("-f", "--file",  help = "Provide yaml-based file.", required=True)
         parser.add_argument("--force-init",  help = "Force creation of svROS directory, if not created.", action="store_true")
         parser.add_argument("--reset",  help = "Reset the project directory, if it already exists.", action="store_true")
         parser.set_defaults(func = self.command_export)
 
-    # Handler svROS run
+    # Handler svROS launch
     def command_run(self, args):
         # Check if init file exists.
         exists, init = self._check_file(f'{self._DIR}/.init', mode=False)
@@ -734,7 +734,7 @@ class Launcher:
         print(f'[svROS] Running svROS :: Project {color.color("BOLD", color.color("ORANGE", project_name))}')
         return run._run()
 
-    # => svROS run -p (--project) $project
+    # => svROS launch -p (--project) $project
     def _run(self, parser):
         parser.add_argument("-p", "--project", help = "Provide a project to be analyzed.", required=True)
         parser.set_defaults(func = self.command_run)

@@ -10,15 +10,15 @@
 ║                                                                      ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                      ║
-║     => svROS init [ , reset]                                         ║
+║     => svROS init [ ,reset]                                          ║
 ║         . initializes the .svROS directory                           ║
-║     => svROS export [args]                                           ║
+║     => svROS import [args]                                           ║
 ║         . extract node info and creates sros-based file              ║
 ║         -f (--file) file [ ,options]                                 ║
 ║            options:                                                  ║
 ║                --force-init        => Force creation of svROS dir    ║
 ║                --reset             => Reset project directory        ║
-║     => svROS run [args]                                              ║
+║     => svROS launch [args]                                           ║
 ║         . runs the tool with a given project directory               ║
 ║         -p (--project) project                                       ║
 ║                                                                      ║
