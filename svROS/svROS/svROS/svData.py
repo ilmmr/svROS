@@ -5,8 +5,9 @@ from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svWarning
-# XML Parser
+# Parsers
 import xml.etree.ElementTree as ET
+from lark import Lark, tree
 # HAROS HPL Exporter
 from hpl.parser import HplProperty, HplParser, parse_property, parse_specification, parse_predicate, HplPredicate, HplEventDisjunction, HplSimpleEvent, HplBinaryOperator
 
@@ -37,26 +38,36 @@ class Package:
 "ROS2-based for message value related to a topic_type as this tool focus on Topic-Message processing."
 class MessageValue(object):
     VALUES = {}
-    def __init__(self, name):
-        self.name, self.signature, self.values = name, name + '_Value', set()
-        self.values.add(f'{self.signature}_Default')
-        MessageType.TYPES[name] = self
+    def __init__(self, name, isint):
+        self.name, self.isint, self.signature, self.values = name, isint, name + '_Value', set()
+        # self.values.add(f'{self.signature}_Default')
+        MessageValue.VALUES[name] = self
 
     @classmethod
-    def init_message_value(cls, name):
-        if name in cls.VALUES: return cls.VALUES[name]
-        return cls(name=name)
+    def init_message_value(cls, name, isint):
+        if name in cls.VALUES:
+            value = cls.VALUES[name] 
+            if not bool(isint == value.isint): raise svException('Fail to load already loaded value: Coherency does not hold.')
+            return cls.VALUES[name]
+        return cls(name=name, isint=isint)
     
     def __str__(self):
-        values     = None if (self.values == set()) else ','.join(self.values)
-        return f'sig {self.signature} extends Value {{}}\none sig {values} extends {self.signature} {{}}'
+        if self.isint:
+            _str_ = f"""sig {self.signature} in Int {{}}"""
+            values = set()
+            for v in self.values:
+                values.add(v)
+            _str_ += f"""\nfact {{{self.signature} in {'+'.join(values)}}}"""
+        else:
+            values     = None if (self.values == set()) else ','.join(self.values)
+            _str_ = f'abstract sig {self.signature} extends Value {{}}\none sig {values} extends {self.signature} {{}}'
+        return _str_ + '\n'
 
 "ROS2-based for message topic_type as this tool focus on Topic-Message processing."
 class MessageType(object):
     TYPES = {}
     def __init__(self, name, signature, topic):
         self.name, self.signature, self.topics = name, signature, set()
-        self.value  = MessageValue.init_message_value(name=self.abstract(tag=self.name))
         self.topics.add(topic)
         MessageType.TYPES[name]   = self
 
@@ -74,7 +85,16 @@ class MessageType(object):
         return tag.lower()[(tag.rfind('_'))+1:].capitalize()
     
     def __str__(self):
-        return f'sig {self.signature} extends Message {{}} {{\n\tvalue in {self.value.signature}\n\ttopic in {" + ".join(self.topics)}\n}}\n'
+        return f'sig {self.signature} extends Message {{}} {{\n\tvalue in {self.value.signature}\n}}\n' + str(self.value)
+
+    @property
+    def isint(self):
+        return self._isint
+    
+    @isint.setter
+    def isint(self, b):
+        self._isint = b
+        self.value  = MessageValue.init_message_value(name=self.abstract(tag=self.name), isint=b)
 
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
@@ -85,7 +105,7 @@ class Topic(object):
             \__ Type
     """
     def __init__(self, name, topic_type, message_type=None):
-        self.name, self.type, self.remap, self.signature, self.message_type = name, topic_type, None, self.abstract(tag=name), message_type
+        self.name, self.type, self.remap, self.signature, self.message_type = name, topic_type, None, 'channel'+self.abstract(tag=name), message_type
         Topic.TOPICS[name] = self
         
     @classmethod
@@ -114,17 +134,36 @@ class Topic(object):
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
     def declaration(self):
-        abstract_type, self.message_type = self.abstract(tag=self.type), MessageType.TYPES[self.abstract(tag=self.type)]
-        return f"""one sig {self.signature} extends Topic {{}} {{(box0 + box1) in {self.message_type.signature}}}\n"""
+        abstract_type, self.message_type = self.abstract(tag=self.type), MessageType.TYPES[self.abstract(tag=self.type).lower()]
+        return f"""one sig {self.signature} extends Channel {{}}\n"""
+        #"""{{(box0 + box1) in {self.message_type.signature}}}\n"""
 
     @classmethod
     def topic_declaration(cls):
         TOPICS       = cls.TOPICS
         declaration  = ''.join(list(map(lambda topic: TOPICS[topic].declaration(), TOPICS))) + '\n'
+        # CHANNEL COHENRECY
+        declaration  += """fact channel_coherency {{\n\talways( """
+        temp          = []
+        for topic in TOPICS:
+            topic = TOPICS[topic]
+            temp.append(f"""{topic.signature}.(Execution.inbox) in {topic.message_type.signature}""")
+        declaration  += ' and '.join(temp) + """ )\n}}\n\n"""
+        # TYPES
         TYPES        = MessageType.TYPES
         declaration += '\n'.join(list(map(lambda msgtp: str(TYPES[msgtp]) , TYPES )))
         # VALUES?
         return declaration
+
+    @classmethod
+    def list_of_types(cls):
+        # Returning object.
+        ret_object = {}
+        for index in cls.TOPICS:
+            topic = cls.TOPICS[index]
+            if topic.type not in ret_object:
+                ret_object[topic.type] = None
+        return ret_object
 
 "ROS2-based Node already parse, with remaps and topic handling."
 class Node(object):
@@ -169,7 +208,15 @@ class Node(object):
                 name       = Node.render_remap(topic=sub, remaps=node.remaps).rosname(node=node)
                 ret_object[index]['subscribe'][name] = topic_type
             # HPL Properties
-            ret_object[index]['analysis'] = {'states': None, 'properties': ['']}
+            # ret_object[index]['analysis'] = {'states': None, 'properties': ['']}
+        return ret_object
+
+    @classmethod
+    def list_of_nodes(cls):
+        # Returning object.
+        ret_object = {}
+        for index in cls.NODES:
+            ret_object[index] = [None]
         return ret_object
 
     @classmethod
@@ -312,7 +359,7 @@ class svROSNode(object):
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
     def __init__(self, full_name, profile, **kwargs):
-        self.index, self.rosname, self.namespace, self.executable, self.advertise, self.subscribe, self.properties, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('advertise'), kwargs.get('subscribe'), kwargs.get('analysis', {}).get('properties'), profile
+        self.index, self.rosname, self.namespace, self.executable, self.advertise, self.subscribe, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('advertise'), kwargs.get('subscribe'), profile
         self.enclave = self.profile.enclave if self.profile else None
         # Process node-package.
         self.package = self.index.replace(self.rosname, '') 
@@ -325,16 +372,8 @@ class svROSNode(object):
         self.can_publish   = profile.advertise if self.secure else None
         # GET from Pickle classes.
         if Node.NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
-        # HANDLE node properties.
-        if self.properties.__len__() == 1 and self.properties.pop() == '': self.properties = None
-        if self.properties: self.properties = self.parse_hpl_properties() 
         # Store in class variable.
         svROSNode.NODES[self.index] = self
-
-        # PROCESS INNER STATES.
-        states = kwargs.get('analysis', {}).get('states')
-        if states:
-            for state in states: svState.init_state(name=state, values=states[state])
     
     # Constrain TOPIC ALLOWANCE.
     def constrain_topics(self):
@@ -366,10 +405,10 @@ class svROSNode(object):
             return node.remaps
         else: return list()
 
-    def abstract(self, tag): return tag.lower().replace('/', '_')
+    def abstract(self, tag): return tag.capitalize().replace('/', '_')
 
-    def parse_hpl_properties(self):
-        property_parser = svProperty.parser(node=self, properties=self.properties)
+    def parse_node_properties(self, properties):
+        property_parser = svProperty.parser(node=self, properties=properties)
         properties = '\n\t'.join(property_parser.convert_properties())
         alloy      = f'fact node_behaviour{self.abstract(tag=self.rosname)} {{\n\t{properties}\n}}'
         return alloy
@@ -468,6 +507,8 @@ class svROSNode(object):
         if not subscribes: subscribes = "no subscribes"
         else:              subscribes = f"subscribes = {subscribes}"
         declaration  = f'one sig node{self.abstract(tag=self.rosname)} extends Node {{}} {{\n\t{advertises}\n\t{subscribes}\n}}\n'
+        # SIGNATURE.
+        self.signature = f"""node{self.abstract(tag=self.rosname)}"""
         return declaration
         # if self.properties is None:
         #     if self.advertise is None:
@@ -523,20 +564,64 @@ class svROSNode(object):
                 continue
         return '\n\n'.join(signatures)
 
+    @property
+    def properties(self):
+        return self._properties
+
+    @properties.setter
+    def properties(self, properties):
+        # HANDLE node properties.
+        if properties.__len__() == 1 and properties.pop() == '': self._properties = None
+        else: self._properties = self.parse_node_properties(properties=properties) 
+
 class svState(object):
     STATES = {}
-
-    def __init__(self, name, default, values):
-        self.name, self.signature, self.default, self.values = name, self.signature(tag=name), default, values
+    def __init__(self, name, default, values, private=False, isint=False):
+        self.name, self.signature, self.default, self.values, self.private, self.isint = name, self.signature(tag=name), default, values, private, isint
         svState.STATES[self.name] = self
     
-    def signature(self, tag): return 'state_' + tag.lower()
+    def __str__(self):
+        if self.isint:
+            _str_ = f"""\nsig {self.signature} in Int {{}}"""
+            values = set()
+            for v in self.values:
+                values.add(v)
+            _str_ += f"""\nfact {{{self.signature} in {'+'.join(values)}}}"""
+        else:
+            _str_  = f"""\nabstract sig {self.signature} {{}}"""
+            _str_ += f"""\none sig {','.join([self.values_signature(value) for value in self.values])} extends {self.signature} {{}}"""
+        return _str_
+
+    def signature(self, tag): return 'State_' + tag.capitalize()
+
+    def values_signature(self, value): return self.name.capitalize() + '_' + value.capitalize()
 
     @classmethod
     def init_state(cls, name, values):
+        # Grammar to parse states.
+        grammar = """
+            sentence: one | two | three | four
+            one: PRIV INT NAME
+            two: INT NAME
+            three: PRIV NAME
+            four: NAME
+            PRIV:"priv"
+            INT:"int"
+            NAME:/(?!\s)[a-zA-Z0-9_\/\-.\:]+/
+            %import common.WS
+            %ignore WS
+        """
+        parser = Lark(grammar, start='sentence', ambiguity='explicit')
+        if not parser.parse(str(name)): raise svException(f'Failed to parse state {str(name)}.')
+        t      = parser.parse(name)
+        if t.children[0].data == "one":   private, isint = True, True
+        if t.children[0].data == "two":   private, isint = False, True
+        if t.children[0].data == "three": private, isint = True, False
+        if t.children[0].data == "four":  private, isint = False, False
+        name = str(t.children[0].children[::-1][0])
         values  = values.split('/')
         default = values[0]
-        return cls(name=name, default=default, values=values)
+        return cls(name=name, default=default, values=values, private=private, isint=isint)
 
 """ 
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
@@ -723,6 +808,9 @@ class svROSPrivilege(object):
         _str_ = f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}\nrule = {self.rule}\nobject = {self.object.name}}}\n""" 
         return _str_
 
+###############################
+# === ANALYSING !! YAY :))) ===
+###############################
 class svProperty(object):
     """
         HPL PROPERTY => svPROPERTY
@@ -744,4 +832,25 @@ class svProperty(object):
     def convert_properties(self):
         for prop in self.properties:
             if not isinstance(prop, HplProperty): raise svException('Not a HPL-based property.')
-            
+
+class svExecution(object):
+    """
+        Execution Traces => SELF-COMPOSITION
+    """
+    def __init__(self, name, signature):
+        self.name, self.signature = name, signature
+
+    @classmethod
+    def create_executions(cls):
+        t1 = cls(name='Trace_1', signature='T1')
+        t2 = cls(name='Trace_2', signature='T2')
+        # Convert TO ALLOY.
+        _str_  = f"""abstract sig Execution {{\n\tvar inbox: Channel -> lone Message"""
+        states = ''
+        for state in svState.STATES:
+            state = svState.STATES[state]
+            states += str(state)
+            _str_ += f""",\n\tvar {state.name.lower()}: one {state.signature}"""
+        _str_ += f"""\n}}\n"""
+        _str_ += f"""one sig {t1.signature}, {t2.signature} extends Execution {{}}\n"""
+        return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */'

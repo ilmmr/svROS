@@ -9,7 +9,7 @@ from tools.InfoHandler import color, svException, svWarning
 # Exporters
 from svExport import svrosExport
 from svAnalyzer import svProjectExtractor, svAnalyzer
-from svData import svROSEnclave, svROSNode, Topic
+from svData import svROSEnclave, svROSNode, Topic, svExecution
 
 global WORKDIR, INIT_SCHEMA, _INIT_
 WORKDIR      = os.path.dirname(__file__)
@@ -469,6 +469,7 @@ class svRUN:
         project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
         if not (project_analyzer.security_verification() and project_analyzer.ros_verification()):
             raise svException('Could not initiate running of project => ANALYZER FAILED.')
+        # print(svExecution.create_executions())
         # for n in svROSNode.NODES:
         #     node = svROSNode.NODES[n]
         #     print(node)

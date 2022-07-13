@@ -1,5 +1,3 @@
-module sros_base
-
 /* === SIGNATURE DECLARATION ==== */
 abstract sig Enclave {
 	profiles: set Profile

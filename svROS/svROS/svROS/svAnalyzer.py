@@ -7,7 +7,7 @@ from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svWarning
 # Node parser
-from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, svState, Node, Package, Topic
+from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, svState, Node, Package, Topic, MessageType, svExecution
 import xml.etree.ElementTree as ET
 
 global WORKDIR, SCHEMAS
@@ -32,7 +32,6 @@ class svAnalyzer(object):
     def __post_init__(self):
         # GET FROM EXTRACTOR
         project, PROJECT_DIR, scopes = self.EXTRACTOR.project, self.EXTRACTOR.PROJECT_DIR, self.EXTRACTOR.scopes
-        module_name, sros_module_name = "module " + str(project) + "\n/* === PROJECT " + str(project).upper() + " ===*/", "module sros-" + str(project) + "\n/* === PROJECT " + str(project).upper() + " ===*/"
         self.meta_model, self.sros_model = self.load_configuration(MODELS_DIR=self.MODELS_DIR, PROJECT_DIR=PROJECT_DIR, name=project.lower())
         # self.configuration = Configuration(c_name, self.nodes, self.topics, scopes, properties=self.properties)
         # self.specification = (self.module_name + meta_model + self.configuration.specification())
@@ -43,12 +42,15 @@ class svAnalyzer(object):
 	
     @staticmethod
     def load_configuration(MODELS_DIR, PROJECT_DIR, name):
+        module_name, sros_module_name = "module " + str(name) + " /* === PROJECT " + str(name).upper() + " ===*/\n\n", "module sros-" + str(name) + " /* === PROJECT " + str(name).upper() + " ===*/\n\n"
         # ROS META-MODEL
         with open(f'{MODELS_DIR}/ros_base.als') as f:
-            ros_meta_model = f.read()
+            ros_meta_model  = module_name
+            ros_meta_model += f.read()
         # SROS META-MODEL
         with open(f'{MODELS_DIR}/sros_base.als') as f:
-            sros_meta_model = f.read()
+            sros_meta_model  = sros_module_name
+            sros_meta_model += f.read()
         return ros_meta_model, sros_meta_model
 
     # ALLOY => Runs Model Checking in ROS_MODEL
@@ -68,7 +70,10 @@ class svAnalyzer(object):
         # TOPICS.
         model += '/* === NODES === */\n\n/* === TOPICS === */\n'
         model += Topic.topic_declaration()
-        model +=  '/* === TOPICS === */\n\n/* === NODE BEHAVIOUR === */\n'
+        model +=  '/* === TOPICS === */\n\n'
+        # SELF-COMPOSITION.
+        model += svExecution.create_executions()
+        model += '\n\n/* === NODE BEHAVIOUR === */\n'
         #model += svROSNode.node_property_behaviour()
         model += '/* === NODE BEHAVIOUR === */\n\n/* === OBSERVABLE DETERMINISM === */\n'
         model += svROSNode.observable_determinism()
@@ -156,18 +161,22 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
-        self.config, packages, nodes, observable_determinism = config, list(set(config.get('packages'))), config.get('nodes'), config.get('configurations', {}).get('analysis', {}).get('observable determinism')
+        self.config, packages, nodes = config, list(set(config.get('packages'))), config.get('architecture')
+        # ANALYSIS.
+        observable_determinism, types, states, analysing_nodes = config.get('analysis', {}).get('observable determinism'), config.get('analysis', {}).get('information flow').get('types'), config.get('analysis', {}).get('information flow').get('states'), config.get('analysis', {}).get('information flow').get('nodes') 
         # LOAD PICKLE.
         if not self.IMPORTED_DATA == {}: Node.NODES = self.IMPORTED_DATA['nodes']
         for package in packages: 
             Package.init_package_name(name=package, index=packages.index(package))
         if not (nodes and observable_determinism):
             raise svException(f'Failed to import config file of project.')
-        if not self.load_nodes_profiles(nodes=nodes, observable_determinism=observable_determinism):
+        if not self.load_nodes_profiles(nodes=nodes, observable_determinism=observable_determinism, states=states):
+            raise svException(f'Failed to import config file of project.')
+        if not self.load_analysis(nodes=analysing_nodes, types=types):
             raise svException(f'Failed to import config file of project.')
         return True
 
-    def load_nodes_profiles(self, nodes, observable_determinism):
+    def load_nodes_profiles(self, nodes, observable_determinism, states):
         if svROSEnclave.ENCLAVES is {}:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
         # Processing nodes.
@@ -190,6 +199,8 @@ class svProjectExtractor:
             else: 
                 node['enclave'] = None
                 node            = svROSNode(full_name=name, profile=None, **node)
+        if states:
+            for state in states: svState.init_state(name=state, values=states[state])
         for od in observable_determinism:
             # PARSING OBSERVABLE DETERMINISM.
             if not bool(re.match(pattern=r'(.*?)=>(.*?)', string=od)): raise svException(f"Failed to parse Observable Determinism rule.")
@@ -223,9 +234,33 @@ class svProjectExtractor:
         svROSNode.observalDeterminism(scopes=self.scopes) # Observable determinism in Unsecured Nodes.
         return True
 
+    def load_analysis(self, nodes, types):
+        if svROSNode.NODES is {}:
+            raise svException("No nodes found, loading is yet to be launched.")
+        # LOAD PROPERTIES.
+        for n in nodes:
+            if n not in svROSNode.NODES: raise svException(f"Node {n} not found.")
+            node            = svROSNode.NODES[n]
+            node.properties = nodes[n]
+        for t in types:
+            mtype_temp = types[t].split('/')
+            pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))
+            if not bool(pattern): isint = False
+            else:
+                if not pattern.groups()[0].strip() == 'int': raise svException(f'Failed to parse type {str(t)}.')
+                t, isint = pattern.groups()[1].strip(), True
+            # ...
+            t = t.replace('/', '_').lower()
+            if t not in MessageType.TYPES: raise svException(f"Message Type {t} not found.")
+            mtype       = MessageType.TYPES[t]
+            # SET isint.
+            mtype.isint = isint
+            mtype.value.values = mtype_temp
+        return True
+
     @property
     def scopes(self):
-        scopes = self.config.get('configurations', {}).get('analysis', {}).get('scope')
+        scopes = self.config.get('analysis', {}).get('scope', {})
         messages, steps = scopes.get('Message'), scopes.get('Steps') 
         if not (messages and steps):
             raise svException('Failed to retrieve scopes. Either Message or Steps scopes are not defined.')
