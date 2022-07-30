@@ -352,7 +352,7 @@ class Node(object):
 class svROSNode(object):
     NODES        = {}
     OBSDT        = {}
-    PROPT        = {}
+    PROPT        = list()
     """
         svROSNode
             \__ Already parsed node
@@ -445,7 +445,7 @@ class svROSNode(object):
                         else: paths[topic].append(obs[1])
                     # States.
                     paths[topic] += state_outputs
-            unsecured._node_observable_determinism = paths
+            unsecured.node_observable_determinism = paths
             cls.OBSDT[unsecured] = unsecured.sync_obs_det(scopes=scopes)
 
     @staticmethod
@@ -530,20 +530,31 @@ class svROSNode(object):
     def sync_obs_det(self, scopes):
         scope_message, scope_steps = scopes.get('Message'), scopes.get('Steps') 
         if self.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
-        signatures, topic_output = {}, self._node_observable_determinism
+        signatures, topic_output = {}, self.node_observable_determinism
+        # PUBLIC STATE...
+        public_event_synchronization = f"""// Public-Event Synchronization:\nfact public_event_synchronization {{"""
         for topic_name in topic_output:
             topic, outputs = Topic.TOPICS.get(topic_name), topic_output[topic_name]
             if (not topic) or (not topic.signature): raise svException(f'Topic {topic_name} does not exist.')
             tmp = {}
+            public_event_synchronization += f"""\n\talways (all m : Message | publish0[{topic.signature}, m] iff publish1[{topic.signature}, m])"""
             for out in outputs:
-                pred_signature = f'OD{topic.signature}_Sync_{outputs.index(out)}' 
+                # pred_signature = f'OD{topic.signature}_Sync_{outputs.index(out)}' 
                 depd_signature = f'OD{topic.signature}_Depd_{outputs.index(out)}'
                 comments       = f'/* === OD: {topic.name} => {out.name} === */\n'
-                signature      = f'{comments}pred {pred_signature} {{ historically (all m : Message | (publish0[{topic.signature},m] iff publish1[{topic.signature},m]) and (publish0[{out.signature},m] iff publish1[{out.signature},m])) }}\ncheck {depd_signature} {{ always (before {pred_signature} implies (all m0, m1 : Message | publish0[{out.signature},m0] and publish1[{out.signature},m1] implies m0.value = m1.value)) }} for 0 but {scope_message} Message, 1..{scope_steps} steps'
-                svROSNode.PROPT[depd_signature] = signature
+                # print(out.__dict__)
+                # signature      = f'{comments}pred {pred_signature} {{ historically (all m : Message | (publish0[{topic.signature},m] iff publish1[{topic.signature},m]) and (publish0[{out.signature},m] iff publish1[{out.signature},m])) }}\ncheck {depd_signature} {{ always (before {pred_signature} implies (all m0, m1 : Message | publish0[{out.signature},m0] and publish1[{out.signature},m1] implies m0 = m1)) }} for 0 but {scope_message} Message, 1..{scope_steps} steps'
+                if isinstance(out, Topic):
+                    signature = f"""{comments}check {{always (all m0, m1 : Message | publish0[{out.signature}, m0] and publish1[{out.signature}, m1] implies m0 = m1)}} for 0 but {scope_message} Message, 1..{scope_steps} steps"""
+                elif isinstance(out, svState):
+                    signature = f"""{comments}check {{always (T1.{out.name.lower()}.1 = T2.{out.name.lower()}.1)}} for 0 but {scope_message} Message, 1..{scope_steps} steps"""
+                else: svException('ERROR...')
+                svROSNode.PROPT.append(signature)
                 tmp[out.name] = depd_signature
 
             signatures[topic_name] = tmp
+        public_event_synchronization += f"""\n}}"""
+        svROSNode.PROPT.append(public_event_synchronization)
         return signatures
 
     @classmethod
@@ -557,11 +568,9 @@ class svROSNode(object):
     def observable_determinism(cls):
         if cls.NODES is {}: raise svException("No nodes found, can not process handling of topic behaviour.")
         signatures = []
-        for property_check in cls.PROPT.items():
-            if property_check[0].startswith('OD'):
-                signatures.append(property_check[1])
-            else:
-                continue
+        for property_check in cls.PROPT[::-1]:
+            # if property_check[0].startswith('OD'):
+            signatures.append(property_check)
         return '\n\n'.join(signatures)
 
     @property
@@ -837,6 +846,7 @@ class svExecution(object):
     """
         Execution Traces => SELF-COMPOSITION
     """
+    NODE_BEHAVIOURS = {}
     def __init__(self, name, signature):
         self.name, self.signature = name, signature
 
@@ -844,13 +854,32 @@ class svExecution(object):
     def create_executions(cls):
         t1 = cls(name='Trace_1', signature='T1')
         t2 = cls(name='Trace_2', signature='T2')
-        # Convert TO ALLOY.
-        _str_  = f"""abstract sig Execution {{\n\tvar inbox: Channel -> lone Message"""
+        # Convert TO ALLOY. 
+        _str_  = f"""abstract sig Execution {{\n\tvar inbox: Channel -> lone Message,\n\t"""
+        # EXPLAINING INT VALUES
+        _str_ += """// Int related to each state indicates that if had occurred any change: 0 states no change, 1 states change"""
         states = ''
+        nop = set()
+        # Predicate SYSTEM
+        system_str   = f"""pred system [t : Execution] {{\n\t// Clear public states from holding a value for long."""
+        # PUBLIC SYNCH
+        public_state = f"""fact public_state_equivalence {{"""
         for state in svState.STATES:
             state = svState.STATES[state]
             states += str(state)
-            _str_ += f""",\n\tvar {state.name.lower()}: one {state.signature}"""
+            _str_ += f""",\n\tvar {state.name.lower()}: {state.signature} -> one Int"""
+            if not state.private: 
+                system_str   += f"""\n\tsome (Execution.{state.name.lower()}).1 implies {state.signature}.(Execution.{state.name.lower()})' = 0"""
+                # Public state equivalence?
+                public_state += f"""\n\t{state.signature}.(Execution.{state.name.lower()}) = 0\n\talways (some (T1.{state.name.lower()}).1 iff some (T2.{state.name.lower()}).1)"""
+            nop.add(state.name.lower())
+        public_state += f"""\n}}\n"""
         _str_ += f"""\n}}\n"""
+        # Predicate NOP
+        nop_str = f"""pred nop [t : Execution] {{\n\tinbox' = inbox"""
+        for n in nop:
+            nop_str    += f"""\n\t{n}' = {n}"""
+        nop_str += f"""\n}}\n"""
+        system_str += f"""\n\t// System executions.\n\t{'[t] or '.join(cls.NODE_BEHAVIOURS.keys())}[t]\n}}"""
         _str_ += f"""one sig {t1.signature}, {t2.signature} extends Execution {{}}\n"""
-        return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */'
+        return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str + '\n// Public-State Equivalence and Synchronization:\n' + public_state 

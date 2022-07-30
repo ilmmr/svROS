@@ -6,6 +6,7 @@ from collections import defaultdict
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svWarning
+from lark import Lark, tree
 # Node parser
 from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, svState, Node, Package, Topic, MessageType, svExecution
 import xml.etree.ElementTree as ET
@@ -73,7 +74,7 @@ class svAnalyzer(object):
         model +=  '/* === TOPICS === */\n\n'
         # SELF-COMPOSITION.
         model += svExecution.create_executions()
-        model += '\n\n/* === NODE BEHAVIOUR === */\n'
+        model += '\n/* === NODE BEHAVIOUR === */\n'
         #model += svROSNode.node_property_behaviour()
         model += '/* === NODE BEHAVIOUR === */\n\n/* === OBSERVABLE DETERMINISM === */\n'
         model += svROSNode.observable_determinism()
@@ -239,11 +240,29 @@ class svProjectExtractor:
             raise svException("No nodes found, loading is yet to be launched.")
         # LOAD PROPERTIES.
         for n in nodes:
+            # PARSING.
+            grammar = """
+            sentence: one | two
+            one: NAME "as" NAME
+            two: NAME
+            NAME:/(?!\s)[a-zA-Z0-9_\/\-.\:]+/
+            %import common.WS
+            %ignore WS
+            """
+            parser, key = Lark(grammar, start='sentence', ambiguity='explicit'), n
+            if not parser.parse(n): raise svException(f'Failed to parse node behaviour {n}.')
+            t      = parser.parse(n)
+            if t.children[0].data == "one":
+                n, signature = n.split('as')[0].strip(), n.split('as')[1].strip()
+            else:
+                signature = n
+            # ...
             if n not in svROSNode.NODES: raise svException(f"Node {n} not found.")
             node            = svROSNode.NODES[n]
-            node.properties = nodes[n]
+            node.properties = nodes[key]
+            svExecution.NODE_BEHAVIOURS[signature] = node
         for t in types:
-            mtype_temp = types[t].split('/')
+            tt, mtype_temp = t, types[t].split('/')
             pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))
             if not bool(pattern): isint = False
             else:
@@ -251,7 +270,7 @@ class svProjectExtractor:
                 t, isint = pattern.groups()[1].strip(), True
             # ...
             t = t.replace('/', '_').lower()
-            if t not in MessageType.TYPES: raise svException(f"Message Type {t} not found.")
+            if t not in MessageType.TYPES: raise svException(f"Message Type {tt} not found.")
             mtype       = MessageType.TYPES[t]
             # SET isint.
             mtype.isint = isint
