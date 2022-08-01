@@ -39,7 +39,7 @@ class Package:
 class MessageValue(object):
     VALUES = {}
     def __init__(self, name, isint):
-        self.name, self.isint, self.signature, self.values = name, isint, name + '_Value', set()
+        self.name, self.isint, self.signature, self.values = name, isint, name, set()
         # self.values.add(f'{self.signature}_Default')
         MessageValue.VALUES[name] = self
 
@@ -56,11 +56,12 @@ class MessageValue(object):
             _str_ = f"""sig {self.signature} in Int {{}}"""
             values = set()
             for v in self.values:
+                if not v.lstrip("-").isdigit(): raise svException(f"{self.signature} can not be Int: {v} is not a digit.")
                 values.add(v)
             _str_ += f"""\nfact {{{self.signature} in {'+'.join(values)}}}"""
         else:
             values     = None if (self.values == set()) else ','.join(self.values)
-            _str_ = f'abstract sig {self.signature} extends Value {{}}\none sig {values} extends {self.signature} {{}}'
+            _str_ = f'abstract sig {self.signature} extends Msg {{}}\none sig {values} extends {self.signature} {{}}'
         return _str_ + '\n'
 
 "ROS2-based for message topic_type as this tool focus on Topic-Message processing."
@@ -85,7 +86,8 @@ class MessageType(object):
         return tag.lower()[(tag.rfind('_'))+1:].capitalize()
     
     def __str__(self):
-        return f'sig {self.signature} extends Message {{}} {{\n\tvalue in {self.value.signature}\n}}\n' + str(self.value)
+        # {{\n\tvalue in {self.value.signature}\n}}
+        return str(self.value)
 
     @property
     def isint(self):
@@ -143,12 +145,12 @@ class Topic(object):
         TOPICS       = cls.TOPICS
         declaration  = ''.join(list(map(lambda topic: TOPICS[topic].declaration(), TOPICS))) + '\n'
         # CHANNEL COHENRECY
-        declaration  += """fact channel_coherency {{\n\talways( """
+        declaration  += f"""fact channel_coherency {{\n\talways ("""
         temp          = []
         for topic in TOPICS:
             topic = TOPICS[topic]
-            temp.append(f"""{topic.signature}.(Execution.inbox) in {topic.message_type.signature}""")
-        declaration  += ' and '.join(temp) + """ )\n}}\n\n"""
+            temp.append(f"""elems[{topic.signature}.(Execution.inbox)] in {topic.message_type.signature}""")
+        declaration  += ' and '.join(temp) + f""")\n}}\n\n"""
         # TYPES
         TYPES        = MessageType.TYPES
         declaration += '\n'.join(list(map(lambda msgtp: str(TYPES[msgtp]) , TYPES )))
@@ -353,6 +355,7 @@ class svROSNode(object):
     NODES        = {}
     OBSDT        = {}
     PROPT        = list()
+    PUBSYNC      = set()
     """
         svROSNode
             \__ Already parsed node
@@ -430,17 +433,19 @@ class svROSNode(object):
         for unsecured in cls.OBSDT:
             paths            = dict()
             channels_outputs, state_outputs = set(filter(lambda x: isinstance(x, svROSNode), cls.OBSDT[unsecured])), list(filter(lambda x: isinstance(x, svState), cls.OBSDT[unsecured]))
-    
+            if unsecured.connection is None:
+                print(svWarning(f"Failed to check Observable Determinism in {unsecured.rosname}: Node has no active advertising connections."))
+                continue
             for topic in unsecured.connection:
                 observable_outputs = cls.obsdet_paths(node=unsecured, current=None, connections=unsecured.connection[topic], output=[], path_nodes=[unsecured])
                 # FILTER and check!
                 if not (channels_outputs <= set(map(lambda obs: obs[0], observable_outputs))):
-                    raise svException(f'Failed to check observable determinism in {unsecured.rosname}: Some connections are not observable!')
+                    raise svException(f'Failed to check Observable Determinism in {unsecured.rosname}: Some connections are either not observable or not correctly set!')
                 else:
                     paths[topic] = []
                     for obs in observable_outputs:
                         if obs[0] in channels_outputs:
-                            svWarning(message=f'OD {unsecured.rosname} => {obs[0].rosname} :: {topic} --> {str(obs[1])}')
+                            print(svWarning(message=f'OD {unsecured.rosname} => {obs[0].rosname} :: {topic} --> {str(obs[1])}'))
                         if isinstance(obs[1], list): paths[topic] += obs[1]
                         else: paths[topic].append(obs[1])
                     # States.
@@ -459,6 +464,7 @@ class svROSNode(object):
             if (c in path_nodes and c is not node): continue
             else: path_nodes.append(c)
             # Process connections.
+            if c.connection is None: continue
             for t in c.connection:
                 svROSNode.obsdet_paths(node=node, current=c, connections=c.connection[t], output=output, path_nodes=path_nodes)
         return output
@@ -473,9 +479,9 @@ class svROSNode(object):
             if subscribes_in != []: 
                 for sub in subscribes_in:
                     if (not node.secure and self.secure):
-                        print(svWarning(f'Connection through {sub} is not well supported. {node.rosname.capitalize()} is not secure, while {self.rosname.capitalize()} is secure.'))
+                        print(svWarning(f'Connection through {sub} is not well supported. {node.rosname.capitalize()} is not secure, while {self.rosname.capitalize()} is secure: {color.color("BOLD", f"{self.rosname.capitalize()} -{sub}-> {node.rosname.capitalize()}")}'))
                     elif (not self.secure and node.secure):
-                        print(svWarning(f'Connection through {sub} is not well supported. {self.rosname.capitalize()} is not secure, while {node.rosname.capitalize()} is secure.'))
+                        print(svWarning(f'Connection through {sub} is not well supported. {self.rosname.capitalize()} is not secure, while {node.rosname.capitalize()} is secure: {color.color("BOLD", f"{self.rosname.capitalize()} -{sub}-> {node.rosname.capitalize()}")}'))
                     access_to[sub].add(node)
         return access_to
 
@@ -531,30 +537,30 @@ class svROSNode(object):
         scope_message, scope_steps = scopes.get('Message'), scopes.get('Steps') 
         if self.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
         signatures, topic_output = {}, self.node_observable_determinism
-        # PUBLIC STATE...
-        public_event_synchronization = f"""// Public-Event Synchronization:\nfact public_event_synchronization {{"""
+        # For control reasons:
+        already_output = set()
         for topic_name in topic_output:
-            topic, outputs = Topic.TOPICS.get(topic_name), topic_output[topic_name]
+            topic, outputs, tmp = Topic.TOPICS.get(topic_name), topic_output[topic_name], {}
             if (not topic) or (not topic.signature): raise svException(f'Topic {topic_name} does not exist.')
-            tmp = {}
-            public_event_synchronization += f"""\n\talways (all m : Message | publish0[{topic.signature}, m] iff publish1[{topic.signature}, m])"""
+            svROSNode.PUBSYNC.add(f"""\n\talways (all m : Message | publish0[{topic.signature}, m] iff publish1[{topic.signature}, m])""")
             for out in outputs:
+                if out in already_output: continue
+                else: already_output.add(out)
                 # pred_signature = f'OD{topic.signature}_Sync_{outputs.index(out)}' 
                 depd_signature = f'OD{topic.signature}_Depd_{outputs.index(out)}'
                 comments       = f'/* === OD: {topic.name} => {out.name} === */\n'
-                # print(out.__dict__)
-                # signature      = f'{comments}pred {pred_signature} {{ historically (all m : Message | (publish0[{topic.signature},m] iff publish1[{topic.signature},m]) and (publish0[{out.signature},m] iff publish1[{out.signature},m])) }}\ncheck {depd_signature} {{ always (before {pred_signature} implies (all m0, m1 : Message | publish0[{out.signature},m0] and publish1[{out.signature},m1] implies m0 = m1)) }} for 0 but {scope_message} Message, 1..{scope_steps} steps'
+                # Can either be a Channel or a State.
                 if isinstance(out, Topic):
-                    signature = f"""{comments}check {{always (all m0, m1 : Message | publish0[{out.signature}, m0] and publish1[{out.signature}, m1] implies m0 = m1)}} for 0 but {scope_message} Message, 1..{scope_steps} steps"""
+                    # public output must be done at the same instance
+                    svROSNode.PUBSYNC.add(f"""\n\talways (all m1, m2 : Message | publish0[{out.signature}, m1] iff publish1[{out.signature}, m2])""")
+                    # OD signature.
+                    signature = f"""{comments}check {{always (all m0, m1 : Message | publish0[{out.signature}, m0] and publish1[{out.signature}, m1] implies m0 = m1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
                 elif isinstance(out, svState):
-                    signature = f"""{comments}check {{always (T1.{out.name.lower()}.1 = T2.{out.name.lower()}.1)}} for 0 but {scope_message} Message, 1..{scope_steps} steps"""
+                    signature = f"""{comments}check {{always (T1.{out.name.lower()}.1 = T2.{out.name.lower()}.1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
                 else: svException('ERROR...')
                 svROSNode.PROPT.append(signature)
                 tmp[out.name] = depd_signature
-
             signatures[topic_name] = tmp
-        public_event_synchronization += f"""\n}}"""
-        svROSNode.PROPT.append(public_event_synchronization)
         return signatures
 
     @classmethod
@@ -571,7 +577,12 @@ class svROSNode(object):
         for property_check in cls.PROPT[::-1]:
             # if property_check[0].startswith('OD'):
             signatures.append(property_check)
-        return '\n\n'.join(signatures)
+        # PUBLIC STATE...
+        public_event_synchronization = f"""// Public-Event Synchronization:\nfact public_event_synchronization {{"""
+        for public_sync in cls.PUBSYNC:
+            public_event_synchronization += public_sync
+        public_event_synchronization += f"""\n}}\n"""
+        return public_event_synchronization + '\n\n'.join(signatures)
 
     @property
     def properties(self):
@@ -855,10 +866,10 @@ class svExecution(object):
         t1 = cls(name='Trace_1', signature='T1')
         t2 = cls(name='Trace_2', signature='T2')
         # Convert TO ALLOY. 
-        _str_  = f"""abstract sig Execution {{\n\tvar inbox: Channel -> lone Message,\n\t"""
+        _str_  = f"""abstract sig Execution {{\n\tvar inbox: Channel -> (seq Message),\n\t"""
         # EXPLAINING INT VALUES
         _str_ += """// Int related to each state indicates that if had occurred any change: 0 states no change, 1 states change"""
-        states = ''
+        states, only_one_per_state = '', [] # only one with 1 at time. 1 corresponds to current value...
         nop = set()
         # Predicate SYSTEM
         system_str   = f"""pred system [t : Execution] {{\n\t// Clear public states from holding a value for long."""
@@ -867,18 +878,19 @@ class svExecution(object):
         for state in svState.STATES:
             state = svState.STATES[state]
             states += str(state)
-            _str_ += f""",\n\tvar {state.name.lower()}: {state.signature} -> one Int"""
+            _str_ += f""",\n\tvar {state.name.lower()}: {state.signature} -> one (0 + 1)"""
+            only_one_per_state.append(f"""lone {state.name.lower()}.1""")
             if not state.private: 
                 system_str   += f"""\n\tsome (Execution.{state.name.lower()}).1 implies {state.signature}.(Execution.{state.name.lower()})' = 0"""
                 # Public state equivalence?
-                public_state += f"""\n\t{state.signature}.(Execution.{state.name.lower()}) = 0\n\talways (some (T1.{state.name.lower()}).1 iff some (T2.{state.name.lower()}).1)"""
+                public_state += f"""\n\t{state.signature}.(Execution.{state.name.lower()}) = 0\n\talways (some T1.{state.name.lower()}.1 iff some T2.{state.name.lower()}.1)"""
             nop.add(state.name.lower())
         public_state += f"""\n}}\n"""
-        _str_ += f"""\n}}\n"""
+        _str_ += f"""\n}} {{ {' and '.join(only_one_per_state)} }} \n"""
         # Predicate NOP
-        nop_str = f"""pred nop [t : Execution] {{\n\tinbox' = inbox"""
+        nop_str = f"""pred nop [t : Execution] {{\n\tt.inbox' = t.inbox"""
         for n in nop:
-            nop_str    += f"""\n\t{n}' = {n}"""
+            nop_str    += f"""\n\tt.{n}' = t.{n}"""
         nop_str += f"""\n}}\n"""
         system_str += f"""\n\t// System executions.\n\t{'[t] or '.join(cls.NODE_BEHAVIOURS.keys())}[t]\n}}"""
         _str_ += f"""one sig {t1.signature}, {t2.signature} extends Execution {{}}\n"""

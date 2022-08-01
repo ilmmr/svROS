@@ -2,10 +2,8 @@
 abstract sig Node {
 	subscribes, advertises : set Channel
 }
-abstract sig Value {}
-abstract sig Message {
-	value : one (Value + Int)
-}
+abstract sig Msg {}
+sig Message = Msg + Int {}
 abstract sig Channel {}
 /* === SIGNATURES === */
 
@@ -16,10 +14,10 @@ fact initial_assumptions {
 	always (nop[T1] or system[T2])
 }
 pred publish0[channel: Channel, m : Message] {
-	channel->m not in T1.inbox and channel->m in T1.inbox'
+	m not in (channel.(T2.inbox)).elems and m in (channel.(T1.inbox))'.elems
 }
 pred publish1[channel: Channel, m : Message] {
-	channel->m not in T2.inbox and channel->m in T2.inbox'
+	m not in (channel.(T2.inbox)).elems and m in (channel.(T2.inbox))'.elems
 }
 fun active [] : set Node {
 	advertises.(Execution.inbox).Message + subscribes.(Execution.inbox).Message

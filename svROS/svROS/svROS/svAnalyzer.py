@@ -223,7 +223,8 @@ class svProjectExtractor:
                 if od_output[1:] not in svState.STATES:
                     raise svException(f"Observable state {od_output} is not defined.")
                 od_output = svState.STATES[od_output[1:]]
-
+                if od_output.private: raise svException(f"State {od_output.name} is not observable, as it is private.")
+            # Parsing node...
             node = svROSNode.NODES[un_node]
             # Connections and NODE => OBSERVABLE
             if node.secure: print(svWarning(f'Node is SROS secured, but its identified as an outsider to the determinism of the program.'))
