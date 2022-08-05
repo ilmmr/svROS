@@ -9,6 +9,7 @@ from tools.InfoHandler import color, svException, svWarning
 from lark import Lark, tree
 # Node parser
 from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, svState, Node, Package, Topic, MessageType, svExecution
+from svLanguage import svPredicate
 import xml.etree.ElementTree as ET
 
 global WORKDIR, SCHEMAS
@@ -19,11 +20,6 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
     This file contains the necessary classes and methods to translate from Python Structures into Alloy configuration model.
     Additionally some methods were implemented to approprietally retrieve text-based structures into Alloy.
 """
-@dataclass
-class svHPLParser(object):
-    node      : svROSNode
-    properties: list = field(default_factory=list)
-
 "Main class that implements the analyzing process while accounting the configuration."
 @dataclass
 class svAnalyzer(object):
@@ -79,7 +75,7 @@ class svAnalyzer(object):
         model += '/* === NODE BEHAVIOUR === */\n\n/* === OBSERVABLE DETERMINISM === */\n'
         model += svROSNode.observable_determinism()
         model += '\n/* === OBSERVABLE DETERMINISM === */'
-        with open(file_path, 'w+') as ros: ros.write(model)
+        # with open(file_path, 'w+') as ros: ros.write(model)
         return file_path
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
@@ -105,7 +101,7 @@ class svAnalyzer(object):
         model += '/* === PROFILES === */\n\n/* === OBJECTS === */\n'
         model += ''.join(list(map(lambda obj: str(OBJECTS[obj]), OBJECTS)))
         model += '/* === OBJECTS === */'
-        with open(file_path, 'w+') as sros: sros.write(model)
+        # with open(file_path, 'w+') as sros: sros.write(model)
         return file_path
 
 "Main exporter parser from current project's directory files: SROS and configuration file"
@@ -258,10 +254,10 @@ class svProjectExtractor:
             else:
                 signature = n
             # ...
-            if n not in svROSNode.NODES: raise svException(f"Node {n} not found.")
+            if n not in svROSNode.NODES: raise svException(f"Node {n} failed to be found.")
             node            = svROSNode.NODES[n]
-            node.properties = nodes[key]
-            svExecution.NODE_BEHAVIOURS[signature] = node
+            predicate       = svPredicate.init_predicate(signature=signature, node=node, properties=nodes[key])
+            node.predicate  = predicate
         for t in types:
             tt, mtype_temp = t, types[t].split('/')
             pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))

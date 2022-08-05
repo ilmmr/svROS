@@ -14,10 +14,10 @@ fact initial_assumptions {
 	always (nop[T1] or system[T2])
 }
 pred publish0[channel: Channel, m : Message] {
-	m not in (channel.(T2.inbox)).elems and m in (channel.(T1.inbox))'.elems
+	T1.inbox'[channel] = add[T1.inbox[channel], m]
 }
 pred publish1[channel: Channel, m : Message] {
-	m not in (channel.(T2.inbox)).elems and m in (channel.(T2.inbox))'.elems
+	T2.inbox'[channel] = add[T2.inbox[channel], m]
 }
 fun active [] : set Node {
 	advertises.(Execution.inbox).Message + subscribes.(Execution.inbox).Message

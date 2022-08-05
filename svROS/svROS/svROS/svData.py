@@ -8,8 +8,6 @@ from tools.InfoHandler import color, svException, svWarning
 # Parsers
 import xml.etree.ElementTree as ET
 from lark import Lark, tree
-# HAROS HPL Exporter
-from hpl.parser import HplProperty, HplParser, parse_property, parse_specification, parse_predicate, HplPredicate, HplEventDisjunction, HplSimpleEvent, HplBinaryOperator
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -362,7 +360,7 @@ class svROSNode(object):
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
     def __init__(self, full_name, profile, **kwargs):
-        self.index, self.rosname, self.namespace, self.executable, self.advertise, self.subscribe, self.profile = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('advertise'), kwargs.get('subscribe'), profile
+        self.index, self.rosname, self.namespace, self.executable, self.advertise, self.subscribe, self.profile, self.predicate = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('advertise'), kwargs.get('subscribe'), profile, None
         self.enclave = self.profile.enclave if self.profile else None
         # Process node-package.
         self.package = self.index.replace(self.rosname, '') 
@@ -409,12 +407,6 @@ class svROSNode(object):
         else: return list()
 
     def abstract(self, tag): return tag.capitalize().replace('/', '_')
-
-    def parse_node_properties(self, properties):
-        property_parser = svProperty.parser(node=self, properties=properties)
-        properties = '\n\t'.join(property_parser.convert_properties())
-        alloy      = f'fact node_behaviour{self.abstract(tag=self.rosname)} {{\n\t{properties}\n}}'
-        return alloy
 
     @staticmethod
     def topic_handler(topics):
@@ -585,19 +577,21 @@ class svROSNode(object):
         return public_event_synchronization + '\n\n'.join(signatures)
 
     @property
-    def properties(self):
-        return self._properties
+    def predicate(self):
+        return self._predicate
 
-    @properties.setter
-    def properties(self, properties):
-        # HANDLE node properties.
-        if properties.__len__() == 1 and properties.pop() == '': self._properties = None
-        else: self._properties = self.parse_node_properties(properties=properties) 
+    @predicate.setter
+    def predicate(self, predicate):
+        from svLanguage import svPredicate
+        if predicate is None: self._predicate = None
+        elif not isinstance(predicate, svPredicate): raise svException("Not a predicate!")
+        else: self._predicate = predicate
 
 class svState(object):
     STATES = {}
     def __init__(self, name, default, values, private=False, isint=False):
-        self.name, self.signature, self.default, self.values, self.private, self.isint = name, self.signature(tag=name), default, values, private, isint
+        self.name, self.default, self.values, self.private, self.isint = name, svState.signature(tag=name), values, private, isint
+        self.signature = self.values_signature(value=default)
         svState.STATES[self.name] = self
     
     def __str__(self):
@@ -612,9 +606,11 @@ class svState(object):
             _str_ += f"""\none sig {','.join([self.values_signature(value) for value in self.values])} extends {self.signature} {{}}"""
         return _str_
 
-    def signature(self, tag): return 'State_' + tag.capitalize()
+    @staticmethod
+    def signature(tag): return 'State_' + tag.capitalize()
 
-    def values_signature(self, value): return self.name.capitalize() + '_' + value.capitalize()
+    def values_signature(self, value): 
+        return self.name.capitalize() + '_' + value.capitalize()
 
     @classmethod
     def init_state(cls, name, values):
@@ -831,33 +827,10 @@ class svROSPrivilege(object):
 ###############################
 # === ANALYSING !! YAY :))) ===
 ###############################
-class svProperty(object):
-    """
-        HPL PROPERTY => svPROPERTY
-    """
-    def __init__(node, properties):
-        if not isinstance(node, svROSNode):
-            raise svException('Failed to create property parser since given node is not a Node.')
-        self.node, self.properties = node, list(map(lambda prop: svProperty.create_prop(text=prop), self.properties))
-
-    @classmethod
-    def parse(cls, node, properties):
-        return cls(node=node, properties=properties)
-
-    @staticmethod
-    def create_prop(text):
-        try: hpl_prop = parse_property(text)
-        except Exception: raise svException(f'Failed to parse HPL-property {text}.')
-
-    def convert_properties(self):
-        for prop in self.properties:
-            if not isinstance(prop, HplProperty): raise svException('Not a HPL-based property.')
-
 class svExecution(object):
     """
         Execution Traces => SELF-COMPOSITION
     """
-    NODE_BEHAVIOURS = {}
     def __init__(self, name, signature):
         self.name, self.signature = name, signature
 
@@ -878,20 +851,26 @@ class svExecution(object):
         for state in svState.STATES:
             state = svState.STATES[state]
             states += str(state)
-            _str_ += f""",\n\tvar {state.name.lower()}: {state.signature} -> one (0 + 1)"""
-            only_one_per_state.append(f"""lone {state.name.lower()}.1""")
+            if state.private:
+                _str_ += f""",\n\tvar {state.name.lower()}: one {state.signature}"""
             if not state.private: 
-                system_str   += f"""\n\tsome (Execution.{state.name.lower()}).1 implies {state.signature}.(Execution.{state.name.lower()})' = 0"""
+                # Execution signature:
+                _str_ += f""",\n\tvar {state.name.lower()}: {state.signature} lone -> (0 + 1)"""
+                only_one_per_state.append(f"""one {state.name.lower()}""")
+                # Aside from Execution Signature:
+                system_str   += f"""\n\tall s : {state.signature} | t.{state.name.lower()} = s->1 implies t.{state.name.lower()}' = s->0"""
                 # Public state equivalence?
-                public_state += f"""\n\t{state.signature}.(Execution.{state.name.lower()}) = 0\n\talways (some T1.{state.name.lower()}.1 iff some T2.{state.name.lower()}.1)"""
+                public_state += f"""\n\tExecution.{state.name.lower()}) = {state.default}->0\n\talways (some T1.{state.name.lower()}.1 iff some T2.{state.name.lower()}.1)"""
             nop.add(state.name.lower())
         public_state += f"""\n}}\n"""
-        _str_ += f"""\n}} {{ {' and '.join(only_one_per_state)} }} \n"""
+        _str_ += f"""\n}}""" # {{ {' and '.join(only_one_per_state)} }} \n"""
         # Predicate NOP
         nop_str = f"""pred nop [t : Execution] {{\n\tt.inbox' = t.inbox"""
         for n in nop:
             nop_str    += f"""\n\tt.{n}' = t.{n}"""
         nop_str += f"""\n}}\n"""
-        system_str += f"""\n\t// System executions.\n\t{'[t] or '.join(cls.NODE_BEHAVIOURS.keys())}[t]\n}}"""
+        # svPredicate
+        from svLanguage import svPredicate
+        system_str += f"""\n\t// System executions.\n\t{'[t] or '.join(svPredicate.NODE_BEHAVIOURS.keys())}[t]\n}}"""
         _str_ += f"""one sig {t1.signature}, {t2.signature} extends Execution {{}}\n"""
         return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str + '\n// Public-State Equivalence and Synchronization:\n' + public_state 
