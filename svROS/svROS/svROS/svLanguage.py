@@ -9,6 +9,7 @@ from tools.InfoHandler import color, svException, svWarning
 import xml.etree.ElementTree as ET
 from lark import Lark, tree
 
+from language.grammar import GrammarParser
 from svData import Topic, svROSNode, svState
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -59,31 +60,47 @@ class svPredicate(object):
         Overall Node behaviour => svPredicate
     """
     NODE_BEHAVIOURS = {}
-    def __init__(self, signature, node, properties):
+    def __init__(self, signature, node, properties, parent=None):
         if not isinstance(node, svROSNode):
             raise svException('Failed to create property parser since given node is not a Node.')
-        self.signature, self.node, self.properties = signature, node
-        if properties: self.properties = list(map(lambda prop: svPredicate.create_prop(text=prop), properties))
+        self.signature, self.node, self.sub_predicates, self.parent = signature, node, set(), parent
+        if properties: self.properties = list(map(lambda prop: self.create_prop(text=prop), properties))
         else: self.properties = None
         self.behaviour = self.parse_predicate()
-        svPredicate.NODE_BEHAVIOURS[signature] = self
+        # Only store top-level predicates.
+        if parent == None: svPredicate.NODE_BEHAVIOURS[signature] = self
 
     def parse_predicate(self):
         # Building non-accessable!
         node_access = list(self.node.advertise) if self.node.advertise is not None else []
         node_access += list(self.node.subscribe) if self.node.subscribe is not None else []
         non_accessable = list(filter(lambda t: t not in node_access, Topic.TOPICS.values()))
-        parser         = svProperty.parse(node=self.node, properties=self.properties, non_accessable=non_accessable)
+        # parser         = svProperty.parse(node=self.node, properties=self.properties, non_accessable=non_accessable)
         # if no properties were conceived.
-        print(svAlloyPredicate.parse(node=self.node, properties=None, pre_condition=None, changable_channels=None, changable_variables=None))
+        # print(self.properties)
+        # print(svAlloyPredicate.parse(node=self.node, properties=None, pre_condition=None, changable_channels=None, changable_variables=None))
 
-    @staticmethod
-    def create_prop(text):
-        try: print(text)
+    def create_prop(self, text):
+        try: 
+            # Dict means that is another predicate.
+            if isinstance(text, dict):
+                if list(text.keys()).__len__() != 1: raise svException(f'Failed to parse property {text}.')
+                signature, properties, node  = str(self.signature + '_' + list(text.keys())[0]).strip(), text[list(text.keys())[0]], self.node
+                sub_predicate = svPredicate.init_predicate(signature, node, properties, parent=self)
+                if sub_predicate in self.sub_predicates: raise svException(f'Sub-Predicate {signature} of predicate {self.signature} already specified.')
+                self.sub_predicates.add(sub_predicate)
+                return
+            elif isinstance(text, str):
+                GrammarParser.parse(text=text)
+                return
+            raise svException(f'Failed to parse property {text}.')
         except Exception: raise svException(f'Failed to parse property {text}.')
 
     @classmethod
-    def init_predicate(cls, signature, node, properties):
+    def init_predicate(cls, signature, node, properties, sub_predicate=False):
+        if sub_predicate == True:
+            return cls(signature=signature, node=node, properties=properties)
+        # Not a subpredicate!
         if properties.__len__() == 1 and properties.pop() == '': properties = None
         if signature in cls.NODE_BEHAVIOURS:
             svprop = cls.NODE_BEHAVIOURS[signature]
@@ -91,5 +108,4 @@ class svPredicate(object):
             return svprop
         elif node.predicate is not None:
             raise svException(f"Node {node.rosname} has two different predicates mentioned. Please remove 1!")
-        else:
-            return cls(signature=signature, node=node, properties=properties)
+        return cls(signature=signature, node=node, properties=properties)
