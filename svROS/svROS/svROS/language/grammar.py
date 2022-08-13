@@ -13,17 +13,18 @@ GRAMMAR = f"""
     cond       : ( NO_OPERATOR | SOME_OPERATOR ) ( TOPIC | PREDICATE | evaluation )
     evaluation : ( TOPIC | STATE ) EQUAL_OPERATOR VALUE
 
-    reads       : reads_only | reads_perf
+    reads       : reads_only 
+                | reads_perf
     reads_only  : TOPIC
     reads_perf  : TOPIC "then" "{{" disjunction "}}"
 
     disjunction : [disjunction OR_OPERATOR] conjunction
     conjunction : [conjunction AND_OPERATOR] read_condition
 
-    read_condition   : ["m =" VALUE CONSEQUENCE_OPERATOR] read_consequence
+    read_condition   : ["m" ( EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE CONSEQUENCE_OPERATOR] read_consequence
     read_consequence : ( TOPIC | STATE ) ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
     
-    publishes : TOPIC ("{{" "m =" VALUE "}}")
+    publishes : TOPIC [ EQUAL_OPERATOR VALUE ]
 
     alters : [alters AND_OPERATOR] alters_condition
     alters_condition : STATE ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
@@ -36,11 +37,14 @@ GRAMMAR = f"""
     NO_OPERATOR   : "no" | "not"
     SOME_OPERATOR : "some" | "exists"
 
-    OR_OPERATOR : "or"  | "+"
-    AND_OPERATOR  : "and" | "&"
+    OR_OPERATOR : "or"  | "++"
+    AND_OPERATOR  : "and" | "&&"
     CONSEQUENCE_OPERATOR : "implies" | "=>"
     
-    EQUAL_OPERATOR : "eql" | "="
+    EQUAL_OPERATOR   : "eql" | "="
+    GREATER_OPERATOR : "gtr" | ">"
+    LESSER_OPERATOR  : "les" | "<"
+
     INC_OPERATOR   : "add" | "+="
     DEC_OPERATOR   : "rmv" | "-="
 
@@ -55,6 +59,7 @@ GRAMMAR = f"""
 
 from lark import Lark, tree, Token, Transformer
 from lark.exceptions import UnexpectedCharacters, UnexpectedToken
+from svData import Topic, svState
 class GrammarParser(object):
     """
         Grammar Main Parser
@@ -67,17 +72,35 @@ class GrammarParser(object):
         grammar, parser = cls.GRAMMAR, Lark(cls.GRAMMAR, parser="lalr", start='axiom', transformer=LanguageTransformer())
         # PARSE!
         try:
-            text = parser.parse(text)
+            conditions = parser.parse(text)
         except (UnexpectedToken, UnexpectedCharacters, SyntaxError) as e:
             raise svException(f'Failed to parse property {text}: {e}')
-
+        try:
+            return conditions
+        except AttributeError: raise svException(f'Failed to parse property {text}: {e}')
+        
 ###############################
 # === LANGUAGE TRANSFORMER  ===
 ###############################
+class BinaryOperator(object):
+    # OPERATORS
+    OPERATORS = {"OR_OPERATOR", "AND_OPERATOR", "EQUAL_OPERATOR", "GREATER_OPERATOR", "LESSER_OPERATOR", "INC_OPERATOR", "DEC_OPERATOR"}
+
+    def __init__(self, op, argument, value):
+        assert op in self.OPERATORS
+        self.operator, self.argument1, self.argument2 = op, argument, value
+
+    def children(self):
+        return (self.operand1, self.operand2)
+
 class LanguageTransformer(Transformer):
 
+    def __init__(self):
+        self.OBJECTS = set()
+
     def axiom(self, children):
-        return children
+        if self.OBJECTS.__len__() == 1: return next(iter(self.OBJECTS))
+        else: return MultipleConditions(conditions=list(self.OBJECTS))
 
     # CONDITIONAL
     def evaluation_cond(self, children):
@@ -92,11 +115,43 @@ class LanguageTransformer(Transformer):
             predicate, entity, value = children[1].type, children[1].value, None
         else:
             predicate, entity, value = LanguageTransformer.evaluation_cond(self, children[1].children)
-        return Conditional(quantifier=quantifier, type=predicate, entity=entity, value=value)
+        conditional = Conditional(quantifier=quantifier, type=predicate, entity=entity, value=value)
+        self.OBJECTS.add(conditional)
+        return conditional
 
     # READS
     def reads_only(self, children):
-        return Read(entity=children[0].value, conditions=None, readonly=True)
+        read = Read(entity=children[0].value, conditions=None, readonly=True)
+        self.OBJECTS.add(read)
+        return read
+
+    def reads_perf(self, children):
+        topic, conditions = children[0].value, self.conj
+        read = Read(entity=topic, conditions=conditions, readonly=False)
+        self.OBJECTS.add(read)
+        return read
+
+    def conjunction(self, children):
+        if children[1] is None: 
+            try: self.conj.append([children[2]])
+            except AttributeError: self.conj = [[children[2]]]
+        else: 
+            try: index = self.conj.__len__() - 1
+            except AttributeError: index = 0
+            self.conj[index].append(children[2])
+
+    def read_consequence(self, children):
+        entity, type, relation, value = children[0].value, children[0].type, children[1].type, children[2].value
+        return ReadConsequence(entity=entity, type=type, relation=relation, value=value)
+
+    def read_condition(self, children):
+        try: self.disj.append(children)
+        except AttributeError: self.disj = [children]
+        # no conditional!
+        if children[0] is None: return children[3]
+        else:
+            conditional, value = children[0].type, children[1].value
+            return ReadConditional(conditional=conditional, value=value, consequence=children[3])
 
     # PUBLISH
     def publishes(self, children):
@@ -104,13 +159,28 @@ class LanguageTransformer(Transformer):
         entity = children[0].value
         if children.__len__() > 1: value = children[::-1][0]
         else: value = None
-        return Publish(entity=entity, value=value)
+        publish = Publish(entity=entity, value=value)
+        self.OBJECTS.add(publish)
+        return publish
 
     # ALTERS
     def alters_condition(self, children):
         if not children.__len__() == 3: raise svException("")
         entity, relation, value = (children[0].value)[1:], children[1].type, children[2].value
-        return Alter(entity=entity, relation=relation, value=value)
+        alter = Alter(entity=entity, relation=relation, value=value)
+        self.OBJECTS.add(alter)
+        return alter
+
+###############################
+# === PARSER FROM TRANSFMER ===
+###############################
+class MultipleConditions(object):
+
+    def __init__(self, conditions):
+        self.conditions = conditions
+    
+    def __alloy__(self):
+        return '\n'.join(self.conditions)
 
 class Conditional(object):
 
@@ -118,6 +188,33 @@ class Conditional(object):
         self.quantifier, self.type, self.value = quantifier, type, value
         if self.type in {'PREDICATE', 'STATE'}: self.entity = entity[1:]
         else: self.entity = entity
+        if self.type == 'TOPIC':
+            if entity not in Topic.TOPICS: raise svException(f"Channel {entity} does not exist!")
+
+    def __alloy__(self):
+        return ''
+
+class ReadConsequence(object):
+
+    def __init__(self, entity, type, relation, value):
+        self.entity, self.type, self.relation, self.value, self.replicate = entity, type, relation, value, False
+        match type:
+            case 'STATE':
+                if entity[1:] not in svState.STATES: raise svException(f"State {entity} does not exist!")
+            case 'TOPIC':
+                if entity not in Topic.TOPICS: raise svException(f"Channel {entity} does not exist!")
+        if self.type in {'PREDICATE', 'STATE'}: self.entity = entity[1:]
+        else: self.entity = entity
+        # value can be m
+        if value == 'm': self.replicate = True
+
+    def __alloy__(self):
+        return ''
+
+class ReadConditional(object):
+
+    def __init__(self, conditional, value, consequence=None):
+        self.conditional, self.value, self.consequence = conditional, value, consequence
 
     def __alloy__(self):
         return ''
@@ -125,7 +222,8 @@ class Conditional(object):
 class Read(object):
 
     def __init__(self, entity, conditions, readonly=False):
-        self.entity, self.conditions = entity, conditions
+        if entity not in Topic.TOPICS: raise svException(f"Channel {entity} does not exist!")
+        self.entity, self.conditions, self.readonly = entity, conditions, readonly
 
     def __alloy__(self):
         return ''
@@ -133,6 +231,7 @@ class Read(object):
 class Publish(object):
 
     def __init__(self, entity, value=None):
+        if entity not in Topic.TOPICS: raise svException(f"Channel {entity} does not exist!")
         self.entity, self.value = entity, value
 
     def __alloy__(self):
@@ -141,6 +240,7 @@ class Publish(object):
 class Alter(object):
 
     def __init__(self, entity, relation, value):
+        if entity not in svState.STATES: raise svException(f"State {entity} does not exist!")
         self.entity, self.relation, self.value = entity, relation, value
 
     def __alloy__(self):

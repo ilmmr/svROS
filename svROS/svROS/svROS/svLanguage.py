@@ -8,8 +8,9 @@ from tools.InfoHandler import color, svException, svWarning
 # Parsers
 import xml.etree.ElementTree as ET
 from lark import Lark, tree
+import itertools
 
-from language.grammar import GrammarParser
+from language.grammar import GrammarParser, Read, Publish, Alter, ReadConditional, ReadConsequence
 from svData import Topic, svROSNode, svState
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -75,11 +76,51 @@ class svPredicate(object):
         node_access = list(self.node.advertise) if self.node.advertise is not None else []
         node_access += list(self.node.subscribe) if self.node.subscribe is not None else []
         non_accessable = list(filter(lambda t: t not in node_access, Topic.TOPICS.values()))
+        try:
+            changable_channels, changable_variables = self.check_accessable(non_accessable=non_accessable)
+        except AttributeError:
+            raise svException(f"Failed to parse predicate {self.signature}.")
         # parser         = svProperty.parse(node=self.node, properties=self.properties, non_accessable=non_accessable)
         # if no properties were conceived.
         # print(self.properties)
         # print(svAlloyPredicate.parse(node=self.node, properties=None, pre_condition=None, changable_channels=None, changable_variables=None))
 
+    # Method that either checks node access capacities as it outputs the non frame conditions under such node.
+    def check_accessable(self, non_accessable=None):
+        changable_variables, chagable_channels = list(), list()
+        for prop in self.properties:
+            # READ
+            if isinstance(prop, Read):
+                entity = Topic.TOPICS[prop.entity]
+                if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {prop.entity}.")
+                chagable_channels.append(entity)
+                for condition in list(itertools.chain(*prop.conditions)):
+                    if isinstance(condition, ReadConditional):
+                        if condition.consequence is None: continue
+                        else: condition = condition.consequence
+                    elif isinstance(condition, ReadConsequence): pass
+                    else: raise svException("ERROR")
+                    # PARSE TYPE
+                    if condition.type == "TOPIC":
+                        entity = Topic.TOPICS[condition.entity]
+                        if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {condition.entity}.")
+                        chagable_channels.append(entity)
+                    else:
+                        state = svState.STATES[condition.entity]
+                        changable_variables.append(state)
+            # PUBLISH        
+            if isinstance(prop, Publish):
+                entity = Topic.TOPICS[prop.entity]
+                if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access publish object {prop.entity}.")
+                chagable_channels.append(entity)
+            # ALTER
+            if isinstance(prop, Alter):
+                state = svState.STATES[prop.entity]
+                changable_variables.append(state)     
+        # Return accessable channels and variables!
+        return chagable_channels, changable_variables
+
+    # Method to extract and parse text properties into class properties!
     def create_prop(self, text):
         try: 
             # Dict means that is another predicate.
@@ -89,23 +130,24 @@ class svPredicate(object):
                 sub_predicate = svPredicate.init_predicate(signature, node, properties, parent=self)
                 if sub_predicate in self.sub_predicates: raise svException(f'Sub-Predicate {signature} of predicate {self.signature} already specified.')
                 self.sub_predicates.add(sub_predicate)
-                return
+                return sub_predicate
             elif isinstance(text, str):
-                GrammarParser.parse(text=text)
-                return
-            raise svException(f'Failed to parse property {text}.')
+                property = GrammarParser.parse(text=text)
+                return property
+            else:
+                raise svException(f'Failed to parse property {text}.')
         except Exception: raise svException(f'Failed to parse property {text}.')
 
     @classmethod
-    def init_predicate(cls, signature, node, properties, sub_predicate=False):
-        if sub_predicate == True:
-            return cls(signature=signature, node=node, properties=properties)
+    def init_predicate(cls, signature, node, properties, parent=None):
+        if properties.__len__() == 1 and properties[0] == '': 
+            properties = None
+        if parent is not None: return cls(signature=signature, node=node, properties=properties, parent=parent)
         # Not a subpredicate!
-        if properties.__len__() == 1 and properties.pop() == '': properties = None
         if signature in cls.NODE_BEHAVIOURS:
             svprop = cls.NODE_BEHAVIOURS[signature]
             svprop.properties = properties
             return svprop
         elif node.predicate is not None:
             raise svException(f"Node {node.rosname} has two different predicates mentioned. Please remove 1!")
-        return cls(signature=signature, node=node, properties=properties)
+        return cls(signature=signature, node=node, properties=properties, parent=parent)
