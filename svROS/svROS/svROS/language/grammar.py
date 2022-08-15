@@ -78,6 +78,19 @@ class GrammarParser(object):
         try:
             return conditions
         except AttributeError: raise svException(f'Failed to parse property {text}: {e}')
+
+ALLOY_OPERATORS = {
+    "NO_OPERATOR": "no",
+    "SOME_OPERATOR": "some",
+    "OR_OPERATOR": "or",
+    "AND_OPERATOR": "and",
+    "CONSEQUENCE_OPERATOR": "implies",
+    "EQUAL_OPERATOR": "=",
+    "GREATER_OPERATOR": "gt",
+    "LESSER_OPERATOR": "le",
+    "INC_OPERATOR": "plus",
+    "DEC_OPERATOR": "minus"
+}
         
 ###############################
 # === LANGUAGE TRANSFORMER  ===
@@ -180,7 +193,7 @@ class MultipleConditions(object):
         self.conditions = conditions
     
     def __alloy__(self):
-        return '\n'.join(self.conditions)
+        return ' and '.join([f'({cond})' for c in self.conditions])
 
 class Conditional(object):
 
@@ -192,7 +205,14 @@ class Conditional(object):
             if entity not in Topic.TOPICS: raise svException(f"Channel {entity} does not exist!")
 
     def __alloy__(self):
-        return ''
+        alloy = f'{ALLOY_OPERATORS[str(self.quantifier).lower()]}'
+        if self.type == 'PREDICATE':
+            entity = str(entity).lower().replace('/','_')
+            if self.quantifier == 'NO_OPERATOR':
+                alloy   += f'{entity}[t]'
+            else: alloy  = f'{entity}[t]'
+        else: alloy += f'{entity}'
+        return alloy
 
 class ReadConsequence(object):
 
@@ -226,7 +246,8 @@ class Read(object):
         self.entity, self.conditions, self.readonly = entity, conditions, readonly
 
     def __alloy__(self):
-        return ''
+        channel = Topic.TOPICS[self.entity]
+        return f"let m = first[t.inbox[{channel.signature}]] {{\n\t" + "\n\t".join([c.__alloy__() for c in self.conditions]) + f"\n}}"
 
 class Publish(object):
 
@@ -235,7 +256,10 @@ class Publish(object):
         self.entity, self.value = entity, value
 
     def __alloy__(self):
-        return ''
+        channel = Topic.TOPICS[self.entity]
+        if value is None:
+            return f"some m : Message | t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], m]"
+        return f"some m : Message | m = {value} implies t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], m]"
 
 class Alter(object):
 
@@ -244,4 +268,9 @@ class Alter(object):
         self.entity, self.relation, self.value = entity, relation, value
 
     def __alloy__(self):
-        return ''
+        if relation == 'EQUAL_OPERATOR': 
+            state = svState.STATES[self.entity]
+            if value not in state.values: raise svException(f"State value {value} does not exist!")
+            value = state.values_signature(value=value)
+            return f"t.{state.name.lower()}' = {value}->1"
+        return f"t.{state.name.lower()}' = {ALLOY_OPERATORS[relation]}[t.{state.name.lower()}, {value}]"

@@ -25,7 +25,7 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 class svAnalyzer(object):
     EXTRACTOR     : object
     MODELS_DIR    : str
-
+    
     def __post_init__(self):
         # GET FROM EXTRACTOR
         project, PROJECT_DIR, scopes = self.EXTRACTOR.project, self.EXTRACTOR.PROJECT_DIR, self.EXTRACTOR.scopes
@@ -257,6 +257,9 @@ class svProjectExtractor:
             if n not in svROSNode.NODES: raise svException(f"Node {n} failed to be found.")
             node            = svROSNode.NODES[n]
             predicate       = svPredicate.init_predicate(signature=signature, node=node, properties=nodes[key])
+            # Node predicate association.
+            if node.predicate is not None:
+                raise svException(f"Node {node.rosname} has two different predicates mentioned. Please remove 1!")
             node.predicate  = predicate
         for t in types:
             tt, mtype_temp = t, types[t].split('/')

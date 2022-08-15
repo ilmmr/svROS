@@ -27,21 +27,18 @@ class svAlloyPredicate(object):
         pass
 
     @classmethod
-    def parse(cls, node, properties, pre_condition, changable_channels, changable_variables):
-        pre, properties = '', ''
+    def parse(cls, node, properties, changable_channels, changable_variables):
         if properties is None:
-            if pre_condition: pass 
-            return pre + svAlloyPredicate.frame_conditions(nop=True)
+            return svAlloyPredicate.frame_conditions(nop=True)
         else:
-            if pre_condition: pass
-            return pre + properties + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
+            return '\n\t'.join([p.__alloy__() for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
 
     @staticmethod
     def frame_conditions(nop, channels=None, variables=None):
         if not isinstance(nop, bool): svException("!!")
-        if nop is True: return f"""\t//Frame Conditions\n\tnop[t]"""
+        if nop is True: return f"""\n\t//Frame Conditions\n\tnop[t]"""
         else:
-            _str_ = f"""\t//Frame Conditions"""
+            _str_ = f"""\n\t//Frame Conditions"""
             # channels
             if channels is None: _str_ += f"""\n\tt.inbox' = t.inbox"""
             else:
@@ -61,15 +58,20 @@ class svPredicate(object):
         Overall Node behaviour => svPredicate
     """
     NODE_BEHAVIOURS = {}
-    def __init__(self, signature, node, properties, parent=None):
+    def __init__(self, signature, node, properties):
         if not isinstance(node, svROSNode):
             raise svException('Failed to create property parser since given node is not a Node.')
+        signature = svPredicate.signature(value=signature)
         self.signature, self.node, self.sub_predicates, self.parent = signature, node, set(), parent
         if properties: self.properties = list(map(lambda prop: self.create_prop(text=prop), properties))
         else: self.properties = None
         self.behaviour = self.parse_predicate()
         # Only store top-level predicates.
-        if parent == None: svPredicate.NODE_BEHAVIOURS[signature] = self
+        svPredicate.NODE_BEHAVIOURS[signature] = self
+
+    @staticmethod
+    def signature(value):
+        return str(value).lower().replace('/','_')
 
     def parse_predicate(self):
         # Building non-accessable!
@@ -78,22 +80,25 @@ class svPredicate(object):
         non_accessable = list(filter(lambda t: t not in node_access, Topic.TOPICS.values()))
         try:
             changable_channels, changable_variables = self.check_accessable(non_accessable=non_accessable)
+            if changable_channels  == []: changable_channels  = None
+            if changable_variables == []: changable_variables = None
         except AttributeError:
             raise svException(f"Failed to parse predicate {self.signature}.")
         # parser         = svProperty.parse(node=self.node, properties=self.properties, non_accessable=non_accessable)
         # if no properties were conceived.
         # print(self.properties)
-        # print(svAlloyPredicate.parse(node=self.node, properties=None, pre_condition=None, changable_channels=None, changable_variables=None))
+        alloy = svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
+        return alloy
 
     # Method that either checks node access capacities as it outputs the non frame conditions under such node.
     def check_accessable(self, non_accessable=None):
-        changable_variables, chagable_channels = list(), list()
+        changable_variables, changable_channels = list(), list()
         for prop in self.properties:
             # READ
             if isinstance(prop, Read):
                 entity = Topic.TOPICS[prop.entity]
                 if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {prop.entity}.")
-                chagable_channels.append(entity)
+                changable_channels.append(entity)
                 for condition in list(itertools.chain(*prop.conditions)):
                     if isinstance(condition, ReadConditional):
                         if condition.consequence is None: continue
@@ -104,7 +109,7 @@ class svPredicate(object):
                     if condition.type == "TOPIC":
                         entity = Topic.TOPICS[condition.entity]
                         if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {condition.entity}.")
-                        chagable_channels.append(entity)
+                        changable_channels.append(entity)
                     else:
                         state = svState.STATES[condition.entity]
                         changable_variables.append(state)
@@ -112,13 +117,13 @@ class svPredicate(object):
             if isinstance(prop, Publish):
                 entity = Topic.TOPICS[prop.entity]
                 if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access publish object {prop.entity}.")
-                chagable_channels.append(entity)
+                changable_channels.append(entity)
             # ALTER
             if isinstance(prop, Alter):
                 state = svState.STATES[prop.entity]
                 changable_variables.append(state)     
         # Return accessable channels and variables!
-        return chagable_channels, changable_variables
+        return changable_channels, changable_variables
 
     # Method to extract and parse text properties into class properties!
     def create_prop(self, text):
@@ -127,7 +132,7 @@ class svPredicate(object):
             if isinstance(text, dict):
                 if list(text.keys()).__len__() != 1: raise svException(f'Failed to parse property {text}.')
                 signature, properties, node  = str(self.signature + '_' + list(text.keys())[0]).strip(), text[list(text.keys())[0]], self.node
-                sub_predicate = svPredicate.init_predicate(signature, node, properties, parent=self)
+                sub_predicate = svPredicate.init_predicate(signature, node, properties)
                 if sub_predicate in self.sub_predicates: raise svException(f'Sub-Predicate {signature} of predicate {self.signature} already specified.')
                 self.sub_predicates.add(sub_predicate)
                 return sub_predicate
@@ -139,15 +144,18 @@ class svPredicate(object):
         except Exception: raise svException(f'Failed to parse property {text}.')
 
     @classmethod
-    def init_predicate(cls, signature, node, properties, parent=None):
+    def init_predicate(cls, signature, node, properties):
         if properties.__len__() == 1 and properties[0] == '': 
             properties = None
-        if parent is not None: return cls(signature=signature, node=node, properties=properties, parent=parent)
-        # Not a subpredicate!
         if signature in cls.NODE_BEHAVIOURS:
             svprop = cls.NODE_BEHAVIOURS[signature]
             svprop.properties = properties
             return svprop
-        elif node.predicate is not None:
-            raise svException(f"Node {node.rosname} has two different predicates mentioned. Please remove 1!")
-        return cls(signature=signature, node=node, properties=properties, parent=parent)
+        return cls(signature=signature, node=node, properties=properties)
+
+    def __subpredicates__(self):
+        if self.sub_predicates.__len__() == 0: return ''
+        return ' or '.join([f'{s.signature}[t]' for s in self.sub_predicates])
+
+    def __str__(self):
+        return f"""pred {self.signature} [t : Execution] {{{self.behaviour}\n{self.__subpredicates__()}\n}}"""
