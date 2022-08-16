@@ -31,7 +31,7 @@ class svAlloyPredicate(object):
         if properties is None:
             return svAlloyPredicate.frame_conditions(nop=True)
         else:
-            return '\n\t'.join([p.__alloy__() for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
+            return '\n\t' + '\n\t'.join([p.__alloy__() for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
 
     @staticmethod
     def frame_conditions(nop, channels=None, variables=None):
@@ -62,9 +62,12 @@ class svPredicate(object):
         if not isinstance(node, svROSNode):
             raise svException('Failed to create property parser since given node is not a Node.')
         signature = svPredicate.signature(value=signature)
-        self.signature, self.node, self.sub_predicates, self.parent = signature, node, set(), parent
-        if properties: self.properties = list(map(lambda prop: self.create_prop(text=prop), properties))
-        else: self.properties = None
+        self.signature, self.node, self.sub_predicates = signature, node, set()
+        if properties: 
+            properties = list(map(lambda prop: self.create_prop(text=prop), properties))
+            self.properties = list(filter(lambda prop: not isinstance(prop, svPredicate), properties))
+        else: 
+            self.properties = None
         self.behaviour = self.parse_predicate()
         # Only store top-level predicates.
         svPredicate.NODE_BEHAVIOURS[signature] = self
@@ -88,11 +91,13 @@ class svPredicate(object):
         # if no properties were conceived.
         # print(self.properties)
         alloy = svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
+        print(alloy)
         return alloy
 
     # Method that either checks node access capacities as it outputs the non frame conditions under such node.
     def check_accessable(self, non_accessable=None):
         changable_variables, changable_channels = list(), list()
+        if self.properties is None: return changable_channels, changable_variables
         for prop in self.properties:
             # READ
             if isinstance(prop, Read):
@@ -123,7 +128,7 @@ class svPredicate(object):
                 state = svState.STATES[prop.entity]
                 changable_variables.append(state)     
         # Return accessable channels and variables!
-        return changable_channels, changable_variables
+        return list(set(changable_channels)), list(set(changable_variables))
 
     # Method to extract and parse text properties into class properties!
     def create_prop(self, text):
@@ -148,14 +153,12 @@ class svPredicate(object):
         if properties.__len__() == 1 and properties[0] == '': 
             properties = None
         if signature in cls.NODE_BEHAVIOURS:
-            svprop = cls.NODE_BEHAVIOURS[signature]
-            svprop.properties = properties
-            return svprop
+            raise svException(f"Predicate {signature} is already defined.")
         return cls(signature=signature, node=node, properties=properties)
 
     def __subpredicates__(self):
         if self.sub_predicates.__len__() == 0: return ''
-        return ' or '.join([f'{s.signature}[t]' for s in self.sub_predicates])
+        return  '\n\t-- SUB-PREDICATES\n\t' + ' or '.join([f'{s.signature}[t]' for s in self.sub_predicates])
 
     def __str__(self):
-        return f"""pred {self.signature} [t : Execution] {{{self.behaviour}\n{self.__subpredicates__()}\n}}"""
+        return f"""pred {self.signature} [t : Execution] {{{self.__subpredicates__()}\n{self.behaviour}\n}}"""

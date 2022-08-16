@@ -235,6 +235,20 @@ class svProjectExtractor:
     def load_analysis(self, nodes, types):
         if svROSNode.NODES is {}:
             raise svException("No nodes found, loading is yet to be launched.")
+        for t in types:
+            tt, mtype_temp = t, types[t].split('/')
+            pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))
+            if not bool(pattern): isint = False
+            else:
+                if not pattern.groups()[0].strip() == 'int': raise svException(f'Failed to parse type {str(t)}.')
+                t, isint = pattern.groups()[1].strip(), True
+            # ...
+            t = t.replace('/', '_').lower()
+            if t not in MessageType.TYPES: raise svException(f"Message Type {tt} not found.")
+            mtype       = MessageType.TYPES[t]
+            # SET isint.
+            mtype.isint = isint
+            mtype.value.values = mtype_temp    
         # LOAD PROPERTIES.
         for n in nodes:
             # PARSING.
@@ -261,20 +275,6 @@ class svProjectExtractor:
             if node.predicate is not None:
                 raise svException(f"Node {node.rosname} has two different predicates mentioned. Please remove 1!")
             node.predicate  = predicate
-        for t in types:
-            tt, mtype_temp = t, types[t].split('/')
-            pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))
-            if not bool(pattern): isint = False
-            else:
-                if not pattern.groups()[0].strip() == 'int': raise svException(f'Failed to parse type {str(t)}.')
-                t, isint = pattern.groups()[1].strip(), True
-            # ...
-            t = t.replace('/', '_').lower()
-            if t not in MessageType.TYPES: raise svException(f"Message Type {tt} not found.")
-            mtype       = MessageType.TYPES[t]
-            # SET isint.
-            mtype.isint = isint
-            mtype.value.values = mtype_temp
         return True
 
     @property
