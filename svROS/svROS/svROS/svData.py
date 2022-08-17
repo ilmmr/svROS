@@ -590,8 +590,8 @@ class svROSNode(object):
 class svState(object):
     STATES = {}
     def __init__(self, name, default, values, private=False, isint=False):
-        self.name, self.default, self.values, self.private, self.isint = name, svState.signature(tag=name), values, private, isint
-        self.signature = self.values_signature(value=default)
+        self.name, self.values, self.private, self.isint = name, values, private, isint
+        self.default, self.signature = self.values_signature(value=default), svState.signature(tag=name)
         svState.STATES[self.name] = self
     
     def __str__(self):

@@ -31,11 +31,11 @@ class svAlloyPredicate(object):
         if properties is None:
             return svAlloyPredicate.frame_conditions(nop=True)
         else:
-            return '\n\t' + '\n\t'.join([p.__alloy__() for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
+            return '\n\t' + '\n\t'.join([re.sub(r'\s{2,}', ' ', p.__alloy__()) for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
 
     @staticmethod
     def frame_conditions(nop, channels=None, variables=None):
-        if not isinstance(nop, bool): svException("!!")
+        if not isinstance(nop, bool): svException("Non expected error occurred.")
         if nop is True: return f"""\n\t//Frame Conditions\n\tnop[t]"""
         else:
             _str_ = f"""\n\t//Frame Conditions"""
