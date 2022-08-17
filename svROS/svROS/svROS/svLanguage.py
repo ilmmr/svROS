@@ -31,7 +31,7 @@ class svAlloyPredicate(object):
         if properties is None:
             return svAlloyPredicate.frame_conditions(nop=True)
         else:
-            return '\n\t' + '\n\t'.join([re.sub(r'\s{2,}', ' ', p.__alloy__()) for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
+            return '\n\t' + '\n\t'.join([p.__alloy__() for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
 
     @staticmethod
     def frame_conditions(nop, channels=None, variables=None):
@@ -104,20 +104,19 @@ class svPredicate(object):
                 entity = Topic.TOPICS[prop.entity]
                 if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {prop.entity}.")
                 changable_channels.append(entity)
-                for condition in list(itertools.chain(*prop.conditions)):
-                    if isinstance(condition, ReadConditional):
-                        if condition.consequence is None: continue
-                        else: condition = condition.consequence
-                    elif isinstance(condition, ReadConsequence): pass
-                    else: raise svException("ERROR")
-                    # PARSE TYPE
-                    if condition.type == "TOPIC":
-                        entity = Topic.TOPICS[condition.entity]
-                        if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {condition.entity}.")
-                        changable_channels.append(entity)
-                    else:
-                        state = svState.STATES[condition.entity]
-                        changable_variables.append(state)
+                for condition in prop.conditions.conditions:
+                    implication = condition.implication.conditions
+                    for conjunction in implication:
+                        for cond in conjunction.conditions:
+                            # PARSE TYPE
+                            assert isinstance(cond, ReadConsequence)
+                            if cond.type == "TOPIC":
+                                entity = Topic.TOPICS[cond.entity]
+                                if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {cond.entity}.")
+                                changable_channels.append(entity)
+                            else:
+                                state = svState.STATES[cond.entity]
+                                changable_variables.append(state)
             # PUBLISH        
             if isinstance(prop, Publish):
                 entity = Topic.TOPICS[prop.entity]

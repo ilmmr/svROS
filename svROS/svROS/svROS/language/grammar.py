@@ -10,24 +10,33 @@ GRAMMAR = f"""
           | ALTERS_TOKEN alters
 
     condition  : [condition AND_OPERATOR] cond
-    cond       : ( NO_OPERATOR ) ( TOPIC | PREDICATE | evaluation )
-    evaluation : ( TOPIC | STATE ) ( EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE
+    cond       : ( NO_OPERATOR | SOME_OPERATOR ) ( TOPIC | PREDICATE | evaluation )
+    evaluation : ( TOPIC | STATE ) EQUAL_OPERATOR VALUE
 
     reads       : reads_only 
                 | reads_perf
     reads_only  : TOPIC
-    reads_perf  : TOPIC "then" "{{" disjunction "}}"
+    reads_perf  : TOPIC THEN_OPERATOR "[" implication "]"
 
-    disjunction : [disjunction OR_OPERATOR] conjunction
-    conjunction : [conjunction AND_OPERATOR] read_condition
+    implication : read (COMMA_OPERATOR read)*
+    read        : read_condition CONSEQUENCE_OPERATOR "{{" disjunction "}}"
+                | disjunction
+    
+    read_condition   : read_condition_single
+                     | read_condition_is_multiple
+                     | read_condition_is_either
+    
+    read_condition_is_multiple : read_condition_single (AND_OPERATOR read_condition_single)+
+    read_condition_is_either   : read_condition_single (OR_OPERATOR read_condition_single)+
+    read_condition_single      : MESSAGE_TOKEN ( EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE
 
-    read_condition   : ["m" ( EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE CONSEQUENCE_OPERATOR] read_consequence
-    read_consequence : ( NO_OPERATOR ) PREDICATE
-                     | ( TOPIC | STATE ) ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
+    disjunction      : [disjunction AND_OPERATOR] conjunction
+    conjunction      : [conjunction OR_OPERATOR] read_consequence
+    read_consequence : ( TOPIC | STATE ) ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
     
     publishes : TOPIC [ EQUAL_OPERATOR VALUE ]
 
-    alters : [alters AND_OPERATOR] alters_condition
+    alters           : [alters AND_OPERATOR] alters_condition
     alters_condition : STATE ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
 
     REQUIRES_TOKEN  : "requires"
@@ -35,19 +44,23 @@ GRAMMAR = f"""
     PUBLISHES_TOKEN : "publishes"
     ALTERS_TOKEN    : "alters"
 
-    NO_OPERATOR   : "no" | "not"
-    SOME_OPERATOR : "some" | "exists"
+    NO_OPERATOR     : "no" | "not"
+    SOME_OPERATOR   : "some" | "exists"
 
-    OR_OPERATOR : "or"  | "++"
-    AND_OPERATOR  : "and" | "&&"
+    COMMA_OPERATOR       : ";" | ","
+    THEN_OPERATOR        : "then" | "~"
+    OR_OPERATOR          : "or"  | "++"
+    AND_OPERATOR         : "and" | "&&"
     CONSEQUENCE_OPERATOR : "implies" | "=>"
     
     EQUAL_OPERATOR   : "eql" | "="
     GREATER_OPERATOR : "gtr" | ">"
     LESSER_OPERATOR  : "les" | "<"
 
-    INC_OPERATOR   : "add" | "+="
-    DEC_OPERATOR   : "rmv" | "-="
+    INC_OPERATOR     : "add" | "+="
+    DEC_OPERATOR     : "rmv" | "-="
+
+    MESSAGE_TOKEN    : "m"i
 
     VALUE     : /(?!=>)[a-zA-Z0-9_\/\-.\:]+/
     TOPIC     : /(?!\s)[a-zA-Z0-9_\/\-.\:]+/
@@ -140,19 +153,30 @@ class LanguageTransformer(Transformer):
         return read
 
     def reads_perf(self, children):
-        topic, conditions = children[0].value, self.conj
+        topic, conditions = children[0].value, children[2]
         read = Read(entity=topic, conditions=conditions, readonly=False)
         self.OBJECTS.add(read)
         return read
 
+    def implication(self, children):
+        return Implication(conditions=children[0::2])
+
+    def read(self, children):
+        disjunctions = DisjunctionConsequence(conditions=self.disj)
+        return ReadImplication(conditional=children[0], implication=disjunctions)
+
+    def disjunction(self, children):
+        conjunctions = ConjunctionConsequence(conditions=self.conj)
+        if children[1] is None:
+            self.disj  = [conjunctions]
+        else:
+            self.conj += [conjunctions]
+
     def conjunction(self, children):
         if children[1] is None: 
-            try: self.conj.append([children[2]])
-            except AttributeError: self.conj = [[children[2]]]
+            self.conj  = [children[2]]
         else: 
-            try: index = self.conj.__len__() - 1
-            except AttributeError: index = 0
-            self.conj[index].append(children[2])
+            self.conj += [children[2]]
 
     def read_consequence(self, children):
         if children.__len__() > 2:
@@ -163,13 +187,17 @@ class LanguageTransformer(Transformer):
             return ReadConsequence(entity=entity, type=type, relation=None, value=None, predicate=True)
 
     def read_condition(self, children):
-        try: self.disj.append(children)
-        except AttributeError: self.disj = [children]
-        # no conditional!
-        if children[0] is None: return children[3]
-        else:
-            conditional, value = children[0].type, children[1].value
-            return ReadConditional(conditional=conditional, value=value, consequence=children[3])
+        return children[0]
+
+    def read_condition_is_multiple(self, children):
+        return MultipleReadConditional(conditions=children[0::2])
+    
+    def read_condition_is_either(self, children):
+        return EitherReadConditional(conditions=children[0::2])
+
+    def read_condition_single(self, children):
+        conditional, value = children[1].type, children[2].value
+        return ReadConditional(conditional=conditional, value=value)
 
     # PUBLISH
     def publishes(self, children):
@@ -247,6 +275,40 @@ class Conditional(object):
                 assert self.object.isint
                 return f"{quantifier} {ALLOY_OPERATORS[self.relation]}[t.{self.object.name.lower()}.Int, {self.value}]"
 
+class Implication(object):
+    
+    def __init__(self, conditions):
+        self.conditions = conditions
+    
+    def __alloy__(self, channel):
+        return '\n\t\t'.join([f'{cond.__alloy__(channel=channel)}' for cond in self.conditions])
+
+class ReadImplication(object):
+
+    def __init__(self, conditional, implication):
+        self.conditional, self.implication = conditional, implication
+    
+    def __alloy__(self, channel):
+        if self.conditional is None:
+            return f'{self.implication.__alloy__(channel=channel)}'
+        return f'{self.conditional.__alloy__(channel=channel)} implies {{ {self.implication.__alloy__(channel=channel)} }}'
+
+class DisjunctionConsequence(object):
+    
+    def __init__(self, conditions):
+        self.conditions = conditions
+    
+    def __alloy__(self, channel):
+        return ' and '.join([f'({cond.__alloy__(channel=channel)})' for cond in self.conditions])
+
+class ConjunctionConsequence(object):
+
+    def __init__(self, conditions):
+        self.conditions = conditions
+    
+    def __alloy__(self, channel):
+        return ' or '.join([f'({cond.__alloy__(channel=channel)})' for cond in self.conditions])
+
 class ReadConsequence(object):
 
     def __init__(self, entity, type, relation, value, predicate=False):
@@ -291,19 +353,34 @@ class ReadConsequence(object):
         alter = Alter(entity=self.entity, relation=self.relation, value=self.value)
         return alter.__alloy__() + alter.__else__()
 
+class MultipleReadConditional(object):
+
+    def __init__(self, conditions):
+        self.conditions = conditions
+    
+    def __alloy__(self, channel):
+        return '(' + ' and '.join([f'{cond.__alloy__(channel=channel)}' for cond in self.conditions]) + ')'
+
+class EitherReadConditional(object):
+
+    def __init__(self, conditions):
+        self.conditions = conditions
+    
+    def __alloy__(self, channel):
+        return '(' + ' or '.join([f'{cond.__alloy__(channel=channel)}' for cond in self.conditions]) + ')'
+
 class ReadConditional(object):
 
-    def __init__(self, conditional, value, consequence=None):
-        self.conditional, self.value, self.consequence = conditional, value, consequence
+    def __init__(self, conditional, value):
+        self.conditional, self.value = conditional, value
 
     def __alloy__(self, channel):
-        if self.consequence is None: return ''
         if self.value not in channel.message_type.value.values: raise svException(f"Channel {channel.signature} value {self.value} does not exist!")
         value = self.value
         if self.conditional == 'EQUAL_OPERATOR': 
-            return f"m = {value} implies {self.consequence.__alloy__(channel=channel)}"
+            return f"m = {value}" # implies {self.consequence.__alloy__(channel=channel)}"
         assert channel.message_type.isint
-        return f"{ALLOY_OPERATORS[self.conditional]}[m, {value}] implies {self.consequence.__alloy__(channel=channel)}"
+        return f"{ALLOY_OPERATORS[self.conditional]}[m, {value}]" # implies {self.consequence.__alloy__(channel=channel)}"
 
 class Read(object):
 
@@ -314,12 +391,9 @@ class Read(object):
             raise svException(f"Channel {entity} does not exist!")
         self.entity, self.object, self.conditions, self.readonly = entity, channel, conditions, readonly
 
-    def __conjunction__(self, conditional, channel):
-        return ' and '.join([f'({cond.__alloy__(channel=channel)})' for cond in conditional])
-
     def __alloy__(self):
         channel = self.object
-        return f"let m = first[t.inbox[{channel.signature}]] {{\n\t\t" + " or ".join([f'({self.__conjunction__(conditional=c, channel=channel)})' for c in self.conditions]) + f"\n\t}}" + f"\n\tt.inbox'[{channel.signature}] = rest[t.inbox[{channel.signature}]] "
+        return f"let m = first[t.inbox[{channel.signature}]] {{\n\t\t" + self.conditions.__alloy__(channel=channel) + f"\n\t}}" + f"\n\tt.inbox'[{channel.signature}] = rest[t.inbox[{channel.signature}]] "
 
 class Publish(object):
 
