@@ -28,17 +28,18 @@ class svAlloyPredicate(object):
 
     @classmethod
     def parse(cls, node, properties, changable_channels, changable_variables):
+        print(properties)
         if properties is None:
             return svAlloyPredicate.frame_conditions(nop=True)
         else:
-            return '\n\t' + '\n\t'.join([p.__alloy__() for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
+            return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
 
     @staticmethod
     def frame_conditions(nop, channels=None, variables=None):
         if not isinstance(nop, bool): svException("Non expected error occurred.")
-        if nop is True: return f"""\n\t//Frame Conditions\n\tnop[t]"""
+        if nop is True: return f"""\n\t// Frame Conditions:\n\tnop[t]"""
         else:
-            _str_ = f"""\n\t//Frame Conditions"""
+            _str_ = f"""\n\t// Frame Conditions:"""
             # channels
             if channels is None: _str_ += f"""\n\tt.inbox' = t.inbox"""
             else:
@@ -65,7 +66,8 @@ class svPredicate(object):
         self.signature, self.node, self.sub_predicates = signature, node, set()
         if properties: 
             properties = list(map(lambda prop: self.create_prop(text=prop), properties))
-            self.properties = list(filter(lambda prop: not isinstance(prop, svPredicate), properties))
+            properties = list(filter(lambda prop: not isinstance(prop, svPredicate), properties))
+            self.properties = None if properties == [] else properties 
         else: 
             self.properties = None
         self.behaviour = self.parse_predicate()
@@ -91,7 +93,6 @@ class svPredicate(object):
         # if no properties were conceived.
         # print(self.properties)
         alloy = svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
-        print(alloy)
         return alloy
 
     # Method that either checks node access capacities as it outputs the non frame conditions under such node.
@@ -155,9 +156,13 @@ class svPredicate(object):
             raise svException(f"Predicate {signature} is already defined.")
         return cls(signature=signature, node=node, properties=properties)
 
+    @classmethod
+    def node_behaviour(cls):
+        return '\n'.join([str(predicate) for predicate in cls.NODE_BEHAVIOURS.values()])
+
     def __subpredicates__(self):
         if self.sub_predicates.__len__() == 0: return ''
-        return  '\n\t-- SUB-PREDICATES\n\t' + ' or '.join([f'{s.signature}[t]' for s in self.sub_predicates])
+        return  '\n\t// Sub-Predicates:\n\t' + ' or '.join([f'{s.signature}[t]' for s in self.sub_predicates])
 
     def __str__(self):
-        return f"""pred {self.signature} [t : Execution] {{{self.__subpredicates__()}\n{self.behaviour}\n}}"""
+        return re.sub('\n\n', '\n', f"""pred {self.signature} [t : Execution] {{{self.__subpredicates__()}\n{self.behaviour}\n}}""")

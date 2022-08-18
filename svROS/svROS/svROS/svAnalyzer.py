@@ -5,7 +5,7 @@ from logging import FileHandler
 from collections import defaultdict
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning
+from tools.InfoHandler import color, svException, svWarning, svInfo
 from lark import Lark, tree
 # Node parser
 from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, svState, Node, Package, Topic, MessageType, svExecution
@@ -30,9 +30,7 @@ class svAnalyzer(object):
         # GET FROM EXTRACTOR
         project, PROJECT_DIR, scopes = self.EXTRACTOR.project, self.EXTRACTOR.PROJECT_DIR, self.EXTRACTOR.scopes
         self.meta_model, self.sros_model = self.load_configuration(MODELS_DIR=self.MODELS_DIR, PROJECT_DIR=PROJECT_DIR, name=project.lower())
-        # self.configuration = Configuration(c_name, self.nodes, self.topics, scopes, properties=self.properties)
-        # self.specification = (self.module_name + meta_model + self.configuration.specification())
-	
+        
     @staticmethod
     def run_dir():
         return os.getcwd() 
@@ -57,6 +55,30 @@ class svAnalyzer(object):
         if not os.path.isfile(path=ROS_FILE): return False
         else: return True
 
+    def alloy_ros(self):
+        counter, file_path = False, f'{self.EXTRACTOR.PROJECT_DIR}models/ros-concrete.als'
+        if not os.path.isfile(path=file_path): return False
+        # CHECK PROPERTIES if it holds counter-examples
+        properties = re.findall(r'check\s+(.*?)\s+\{', open(file_path, 'r').read())
+        properties = list(map(lambda check: check.strip(), properties))
+        if counter:
+            print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every property seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
+        else:
+            print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Every property seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
+        for prop in properties:
+            if prop in counter:
+                print(f'\n\t‣‣ {prop.split("2")[0]} =Observable Determinism=> {prop.split("2")[1]} {color.color("RED", "☒")}')
+            else: 
+                print(f'\n\t‣‣ {prop.split("2")[0]} =Observable Determinism=> {prop.split("2")[1]} {color.color("GREEN", "✅")}')
+        # RUN VISUALIZER
+        visualizer = input(svInfo('ROS-Alloy architecural model is now checking completed. Do you want to open the svROS Visualizer? [Y/n]')).strip()
+        if visualizer == r"(?i)y": 
+            # open visualizer
+            return visualizer
+        elif visualizer == r"(?i)n": pass
+        else: pass
+        return True
+
     def generate_ros_model(self, NODES, TOPICS):
         model, file_path = self.meta_model, f'{self.EXTRACTOR.PROJECT_DIR}models/ros-concrete.als'
         if not os.path.exists(path=file_path): open(file_path, 'w+').close()
@@ -71,8 +93,8 @@ class svAnalyzer(object):
         # SELF-COMPOSITION.
         model += svExecution.create_executions()
         model += '\n/* === NODE BEHAVIOUR === */\n'
-        #model += svROSNode.node_property_behaviour()
-        model += '/* === NODE BEHAVIOUR === */\n\n/* === OBSERVABLE DETERMINISM === */\n'
+        model += svPredicate.node_behaviour()
+        model += '\n/* === NODE BEHAVIOUR === */\n\n/* === OBSERVABLE DETERMINISM === */\n'
         model += svROSNode.observable_determinism()
         model += '\n/* === OBSERVABLE DETERMINISM === */'
         # with open(file_path, 'w+') as ros: ros.write(model)
@@ -85,7 +107,20 @@ class svAnalyzer(object):
         SROS_FILE = self.generate_sros_model(PROFILES=PROFILES, ENCLAVES=ENCLAVES, OBJECTS=OBJECTS)
         if not os.path.isfile(path=SROS_FILE): return False
         else: return True
-        # RUN ALLOY.
+    
+    def alloy_sros(self):
+        counter, file_path = 0, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
+        if not os.path.isfile(path=file_path): return False
+        properties = ['valid_configuration_1', 'valid_configuration_2', 'valid_configuration']
+        if not counter:
+            print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Every property seem to hold for the given configuration:\n\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")} \n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("GREEN", "✅")}'))
+        else:
+            print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Not every property seem to hold for the given configuration.'))
+            if counter == 1:
+                print(f'\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("RED", "☒")}\n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("GREEN", "✅")}')
+            else:
+                print(f'\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")}\n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("RED", "☒")}')
+        return True
     
     def generate_sros_model(self, PROFILES, ENCLAVES, OBJECTS):
         model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'

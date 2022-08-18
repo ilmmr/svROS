@@ -42,3 +42,11 @@ class svWarning(object):
 
     def __str__(self):
         return f'[svROS] {color.color("BOLD", color.color("YELLOW", "WARNING:"))} {self.message}'
+
+# Class svROS for output handling
+class svInfo(object):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return f'[svROS] {color.color("BOLD", color.color("BLUE", "INFO:"))} {self.message}'

@@ -20,6 +20,9 @@
 ║                --reset             => Reset project directory        ║
 ║     => svROS launch [args]                                           ║
 ║         . runs the tool with a given project directory               ║
+║         -p (--project) project                                       ║ 
+║     => svROS analyze [args]                                          ║
+║         . runs alloy and the tool graph visualizer                   ║
 ║         -p (--project) project                                       ║
 ║                                                                      ║
 ║                                                                      ║

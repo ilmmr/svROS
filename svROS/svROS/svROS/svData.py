@@ -537,18 +537,16 @@ class svROSNode(object):
             svROSNode.PUBSYNC.add(f"""\n\talways (all m : Message | publish0[{topic.signature}, m] iff publish1[{topic.signature}, m])""")
             for out in outputs:
                 if out in already_output: continue
-                else: already_output.add(out)
-                # pred_signature = f'OD{topic.signature}_Sync_{outputs.index(out)}' 
-                depd_signature = f'OD{topic.signature}_Depd_{outputs.index(out)}'
-                comments       = f'/* === OD: {topic.name} => {out.name} === */\n'
+                else: already_output.add(out) 
+                assertion_signature, comments = f'{topic.signature}2{out.name.lower()}', f'/* === {topic.name} => {out.name} === */\n'
                 # Can either be a Channel or a State.
                 if isinstance(out, Topic):
                     # public output must be done at the same instance
                     svROSNode.PUBSYNC.add(f"""\n\talways (all m1, m2 : Message | publish0[{out.signature}, m1] iff publish1[{out.signature}, m2])""")
                     # OD signature.
-                    signature = f"""{comments}check {{always (all m0, m1 : Message | publish0[{out.signature}, m0] and publish1[{out.signature}, m1] implies m0 = m1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
+                    signature = f"""{comments}check {assertion_signature} {{always (all m0, m1 : Message | publish0[{out.signature}, m0] and publish1[{out.signature}, m1] implies m0 = m1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
                 elif isinstance(out, svState):
-                    signature = f"""{comments}check {{always (T1.{out.name.lower()}.1 = T2.{out.name.lower()}.1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
+                    signature = f"""{comments}check {assertion_signature} {{always (T1.{out.name.lower()}.1 = T2.{out.name.lower()}.1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
                 else: svException('ERROR...')
                 svROSNode.PROPT.append(signature)
                 tmp[out.name] = depd_signature

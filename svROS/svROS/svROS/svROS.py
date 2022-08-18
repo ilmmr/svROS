@@ -5,7 +5,7 @@ from datetime import datetime
 from cerberus import Validator
 from logging import FileHandler
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning
+from tools.InfoHandler import color, svException, svWarning, svInfo
 # Exporters
 from svExport import svrosExport
 from svAnalyzer import svProjectExtractor, svAnalyzer
@@ -439,6 +439,7 @@ class svEXPORT:
     """ === Predefined functions === """
 
 "=> if $ svROS launch"
+"=> if $ svROS analyze"
 @dataclass
 class svRUN:
     project   : str
@@ -461,23 +462,27 @@ class svRUN:
             raise svException(f'Could not initiate running of project: Config file does not exist. Please create a file named {color.color("RED", "config.yml")} in the {self.project.capitalize()} directory or export a project.')
         if not os.path.exists(path=f'{self.project_path}policies.xml'):
             raise svException(f'Could not initiate running of project: SROS file does not exist. Please create a file named {color.color("RED", "policies.xml")} in the {self.project.capitalize()} directory or export a project.')
-        # Loading pre-existing data
+        # Loading pre-existing data:
         existing_data     = self.load_pickle_files()
         project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
         if not (project_extractor.extract_sros() and project_extractor.extract_config()):
             raise svException('Could not initiate running of project.')
         project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
         if not (project_analyzer.security_verification() and project_analyzer.ros_verification()):
+            raise svException('Could not initiate running of project => LAUNCHER FAILED.')
+        # Feedback reporting and information
+        print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed.'))
+        print(svInfo(f'After overviewing such files, make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
+
+    def _analyze(self):
+        project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
+        project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
+        # VERIFYING SROS
+        if not project_analyzer.alloy_sros():
             raise svException('Could not initiate running of project => ANALYZER FAILED.')
-        # print(svExecution.create_executions())
-        # for n in svROSNode.NODES:
-        #     node = svROSNode.NODES[n]
-        #     print(node)
-        # for t in Topic.TOPICS:
-        #     topic = Topic.TOPICS[t]
-        #     print(topic.declaration())
-        #     node = svROSNode.NODES[n]
-        #     print(node.index, [(sub.name, sub.type) for sub in node.subscribe], [(adv.name, adv.type) for adv in node.advertise], node.remaps, node.can_subscribe, node.# can_publish, 'NODE_CONNECTION:', node.connection)
+        # VERIFYING ROS
+        if not project_analyzer.alloy_ros():
+            raise svException('Could not initiate running of project => ANALYZER FAILED.')
 
     def load_pickle_files(self):
         DATADIR = f'{self.project_path}data/'
@@ -515,7 +520,8 @@ class Launcher:
             '-> optional:
                 --force-init => Force creation of svROS dir           
                 --reset      => Reset project directory 
-        => svROS launch -p $project
+        => svROS launch  -p $project
+        => svROS analyze -p $project
     """
     # ROS2 environment variables.
     distro      : str
@@ -629,10 +635,12 @@ class Launcher:
         init    = options.add_parser('init')
         export  = options.add_parser('import')
         run     = options.add_parser('launch')
+        analyze = options.add_parser('analyze')
         # Handling functions
         self._init(parser=init)
         self._export(parser=export)
         self._run(parser=run)
+        self._analyze(parser=analyze)
         return interpreter.parse_args(arguments)
 
     # Handler svROS init
@@ -705,7 +713,7 @@ class Launcher:
             return False
 
         export = svEXPORT(file=args.file, FILE_PATH=os.path.abspath(args.file), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_export=init, reset=args.reset, log=self.log, ros=rf'{self.ros_version}=\t={self.distro}=\t={self.workspace}')
-        print(f'[svROS] Exporting file {color.color("BOLD", color.color("ORANGE", args.file))} into a project: Setup operation.')
+        print(f'[svROS] EXPORTING file {color.color("BOLD", color.color("ORANGE", args.file))} into a project: Setup operation.')
         self.log.info(f"Exporting file {args.file} into a project: Setup operation.")
         return export._default_export()
         
@@ -732,13 +740,37 @@ class Launcher:
         run = svRUN(project=args.project.capitalize(), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_run=init, log=self.log)
         project_name = args.project.capitalize()
         self.log.info(f'Running svROS Project => {project_name}.')
-        print(f'[svROS] Running svROS :: Project {color.color("BOLD", color.color("ORANGE", project_name))}')
+        print(f'[svROS] RUNNING svROS :: Project {color.color("BOLD", color.color("ORANGE", project_name))}')
         return run._run()
 
     # => svROS launch -p (--project) $project
     def _run(self, parser):
         parser.add_argument("-p", "--project", help = "Provide a project to be analyzed.", required=True)
         parser.set_defaults(func = self.command_run)
+
+    # Handler svROS analyze
+    def command_run(self, args):
+        # Check if init file exists.
+        exists, init = self._check_file(f'{self._DIR}/.init', mode=False)
+        # Directory may not be setted...
+        if not exists:
+            print(f'[svROS] Failed to set directory up: {color.color("BOLD", "run $ svROS init!")}')
+            return False
+        if not init:
+            print(f'[svROS] Failed to run... svROS directory is corrupted: {color.color("BOLD", "run $ svROS init --reset!")}')
+            self.log.info(f'Failed to run {args.project}...')
+            return False
+        
+        run = svRUN(project=args.project.capitalize(), _DIR=self._DIR, _BIN=self._BIN, _PROJECTS=self._PROJECTS, can_run=init, log=self.log)
+        project_name = args.project.capitalize()
+        self.log.info(f'Analyzing svROS Project => {project_name}.')
+        print(f'[svROS] ANALYZING svROS :: Project {color.color("BOLD", color.color("ORANGE", project_name))}')
+        return run._analyze()
+
+    # => svROS analyze -p (--project) $project
+    def _analyze(self, parser):
+        parser.add_argument("-p", "--project", help = "Provide a project to be analyzed.", required=True)
+        parser.set_defaults(func = self.command_analyze)
     """ === Launcher functions === """
 
 ###             --- additional ---               ###
