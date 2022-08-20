@@ -288,7 +288,7 @@ class Node(object):
         node   = Node.NODES[node]
         # Enclave is not needed at this point
         topics = {'subscribe': list(map(lambda subs: subs.rosname(node=node), node.subscribes)), 'advertise': list(map(lambda pubs: pubs.rosname(node=node), node.publishes)), 'remaps': node.remaps}
-        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'topics': topics}
+        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'calls': topics}
 
     @staticmethod
     def render_remap(topic, remaps):
@@ -585,6 +585,15 @@ class svROSNode(object):
         elif not isinstance(predicate, svPredicate): raise svException("Not a predicate!")
         else: self._predicate = predicate
 
+    # Retrieve JSON-based dict information
+    @staticmethod
+    def to_json(node: str):
+        node   = svROSNode.NODES[node]
+        # Enclave is not needed at this point
+        topics  = {'subscribe': list(map(lambda subs: subs.rosname(node=node), node.subscribe)), 'advertise': list(map(lambda pubs: pubs.rosname(node=node), node.publishe)), 'remaps': node.remaps}
+        enclave = node.profile.enclave.name if node.profile else ''
+        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'enclave': enclave, 'calls': topics}
+
 class svState(object):
     STATES = {}
     def __init__(self, name, default, values, private=False, isint=False):
@@ -662,6 +671,9 @@ class svROSEnclave(object):
         if not profiles: profiles = "no profiles"
         else:            profiles = f"profiles = {profiles}"
         return f"""one sig enclave{self.signature} extends Enclave {{}} {{{profiles}}}\n"""
+
+    def to_json(self):
+        return {'name': self.name, 'profiles': [profile.to_json for profile in self.profiles]}
 
 "SROS2-based Profile with associated priveleges."
 class svROSProfile(object):
@@ -777,6 +789,9 @@ class svROSProfile(object):
 
     def __str__(self):
         return self.profile_declaration() + self.privilege_declaration()
+
+    def to_json(self):
+        return {'name': self.name, 'namespace': self.namespace, 'advertise': self.advertise, 'deny advertise': self.deny_advertise, 'subscribe': self.subscribe, 'deny subscribe': self.deny_subscribe}
 
 class svROSObject(object):
     OBJECTS = {}

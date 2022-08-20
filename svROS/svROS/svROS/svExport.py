@@ -492,7 +492,7 @@ class svrosExport:
     # Retrieve to a JSON-based file
     def generate_data_file(self, DATADIR):
         # SAVE using PICKLE.
-        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'wb+'), open(f'{DATADIR}Topics.obj', 'wb+'), open(f'{DATADIR}Nodes.obj', 'wb+')
+        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'wb+'), open(f'{DATADIR}Channels.obj', 'wb+'), open(f'{DATADIR}Nodes.obj', 'wb+')
         pickle.dump(Package.PACKAGES, package_file, pickle.HIGHEST_PROTOCOL)
         pickle.dump(Topic.TOPICS, topic_file, pickle.HIGHEST_PROTOCOL)
         pickle.dump(Node.NODES, node_file, pickle.HIGHEST_PROTOCOL)

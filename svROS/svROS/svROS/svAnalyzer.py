@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, pickle
 from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
@@ -112,16 +112,28 @@ class svAnalyzer(object):
         counter, file_path = 0, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
         if not os.path.isfile(path=file_path): return False
         properties = ['valid_configuration_1', 'valid_configuration_2', 'valid_configuration']
-        if not counter:
+        counter = svAnalyzer.execute_java(properties=properties, file=file_path)
+        if counter == []:
             print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Every property seem to hold for the given configuration:\n\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")} \n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("GREEN", "✅")}'))
         else:
             print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Not every property seem to hold for the given configuration.'))
-            if counter == 1:
+            if 'valid_configuration_1' in counter:
                 print(f'\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("RED", "☒")}\n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("GREEN", "✅")}')
-            else:
+            elif 'valid_configuration_2' in counter:
                 print(f'\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")}\n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("RED", "☒")}')
         return True
-    
+
+    @staticmethod
+    def execute_java(properties, file):
+        models_path = f'/usr/generated_models'
+        returning   = []
+        for prop in properties:
+            javacmd = "java -jar generator/out/artifacts/generator_jar/generator.jar " + file + " " + prop
+            os.system(javacmd)
+            if os.path.isfile(path=f'{models_path}/{prop}.xml'):
+                returning.append(prop)
+        return returning
+
     def generate_sros_model(self, PROFILES, ENCLAVES, OBJECTS):
         model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
         if not os.path.exists(path=file_path): open(file_path, 'w+').close()
@@ -145,6 +157,34 @@ class svProjectExtractor:
     project       : str
     PROJECT_DIR   : str
     IMPORTED_DATA : dict
+
+    def save_imported_data(self):
+        try:
+            svROSNode.NODES, svState.STATES, Topic.TOPICS, svPredicate.NODE_BEHAVIOURS, svROSEnclave.ENCLAVES = self.IMPORTED_DATA.get('nodes', {}), self.IMPORTED_DATA.get('states', {}), self.IMPORTED_DATA.get('topics', {}), self.IMPORTED_DATA.get('predicates', {}), self.IMPORTED_DATA.get('enclaves', {})
+        except AttributeError as e:
+            return False
+        return True
+
+    # Before Analyzing...
+    def update_imported_data(self):
+        DATADIR = f'{self.PROJECT_DIR}/data'
+        # SAVE using PICKLE.
+        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'wb+'), open(f'{DATADIR}Channels.obj', 'wb+'), open(f'{DATADIR}Nodes.obj', 'wb+')
+        state, predicates, enclaves = open(f'{DATADIR}States.obj', 'wb+'), open(f'{DATADIR}Predicates.obj', 'wb+'), open(f'{DATADIR}Enclaves.obj', 'wb+')
+        pickle.dump(Package.PACKAGES, package_file, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(Topic.TOPICS, topic_file, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(svROSNode.NODES, node_file, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(svState.STATES, state, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(svPredicate.NODE_BEHAVIOURS, predicates, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(svROSEnclave.ENCLAVES, enclaves, pickle.HIGHEST_PROTOCOL)
+        # json files.
+        data_json = {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': dict(map(lambda node: (node.replace('::', '/'), svROSNode.to_json(node)) , svROSNode.NODES)), 'states': list(set(map(lambda state: state.name.lower(), svState.STATES.values()))), 'predicates': dict(map(lambda predicate: (predicate.signature.lower(), predicate.node.rosname), svPredicate.NODE_BEHAVIOURS.values()))}
+        with open(f'{DATADIR}/launch_configurations.json', 'w+') as data:
+            json.dump(data_json, data, sort_keys=False, indent=4)
+        enclaves_json = list(map(lambda enclave: enclave.to_json(), svROSEnclave.ENCLAVES.values()))
+        with open(f'{DATADIR}/enclaves.json', 'w+') as data:
+            json.dump(enclaves_json, data, sort_keys=False, indent=4)
+        return True
 
     # Extract from SROS file
     def extract_sros(self, sros_file=''):

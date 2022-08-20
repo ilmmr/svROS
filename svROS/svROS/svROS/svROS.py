@@ -470,12 +470,18 @@ class svRUN:
         project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
         if not (project_analyzer.security_verification() and project_analyzer.ros_verification()):
             raise svException('Could not initiate running of project => LAUNCHER FAILED.')
+        # UPDATE IMPORTED DATA
+        project_extractor.update_imported_data()
         # Feedback reporting and information
         print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed.'))
         print(svInfo(f'After overviewing such files, make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
 
     def _analyze(self):
+        existing_data     = self.load_pickle_files(analyze=True)
         project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
+        # SAVE IMPORTED DATA
+        if not project_extractor.save_imported_data():
+            raise svException('Failed to load imported data!')
         project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
         # VERIFYING SROS
         if not project_analyzer.alloy_sros():
@@ -484,11 +490,14 @@ class svRUN:
         if not project_analyzer.alloy_ros():
             raise svException('Could not initiate running of project => ANALYZER FAILED.')
 
-    def load_pickle_files(self):
+    def load_pickle_files(self, analyze=False):
         DATADIR = f'{self.project_path}data/'
-        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Topics.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
+        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Channels.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
         if not (package_file and topic_file and node_file):
             return {}
+        if analyze == True:
+            state, predicates, enclaves = open(f'{DATADIR}States.obj', 'rb'), open(f'{DATADIR}Predicates.obj', 'rb'), open(f'{DATADIR}Enclaves.obj', 'rb')
+            return {'topics': pickle.load(topic_file), 'nodes': pickle.load(node_file), 'states': pickle.load(state), 'predicates': pickle.load(predicates), 'enclaves': pickle.load(enclaves)}
         return {'packages': pickle.load(package_file), 'topics': pickle.load(topic_file), 'nodes': pickle.load(node_file)}
     
     @property
