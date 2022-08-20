@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from cerberus import Validator
 from logging import FileHandler
+from pick import pick
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svWarning, svInfo
 # Exporters
@@ -471,10 +472,19 @@ class svRUN:
         if not (project_analyzer.security_verification() and project_analyzer.ros_verification()):
             raise svException('Could not initiate running of project => LAUNCHER FAILED.')
         # UPDATE IMPORTED DATA
-        project_extractor.update_imported_data()
+        if not project_extractor.update_imported_data():
+            raise svException('Failed to update data on launching.')
+        if not project_extractor.draw_architecture():
+            raise svException(f'Failed to extract application architecture from project {self.project.capitalize()}.')
         # Feedback reporting and information
-        print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed.'))
-        print(svInfo(f'After overviewing such files, make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
+        print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed. Make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
+        print(svInfo(f'Application architecture was succefully created.'))
+        time.sleep(2)
+        option, index = pick(options=[f'{color.color("BLUE", "View Application Architecture")}',f'{color.color("RED", "Exit")}'], indicator='↳', default_index=0)
+        if index == 0:
+            return project_extractor.draw_architecture()
+        else:
+            return 
 
     def _analyze(self):
         existing_data     = self.load_pickle_files(analyze=True)
@@ -486,6 +496,8 @@ class svRUN:
         # VERIFYING SROS
         if not project_analyzer.alloy_sros():
             raise svException('Could not initiate running of project => ANALYZER FAILED.')
+        _continue_ = input(svWarning(f'Continue to ROS-Alloy model verification? [Y/n] ')).strip()
+        if not _continue_ == r'(?i)y': return
         # VERIFYING ROS
         if not project_analyzer.alloy_ros():
             raise svException('Could not initiate running of project => ANALYZER FAILED.')

@@ -71,11 +71,15 @@ class svAnalyzer(object):
             else: 
                 print(f'\n\t‣‣ {prop.split("2")[0]} =Observable Determinism=> {prop.split("2")[1]} {color.color("GREEN", "✅")}')
         # RUN VISUALIZER
-        visualizer = input(svInfo('ROS-Alloy architecural model is now checking completed. Do you want to open the svROS Visualizer? [Y/n]')).strip()
+        visualizer = input(svWarning('Open counter-examples [Y/n]: ')).strip()
         if visualizer == r"(?i)y": 
             # open visualizer
-            return visualizer
-        elif visualizer == r"(?i)n": pass
+            option, index = pick(options=list(map(lambda option: f'{color.color("BLUE", option)}', counter)) + ['Exit'], indicator='↳', default_index=0)
+            if option.strip() == r'(?i)Exit':
+                return True
+            else:
+                visualizer_path, file = f'{self.EXTRACTOR.PROJECT_DIR}data/visualizer/', f'{counter[index]}.html'
+                os.system(command=f'firefox {visualizer_path}{file}')
         else: pass
         return True
 
@@ -157,6 +161,9 @@ class svProjectExtractor:
     project       : str
     PROJECT_DIR   : str
     IMPORTED_DATA : dict
+
+    def draw_architecture(self):
+        return True
 
     def save_imported_data(self):
         try:
