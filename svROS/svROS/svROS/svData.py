@@ -549,7 +549,7 @@ class svROSNode(object):
                     signature = f"""{comments}check {assertion_signature} {{always (T1.{out.name.lower()}.1 = T2.{out.name.lower()}.1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
                 else: svException('ERROR...')
                 svROSNode.PROPT.append(signature)
-                tmp[out.name] = depd_signature
+                tmp[out.name] = assertion_signature
             signatures[topic_name] = tmp
         return signatures
 
@@ -589,10 +589,21 @@ class svROSNode(object):
     @staticmethod
     def to_json(node: str):
         node   = svROSNode.NODES[node]
+        subscribe, advertise = [], []
+        if node.subscribe:
+            subscribe = list(map(lambda subs: subs.rosname(node=node), node.subscribe))
+        if node.advertise:
+            advertise = list(map(lambda pubs: pubs.rosname(node=node), node.advertise))
         # Enclave is not needed at this point
-        topics  = {'subscribe': list(map(lambda subs: subs.rosname(node=node), node.subscribe)), 'advertise': list(map(lambda pubs: pubs.rosname(node=node), node.publishe)), 'remaps': node.remaps}
+        topics  = {'subscribe': subscribe, 'advertise': advertise, 'remaps': node.remaps}
+        # Process connections
+        connections = {}
+        for con in node.connection:
+            connections[con] = list()
+            for nd in node.connection[con]:
+                connections[con].append(nd.rosname)
         enclave = node.profile.enclave.name if node.profile else ''
-        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'enclave': enclave, 'calls': topics}
+        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'enclave': enclave, 'calls': topics, 'connections': connections}
 
 class svState(object):
     STATES = {}
@@ -673,7 +684,7 @@ class svROSEnclave(object):
         return f"""one sig enclave{self.signature} extends Enclave {{}} {{{profiles}}}\n"""
 
     def to_json(self):
-        return {'name': self.name, 'profiles': [profile.to_json for profile in self.profiles]}
+        return {'name': self.name, 'profiles': [profile.to_json() for profile in self.profiles.values()]}
 
 "SROS2-based Profile with associated priveleges."
 class svROSProfile(object):
@@ -791,7 +802,10 @@ class svROSProfile(object):
         return self.profile_declaration() + self.privilege_declaration()
 
     def to_json(self):
-        return {'name': self.name, 'namespace': self.namespace, 'advertise': self.advertise, 'deny advertise': self.deny_advertise, 'subscribe': self.subscribe, 'deny subscribe': self.deny_subscribe}
+        advertise, subscribe = [], []
+        if self.advertise: advertise = self.advertise
+        if self.subscribe: subscribe = self.subscribe
+        return {'name': self.name, 'namespace': self.namespace, 'advertise': advertise, 'deny_advertise': self.deny_advertise, 'subscribe': subscribe, 'deny_subscribe': self.deny_subscribe}
 
 class svROSObject(object):
     OBJECTS = {}

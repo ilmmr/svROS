@@ -474,17 +474,17 @@ class svRUN:
         # UPDATE IMPORTED DATA
         if not project_extractor.update_imported_data():
             raise svException('Failed to update data on launching.')
-        if not project_extractor.draw_architecture():
-            raise svException(f'Failed to extract application architecture from project {self.project.capitalize()}.')
-        # Feedback reporting and information
-        print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed. Make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
-        print(svInfo(f'Application architecture was succefully created.'))
-        time.sleep(2)
-        option, index = pick(options=[f'{color.color("BLUE", "View Application Architecture")}',f'{color.color("RED", "Exit")}'], indicator='↳', default_index=0)
-        if index == 0:
-            return project_extractor.draw_architecture()
-        else:
-            return 
+        # if not project_extractor.draw_architecture():
+        #     raise svException(f'Failed to extract application architecture from project {self.project.capitalize()}.')
+        # # Feedback reporting and information
+        # print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed. Make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
+        # print(svInfo(f'Application architecture was succefully created.'))
+        # time.sleep(1)
+        # choice = enquiries.choose('', choices=[f'{color.color("BLUE", "View Application Architecture")}',f'{color.color("RED", "Exit")}'])
+        # if choice.strip() == r'(?i)Exit':
+        #     return
+        # else:
+        #     return project_extractor.draw_architecture()
 
     def _analyze(self):
         existing_data     = self.load_pickle_files(analyze=True)
@@ -770,7 +770,7 @@ class Launcher:
         parser.set_defaults(func = self.command_run)
 
     # Handler svROS analyze
-    def command_run(self, args):
+    def command_analyze(self, args):
         # Check if init file exists.
         exists, init = self._check_file(f'{self._DIR}/.init', mode=False)
         # Directory may not be setted...

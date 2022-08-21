@@ -28,7 +28,6 @@ class svAlloyPredicate(object):
 
     @classmethod
     def parse(cls, node, properties, changable_channels, changable_variables):
-        print(properties)
         if properties is None:
             return svAlloyPredicate.frame_conditions(nop=True)
         else:
@@ -89,9 +88,6 @@ class svPredicate(object):
             if changable_variables == []: changable_variables = None
         except AttributeError:
             raise svException(f"Failed to parse predicate {self.signature}.")
-        # parser         = svProperty.parse(node=self.node, properties=self.properties, non_accessable=non_accessable)
-        # if no properties were conceived.
-        # print(self.properties)
         alloy = svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
         return alloy
 

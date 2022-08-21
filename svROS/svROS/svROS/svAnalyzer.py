@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, pickle
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, pickle, enquiries, json
 from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
@@ -74,11 +74,11 @@ class svAnalyzer(object):
         visualizer = input(svWarning('Open counter-examples [Y/n]: ')).strip()
         if visualizer == r"(?i)y": 
             # open visualizer
-            option, index = pick(options=list(map(lambda option: f'{color.color("BLUE", option)}', counter)) + ['Exit'], indicator='↳', default_index=0)
-            if option.strip() == r'(?i)Exit':
+            choice = enquiries.choose('', choices=list(map(lambda option: f'{color.color("BLUE", option)}', counter)) + ['Exit'])
+            if choice.strip() == r'(?i)Exit':
                 return True
             else:
-                visualizer_path, file = f'{self.EXTRACTOR.PROJECT_DIR}data/visualizer/', f'{counter[index]}.html'
+                visualizer_path, file = f'{self.EXTRACTOR.PROJECT_DIR}data/visualizer/', f'{choice}.html'
                 os.system(command=f'firefox {visualizer_path}{file}')
         else: pass
         return True
@@ -186,11 +186,12 @@ class svProjectExtractor:
         pickle.dump(svROSEnclave.ENCLAVES, enclaves, pickle.HIGHEST_PROTOCOL)
         # json files.
         data_json = {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': dict(map(lambda node: (node.replace('::', '/'), svROSNode.to_json(node)) , svROSNode.NODES)), 'states': list(set(map(lambda state: state.name.lower(), svState.STATES.values()))), 'predicates': dict(map(lambda predicate: (predicate.signature.lower(), predicate.node.rosname), svPredicate.NODE_BEHAVIOURS.values()))}
-        with open(f'{DATADIR}/launch_configurations.json', 'w+') as data:
+        with open(f'{DATADIR}/configurations.json', 'w+') as data:
             json.dump(data_json, data, sort_keys=False, indent=4)
         enclaves_json = list(map(lambda enclave: enclave.to_json(), svROSEnclave.ENCLAVES.values()))
+        json_object = json.dumps(enclaves_json, indent=4)
         with open(f'{DATADIR}/enclaves.json', 'w+') as data:
-            json.dump(enclaves_json, data, sort_keys=False, indent=4)
+            data.write(json_object)
         return True
 
     # Extract from SROS file

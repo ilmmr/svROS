@@ -479,7 +479,7 @@ class svrosExport:
             sros.write(__xml__)
         # JSON-file
         data_json = self.generate_data_file(DATADIR=f'{self.project_dir}/data/')
-        with open(f'{self.project_dir}/data/configurations.json', 'w+') as data:
+        with open(f'{self.project_dir}/data/source.json', 'w+') as data:
             json.dump(data_json, data, sort_keys=False, indent=4)
         return True
 
