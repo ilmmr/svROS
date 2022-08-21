@@ -508,21 +508,6 @@ class svROSNode(object):
         # SIGNATURE.
         self.signature = f"""node{self.abstract(tag=self.rosname)}"""
         return declaration
-        # if self.properties is None:
-        #     if self.advertise is None:
-        #         self.properties = ''
-        #     else:
-        #         properties = [f'fact {self.abstract(tag=self.rosname)} {{']
-        #         for adv in self.advertise:
-        #             prop  = f'always (eventually some {adv.signature}.inbox0 & {adv.abstract(tag=adv.type)})\n\t'
-        #             prop += f'always (eventually some {adv.signature}.inbox1 & {adv.abstract(tag=adv.type)})'
-        #             properties.append(prop)
-        #         self.properties = ('\n\t'.join(properties)) + f'\n}}'
-        # elif isinstance(self.properties, str):
-        #     pass
-        # else:
-        #     raise svException(f'Failed to load {self.rosname} properties.')
-        # return declaration + self.properties
 
     # Return predicates such as pred LowSync {low requires alarm}
     def sync_obs_det(self, scopes):

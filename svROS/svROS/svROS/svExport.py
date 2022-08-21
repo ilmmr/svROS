@@ -530,11 +530,4 @@ if __name__ == "__main__":
     export = svrosExport(launch=[fil2, file], ros_distro='galactic', ros_workspace='/home/luis/workspaces/ros2-galactic/', project=project, project_dir=project_dir)
     if not export.launch_export():
         print('ERRO::TESTE')
-    # # l = LauncherParser(file=file, extension='.xml').parse()
-    # print([NodeTag.NODES[n] for n in NodeTag.NODES])
-    # print(NodeTag.NODES)
-    
-    # file = '/home/luis/Desktop/ros2launch.py'
-    # l = LauncherParser(file=file, extension='.xml').parse()
-    # print([NodeCall.NODES[n] for n in NodeCall.NODES])
-    # print(NodeCall.NODES)
+### TESTING ###
