@@ -29,23 +29,21 @@ class svAlloyPredicate(object):
     @classmethod
     def parse(cls, node, properties, changable_channels, changable_variables):
         if properties is None:
-            return svAlloyPredicate.frame_conditions(nop=True)
+            return svAlloyPredicate.frame_conditions()
         else:
-            return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in properties]) + svAlloyPredicate.frame_conditions(nop=False, channels=changable_channels, variables=changable_variables)
+            return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in properties]) + svAlloyPredicate.frame_conditions(channels=changable_channels, variables=changable_variables)
 
     @staticmethod
-    def frame_conditions(nop, channels=None, variables=None):
-        if not isinstance(nop, bool): svException("Non expected error occurred.")
-        if nop is True: return f"""\n\t// Frame Conditions:\n\tnop[t]"""
+    def frame_conditions(channels=None, variables=None):
+        _str_ = f"""\n\t// Frame Conditions:"""
+        # channels
+        if channels is None: _str_ += f"""\n\tt.inbox' = t.inbox"""
         else:
-            _str_ = f"""\n\t// Frame Conditions:"""
-            # channels
-            if channels is None: _str_ += f"""\n\tt.inbox' = t.inbox"""
-            else:
-                _str_ += f"""\n\tall c : Channel - {' - '.join([c.signature for c in channels])} | t.inbox'[c] = t.inbox[c]"""
-            if variables is None: variables = svState.STATES.values()
-            else: variables = list(filter(lambda state: state not in variables, svState.STATES.values()))
-            for state in variables: _str_ += f"""\n\tt.{state.name.lower()}' = t.{state.name.lower()}"""
+            _str_ += f"""\n\tall c : Channel - {' - '.join([c.signature for c in channels])} | t.inbox'[c] = t.inbox[c]"""
+        if variables is None: variables = svState.STATES.values()
+        else: variables = list(filter(lambda state: state not in variables, svState.STATES.values()))
+        for state in variables: 
+            _str_ += f"""\n\tsome t.{state.name.lower()}.1 implies t.{state.name.lower()}' = (t.{state.name.lower()}.1)->0 else t.{state.name.lower()}' = t.{state.name.lower()}"""
         return _str_
 
 class svProperty(object):

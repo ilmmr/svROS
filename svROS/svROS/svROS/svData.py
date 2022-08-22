@@ -539,13 +539,6 @@ class svROSNode(object):
         return signatures
 
     @classmethod
-    def node_behaviour_topic(cls):
-        if cls.NODES is {}: raise svException("No nodes found, can not process handling of topic behaviour.")
-        declaration = f'fact node_dependecy {{\n'
-        for node_name in cls.NODES:
-            node = cls.NODES[node]
-
-    @classmethod
     def observable_determinism(cls):
         if cls.NODES is {}: raise svException("No nodes found, can not process handling of topic behaviour.")
         signatures = []
@@ -580,15 +573,19 @@ class svROSNode(object):
         if node.advertise:
             advertise = list(map(lambda pubs: pubs.rosname(node=node), node.advertise))
         # Enclave is not needed at this point
-        topics  = {'subscribe': subscribe, 'advertise': advertise, 'remaps': node.remaps}
-        # Process connections
-        connections = {}
-        for con in node.connection:
-            connections[con] = list()
-            for nd in node.connection[con]:
-                connections[con].append(nd.rosname)
+        topics  = {'subscribe': subscribe, 'advertise': advertise}
         enclave = node.profile.enclave.name if node.profile else ''
-        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'enclave': enclave, 'calls': topics, 'connections': connections}
+        return {'package': node.package, 'namespace': node.namespace, 'rosname': node.rosname, 'enclave': enclave, 'calls': topics}
+
+    @classmethod
+    def connections_to_json(cls):
+        connections = []
+        for node in cls.NODES.values():
+            for con in node.connection:
+                for node_connected in node.connection[con]:
+                    if not ((con, node_connected.rosname, node.rosname) in connections or (con, node.rosname, node_connected.rosname) in connections): 
+                        connections.append((con, node.rosname, node_connected.rosname))
+        return list(map(lambda con: {'relation': con[0], 'source': con[1], 'target': con[2]}, connections))
 
 class svState(object):
     STATES = {}
