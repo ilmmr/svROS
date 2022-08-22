@@ -185,7 +185,7 @@ class svProjectExtractor:
         pickle.dump(svPredicate.NODE_BEHAVIOURS, predicates, pickle.HIGHEST_PROTOCOL)
         pickle.dump(svROSEnclave.ENCLAVES, enclaves, pickle.HIGHEST_PROTOCOL)
         # json files.
-        data_json = {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': dict(map(lambda node: (node.replace('::', '/'), svROSNode.to_json(node)) , svROSNode.NODES)), 'connections': svROSNode.connections_to_json(), 'states': list(set(map(lambda state: state.name.lower(), svState.STATES.values()))), 'predicates': dict(map(lambda predicate: (predicate.signature.lower(), predicate.node.rosname), svPredicate.NODE_BEHAVIOURS.values()))}
+        data_json = {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': list(map(lambda node: svROSNode.to_json(node) , svROSNode.NODES)), 'connections': svROSNode.connections_to_json(), 'states': list(set(map(lambda state: state.name.lower(), svState.STATES.values()))), 'predicates': dict(map(lambda predicate: (predicate.signature.lower(), predicate.node.rosname), svPredicate.NODE_BEHAVIOURS.values()))}
         with open(f'{DATADIR}/configurations.json', 'w+') as data:
             json.dump(data_json, data, sort_keys=False, indent=4)
         enclaves_json = list(map(lambda enclave: enclave.to_json(), svROSEnclave.ENCLAVES.values()))
