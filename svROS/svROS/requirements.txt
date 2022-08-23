@@ -5,3 +5,4 @@ hpl-specs
 lark
 networkx
 enquiries
+jinja2

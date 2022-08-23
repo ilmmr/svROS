@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning
+from tools.InfoHandler import color, svException, svWarning, svInfo
 # Parsers
 import xml.etree.ElementTree as ET
 from lark import Lark, tree
