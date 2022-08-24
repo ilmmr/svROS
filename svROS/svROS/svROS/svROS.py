@@ -1,4 +1,5 @@
 import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, json, pickle
+from simple_term_menu import TerminalMenu
 from yaml import *
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -474,17 +475,18 @@ class svRUN:
         # UPDATE IMPORTED DATA
         if not project_extractor.update_imported_data():
             raise svException('Failed to update data on launching.')
-        # if not project_extractor.draw_architecture():
-        #     raise svException(f'Failed to extract application architecture from project {self.project.capitalize()}.')
-        # # Feedback reporting and information
-        # print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed. Make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
-        # print(svInfo(f'Application architecture was succefully created.'))
-        # time.sleep(1)
-        # choice = enquiries.choose('', choices=[f'{color.color("BLUE", "View Application Architecture")}',f'{color.color("RED", "Exit")}'])
-        # if choice.strip() == r'(?i)Exit':
-        #     return
-        # else:
-        #     return project_extractor.draw_architecture()
+        # Feedback reporting and information
+        print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed. Make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
+        print(svInfo(f'Application architecture was succefully created.'))
+        time.sleep(1)
+        options = ["View Application Architecture", "Exit"]
+        choice = TerminalMenu(options).show()
+        if choice == 1:
+            exit
+        else:
+            project_extractor.draw_architecture()
+            print(svInfo(f'Application architecture is being displayed on your browser.'))
+            exit
 
     def _analyze(self):
         existing_data     = self.load_pickle_files(analyze=True)

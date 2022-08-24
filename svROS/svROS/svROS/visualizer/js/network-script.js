@@ -36,30 +36,25 @@ var cy = (window.cy = cytoscape({
         }},
     ],
 }));
-/* FILL CY DATA */
-var already = 0;
+/* FILL CY with DATA */
 var enclaves = [];
-if (already == 0) {
-    nodes.forEach(node => {
-        var id =  node['rosname']
-        var enclave = node['enclave']
-        if (enclave != '') {
-            if (!enclaves.includes(enclave)) {
-                cy.add({ group: 'nodes', data: { id: enclave }});
-                enclaves.push(node['enclave'])
-            }
-            cy.add({ group: 'nodes', data: { id: id, label : node['rosname'], parent: node['enclave']}});
+nodes.forEach(node => {
+    var id =  node['rosname']
+    var enclave = node['enclave']
+    if (enclave != '') {
+        if (!enclaves.includes(enclave)) {
+            cy.add({ group: 'nodes', data: { id: enclave }});
+            enclaves.push(node['enclave'])
         }
-        else {
-            cy.add({ group: 'nodes', data: { id: id, label : node['rosname'], height: node.width, parent: id}});
-        }
-    })
-    connections.forEach(data => {
-        cy.add({ group: 'edges', selectable: true, data: data})
-    })
-    already = 1; 
-}
-console.log(enclaves)
+        cy.add({ group: 'nodes', data: { id: id, label : node['rosname'], parent: node['enclave']}});
+    }
+    else {
+        cy.add({ group: 'nodes', data: { id: id, label : node['rosname'], height: node.width, parent: id}});
+    }
+})
+connections.forEach(data => {
+    cy.add({ group: 'edges', selectable: true, data: data})
+})
 /* CONFIGURATIONS */
 cy.userZoomingEnabled( false );
 cy.nodes().forEach(function( n ){ n.data('height', n.width()); });

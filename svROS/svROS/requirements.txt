@@ -4,5 +4,5 @@ xmlschema
 hpl-specs
 lark
 networkx
-enquiries
+simple_term_menu
 jinja2

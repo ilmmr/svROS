@@ -1,4 +1,5 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, pickle, enquiries, json
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, pickle, json
+from simple_term_menu import TerminalMenu
 from yaml import *
 from dataclasses import dataclass, field
 from logging import FileHandler
@@ -11,6 +12,8 @@ from lark import Lark, tree
 from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, svState, Node, Package, Topic, MessageType, svExecution
 from svLanguage import svPredicate
 import xml.etree.ElementTree as ET
+# Visualizer
+from svVisualizer import svVisualizer
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -74,10 +77,12 @@ class svAnalyzer(object):
         visualizer = input(svWarning('Open counter-examples [Y/n]: ')).strip()
         if visualizer == r"(?i)y": 
             # open visualizer
-            choice = enquiries.choose('', choices=list(map(lambda option: f'{color.color("BLUE", option)}', counter)) + ['Exit'])
-            if choice.strip() == r'(?i)Exit':
+            options = list(map(lambda option: option, counter)) + ['Exit']
+            choice = TerminalMenu(options).show()
+            if options[choice] == r'(?i)Exit':
                 return True
             else:
+                choice = options[choice]
                 visualizer_path, file = f'{self.EXTRACTOR.PROJECT_DIR}data/visualizer/', f'{choice}.html'
                 os.system(command=f'firefox {visualizer_path}{file}')
         else: pass
@@ -162,8 +167,11 @@ class svProjectExtractor:
     PROJECT_DIR   : str
     IMPORTED_DATA : dict
 
+    # Draw Architecture
     def draw_architecture(self):
-        return True
+        viz_directory = f'{self.PROJECT_DIR}data/viz'
+        viz = svVisualizer(project=self, directory=viz_directory)
+        return viz.run_file(type='ARCHITECTURE')
 
     def save_imported_data(self):
         try:

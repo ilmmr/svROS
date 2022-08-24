@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, json
 from jinja2 import Environment, FileSystemLoader
 # InfoHandler => Prints, Exceptions and Warnings
 from tools.InfoHandler import color, svException, svWarning, svInfo
@@ -13,31 +13,44 @@ class svVisualizer(object):
 
     def __init__(self, project, directory):
         self.project, self.directory = project, directory
+        if not self.ensure_dir():
+            raise svException('Failed to set up Visualizer directory.')
 
     def ensure_dir(self):
         try:
-            os.makedirs(path=self.directory, mode=0o777, exist_ok=True)
+            if os.path.isdir(self.directory) or os.path.exists(self.directory):
+                shutil.rmtree(path=self.directory)
+            shutil.copytree(src=f'{WORKDIR}/visualizer', dst=self.directory)        
         except OSError as error:
-            raise svException('Failed to set up Visualizer directory.')
-        shutil.copytree(src=f'{WORKDIR}/visualizer', dst=self.directory)
+            print(error)
+            return False
+        return True
 
     def run_file(self, type):
         assert type in self.TYPES
-        if type == 'ARCHITECTURE': file, js = f'{self.directory}/template-network.html', f'js/network-script.js'
-        if type == 'OD'          : file, js = f'{self.directory}/template-obsdet.html', f'js/obsdet-script.js'
-        if type == 'SROS'        : file, js = f'{self.directory}/template-sros.html', 'js/sros-script.js'
         # GENERATE JINJA
         jinja = self.generate_jinja()
-        template = jinja.get_template(f'{WORKDIR}/{js}')
-        f = self.generate_from_jinja(template=template, type=type)
+        if type == 'ARCHITECTURE': 
+            file, js  = f'{self.directory}/template-network.html', f'network-script.js'
+            template  = jinja.get_template(f'{js}')
+            data_path = open(f'{self.project.PROJECT_DIR}data/configurations.json')
+            data      = json.load(data_path)
+            render    = template.render(nodes=data['nodes'], connections=data['connections'])
+            with open(f'{self.directory}/js/{js}', 'w+') as data:
+                data.write(render)
+            data_path.close()
+        if type == 'OD'          : 
+            file, js = f'{self.directory}/template-obsdet.html', f'obsdet-script.js'
+            template = jinja.get_template(f'{js}')
+        if type == 'SROS'        : 
+            file, js = f'{self.directory}/template-sros.html', 'sros-script.js'
+            template = jinja.get_template(f'{js}')
+        # GENERATE JINJA
         return os.system(f'{self.COMMAND} {file}')
-
-    def generate_from_jinja(self, template, type):
-        return
         
-    def generate_jinja(self, path='/js'):
+    def generate_jinja(self, path='visualizer/js'):
         return Environment(
-            loader=FileSystemLoader(f'{WORKDIR}{js}'),
+            loader=FileSystemLoader(f'{WORKDIR}/{path}'),
             line_statement_prefix=None,
             line_comment_prefix=None,
             trim_blocks=True,

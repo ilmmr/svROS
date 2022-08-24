@@ -575,7 +575,7 @@ class svROSNode(object):
         # Enclave is not needed at this point
         topics  = {'subscribe': subscribe, 'advertise': advertise}
         enclave = node.profile.enclave.name if node.profile else ''
-        return {'node': node.index.replace('::', '/'), 'package': node.package, 'namespace': node.namespace, 'rosname': node.rosname, 'enclave': enclave, 'calls': topics}
+        return {'node': node.index.replace('::', '/'), 'package': node.package if node.package else '', 'namespace': node.namespace if node.namespace else '', 'rosname': node.rosname if node.rosname else '', 'enclave': enclave, 'calls': topics}
 
     @classmethod
     def connections_to_json(cls):
@@ -787,7 +787,7 @@ class svROSProfile(object):
         advertise, subscribe = [], []
         if self.advertise: advertise = self.advertise
         if self.subscribe: subscribe = self.subscribe
-        return {'name': self.name, 'namespace': self.namespace, 'advertise': advertise, 'deny_advertise': self.deny_advertise, 'subscribe': subscribe, 'deny_subscribe': self.deny_subscribe}
+        return {'name': self.name if self.name else '', 'namespace': self.namespace if self.namespace else '', 'advertise': advertise, 'deny_advertise': self.deny_advertise, 'subscribe': subscribe, 'deny_subscribe': self.deny_subscribe}
 
 class svROSObject(object):
     OBJECTS = {}
