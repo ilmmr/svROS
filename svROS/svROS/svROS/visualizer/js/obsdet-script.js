@@ -12,7 +12,7 @@ var cy = (window.cy = cytoscape({
         "border-width" : 3.0}},
 
         {
-            selector: "node[state = 'true']", 
+            selector: "node[type = 'state']", 
             css: {
                 'background-color': '#FF6347',
                 'shape': "rectangle",
