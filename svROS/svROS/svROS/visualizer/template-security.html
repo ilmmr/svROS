@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="/home/luis/uni-area/Thesis/svROS/svROS/svROS/visualizer/style.css">
   <script src="https://kit.fontawesome.com/ab35b29bb0.js" crossorigin="anonymous"></script>
   <body>
 
@@ -36,9 +36,11 @@
             </div>
             
             <div id="secondary">
-                <pre style="text-align:center" class="w3-text-grey">Observable Determinism</pre>
-                <div style="display:flex;"><div class="trace" style="background-color:blue;"></div> <div class="legenda">Execution Trace 1</div></div>
-                <div style="display:flex;"><div class="trace" style="background-color:orange;"></div> <div class="legenda">Execution Trace 2</div></div>
+                <pre style="text-align:center" class="w3-text-grey">SROS Configuration</pre>
+                <div style="display:flex;"><div class="trace" style="background-color:#666;"></div> <div class="legenda">Profile privilege</div></div>
+                <div style="display:flex;"><div class="trace" style="background-color:orange;"></div> <div class="legenda">Profile acess call</div></div>
+                <div style="display:flex;"><div class="privilege" style="border-color:black;"></div> <div class="legenda">Allow Privilege</div></div>
+                <div style="display:flex;"><div class="privilege" style="border-color:red;"></div> <div class="legenda">Deny Privilege</div></div>
             </div>
          </div>
        </div>
@@ -47,12 +49,11 @@
 
     <!-- W3.CSS Container -->
     <div class="w3-container w3-padding-32" style="margin-top:75px;padding-right:58px"><p class="w3-right">Made by <a href="https://github.com/luis1ribeiro" title="me" target="_blank" class="w3-hover-opacity">lmr</a> </p></div>
-
   </body>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.22.1/cytoscape.min.js" integrity="sha512-KTe+SDYh8ExHDmrSZuoKkFoFQDSU3ywInRi9SkE0ENpJu72GS+UAxd/l0CAXF8DaGGGOLKd7wKRoa7mEirvIpg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://unpkg.com/layout-base/layout-base.js"></script>
   <script src="https://unpkg.com/cose-base/cose-base.js"></script>
   <script src="js/cytoscape-cose-bilkent.js"></script>
-  <script src="js/obsdet-script.js"> </script>
+  <script src="js/security-script.js"> </script>
 </html>

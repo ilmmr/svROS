@@ -76,16 +76,16 @@ class svAnalyzer(object):
         # RUN VISUALIZER
         visualizer = input(svWarning('Open counter-examples [Y/n]: ')).strip()
         if visualizer == r"(?i)y": 
-            # open visualizer
-            options = list(map(lambda option: option, counter)) + ['Exit']
-            choice = TerminalMenu(options).show()
-            if options[choice] == r'(?i)Exit':
-                return True
-            else:
-                choice = options[choice]
-                visualizer_path, file = f'{self.EXTRACTOR.PROJECT_DIR}data/visualizer/', f'{choice}.html'
-                os.system(command=f'firefox {visualizer_path}{file}')
-        else: pass
+            while True:
+                # open visualizer
+                options = list(map(lambda option: option, counter)) + ['Exit']
+                choice = TerminalMenu(options).show()
+                if options[choice] == r'(?i)Exit':
+                    break
+                else:
+                    viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'{options[choice]}.html'
+                    viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
+                    return viz.run_file(type='OD', file=file)
         return True
 
     def generate_ros_model(self, NODES, TOPICS):

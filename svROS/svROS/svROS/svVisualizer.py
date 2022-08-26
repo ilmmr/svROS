@@ -27,7 +27,7 @@ class svVisualizer(object):
             return False
         return True
 
-    def run_file(self, type):
+    def run_file(self, type, file=''):
         assert type in self.TYPES
         # GENERATE JINJA
         jinja = self.generate_jinja()
@@ -64,6 +64,32 @@ class SecurityInstanceParser(object):
     def __init__(self, file):
         self.path = file
 
+    def parse(self):
+        tree = ET.parse(file)
+        root = tree.getroot()
+        rule1, rule2 = root.find('.//skolem[@label="$this/different_privileges"]').findall('./tuple') , root.find('.//skolem[@label="$this/access_in_privileges"]').findall('./tuple')
+        if rule1 == [] and rule2 == []: 
+            return None
+        profiles_states_json, edges = list(), list()
+        for tup in rule1:
+            profile, role, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), tup.findall('./atom')[1].get('label').split('$')[0], self.remove_signature(value=tup.findall('./atom')[2].get('label').split('$')[0].lower())
+            # PROCESS TO JSON
+            profiles_states_json.append({'name': object,  'type': 'object' })
+            profiles_states_json.append({'name': profile, 'type': 'profile'})
+            edges.append({'source': profile, 'target': object, 'role': role, 'call': 'source call'})
+            edges.append({'source': profile, 'target': object, 'role': role, 'call': 'privilege'})
+        for tup in rule2:
+            profile, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), self.remove_signature(value=tup.findall('./atom')[1].get('label').split('$')[0])
+            # PROCESS TO JSON
+            profiles_states_json.append({'name': object,  'type': 'object' })
+            profiles_states_json.append({'name': profile, 'type': 'profile'})
+            edges.append({'source': profile, 'target': object, 'role': role, 'call': 'source call'})
+            edges.append({'source': profile, 'target': object, 'role': role, 'call': 'no privilege'})
+        return [{'nodes': list(set(profiles_states_json)), 'edges': list(set(edges))}]
+
+    def remove_signature(self, value):
+        return '/' + value.split('_', 1)[1].replace('_','/')
+
 class ODInstanceParser(object):
 
     def __init__(self, file):
@@ -81,7 +107,7 @@ class ODInstanceParser(object):
         return instances, slides
 
     def remove_signature(self, value):
-        return value.split('_', 1)[1].replace('_','/')
+        return '/' + value.split('_', 1)[1].replace('_','/')
 
     def get_nodes(self, instance):
         edges, nodes, advertises, subscribes = instance.find(f'.//skolem[@label="$this/isconnected"]').findall('./tuple'), {}, instance.find(f'.//field[@label="advertises"]').findall('./tuple'), instance.find(f'.//field[@label="subscribes"]').findall('./tuple')

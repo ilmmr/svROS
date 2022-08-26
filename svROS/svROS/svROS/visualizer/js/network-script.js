@@ -8,32 +8,48 @@ var cy = (window.cy = cytoscape({
     
     style: [ 
         
-        {selector: 'node', css: {"text-valign" : "center", "text-halign" : "center", 'border-color': '#adcfe6', 'background-color': '#adcfe6', "border-opacity" : 0.75, 'background-opacity': 0.5, 'label': 'data(label)', 'width': '100px', 'height': 'data(height)', "shape" : "ellipse",
-        "border-width" : 3.0}},
+        {
+            selector: 'node', 
+            css: {
+                "text-valign" : "center", 
+                "text-halign" : "center", 
+                'border-color': '#adcfe6', 
+                'background-color': '#adcfe6', 
+                "border-opacity" : 0.75, 'background-opacity': 0.5, "border-width" : 3.0,
+                'label': 'data(label)', 
+                'width': '100px', 'height': 'data(height)', 
+                "shape" : "ellipse"
+            }
+        },
 
         {
             selector: ':parent',
-                css: {
-                  'shape': "rectangle",
-                  'background-color': "#FFFF33",
-                  'background-opacity': 0.333,
-                  'border-color': "#FFFF33",
-                  'border-opacity': 0.5
-                }
-            },
+            css: {
+                'text-valign': 'top',
+                'text-halign': 'middle',
+                'label': 'data(id)',
+                'shape': "rectangle",
+                'background-color': "#FFFF33",
+                'background-opacity': 0.333,
+                'border-color': "#FFFF33",
+                'border-opacity': 0.5
+            }
+        },
         
-        {selector : "edge",
-        css : {
-          "width" : 3,
-          "line-color" : "#666",
-          "line-style" : "solid",
-          "curve-style": "bezier",
-          'source-arrow-color': '#666',
-          "source-arrow-shape" : "triangle",
-          'target-arrow-color': '#666',
-          "target-arrow-shape" : "triangle",
-          "label": "data(relation)"
-        }},
+        {
+            selector : "edge",
+            css : {
+                "width" : 3,
+                "line-color" : "#666",
+                "line-style" : "solid",
+                "curve-style": "bezier",
+                'source-arrow-color': '#666',
+                "source-arrow-shape" : "triangle",
+                'target-arrow-color': '#666',
+                "target-arrow-shape" : "triangle",
+                "label": "data(relation)"
+            }
+        },
     ],
 }));
 /* FILL CY with DATA */
