@@ -15,7 +15,7 @@ var cy = (window.cy = cytoscape({
                 "text-halign" : "center", 
                 'border-color': '#adcfe6', 
                 'background-color': '#adcfe6', 
-                "border-opacity" : 0.75, 'background-opacity': 0.5, "border-width" : 3.0,
+                "border-opacity" : 0.75, 'background-opacity': 0.5, "border-width" : 2.0,
                 'label': 'data(label)', 
                 'width': '100px', 'height': 'data(height)', 
                 "shape" : "ellipse"
@@ -39,7 +39,7 @@ var cy = (window.cy = cytoscape({
         {
             selector : "edge",
             css : {
-                "width" : 3,
+                "width" : 2,
                 "line-color" : "#666",
                 "line-style" : "solid",
                 "curve-style": "bezier",

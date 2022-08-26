@@ -70,22 +70,23 @@ class SecurityInstanceParser(object):
         rule1, rule2 = root.find('.//skolem[@label="$this/different_privileges"]').findall('./tuple') , root.find('.//skolem[@label="$this/access_in_privileges"]').findall('./tuple')
         if rule1 == [] and rule2 == []: 
             return None
-        profiles_states_json, edges = list(), list()
+        profiles_states_json, edges = dict(), dict()
         for tup in rule1:
             profile, role, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), tup.findall('./atom')[1].get('label').split('$')[0], self.remove_signature(value=tup.findall('./atom')[2].get('label').split('$')[0].lower())
             # PROCESS TO JSON
-            profiles_states_json.append({'name': object,  'type': 'object' })
-            profiles_states_json.append({'name': profile, 'type': 'profile'})
-            edges.append({'source': profile, 'target': object, 'role': role, 'call': 'source call'})
-            edges.append({'source': profile, 'target': object, 'role': role, 'call': 'privilege'})
+            profiles_states_json[f'obj_{object}_allow'] = {'id': f'obj_{object}_allow', 'name': object,  'type': 'object', 'rule': 'Allow'}
+            profiles_states_json[f'obj_{object}_deny'] = {'id': f'obj_{object}_deny', 'name': object,  'type': 'object', 'rule': 'Deny'}
+            profiles_states_json[f'prof_{profile}'] = {'id': f'prof_{profile}', 'name': profile, 'type': 'profile'}
+            edges[f'{profile}_to_{object}_priv_all'] = {'relation': f'{profile}_to_{object}_priv_all', 'source': f'prof_{profile}', 'target': f'obj_{object}_allow', 'role': role, 'call': 'privilege'}
+            edges[f'{profile}_to_{object}_priv_deny'] = {'relation': f'{profile}_to_{object}_priv_deny', 'source': f'prof_{profile}', 'target': f'obj_{object}_deny', 'role': role, 'call': 'privilege'}
         for tup in rule2:
-            profile, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), self.remove_signature(value=tup.findall('./atom')[1].get('label').split('$')[0])
+            profile, role, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), tup.findall('./atom')[1].get('label').split('$')[0], self.remove_signature(value=tup.findall('./atom')[2].get('label').split('$')[0])
             # PROCESS TO JSON
-            profiles_states_json.append({'name': object,  'type': 'object' })
-            profiles_states_json.append({'name': profile, 'type': 'profile'})
-            edges.append({'source': profile, 'target': object, 'role': role, 'call': 'source call'})
-            edges.append({'source': profile, 'target': object, 'role': role, 'call': 'no privilege'})
-        return [{'nodes': list(set(profiles_states_json)), 'edges': list(set(edges))}]
+            profiles_states_json[f'obj_{object}_allow'] = {'id': f'obj_{object}_allow', 'name': object,  'type': 'object', 'rule': 'Allow'}
+            profiles_states_json[f'prof_{profile}'] = {'id': f'prof_{profile}', 'name': profile, 'type': 'profile'}
+            edges[f'{profile}_to_{object}_sc'] = {'relation': f'{profile}_to_{object}_sc', 'source': f'prof_{profile}', 'target': f'obj_{object}_allow', 'role': role, 'call': 'source call'}
+            edges[f'{profile}_to_{object}_nopriv'] = {'relation': f'{profile}_to_{object}_nopriv', 'source': f'prof_{profile}', 'target': f'obj_{object}_allow', 'role': role, 'call': 'no privilege'}
+        return list(profiles_states_json.values()), list(edges.values())
 
     def remove_signature(self, value):
         return '/' + value.split('_', 1)[1].replace('_','/')

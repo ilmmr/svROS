@@ -39,10 +39,10 @@ fun different_privileges : Profile -> Role -> Object {
 pred rule_access_in_privileges [p : Profile] {
 	p.access in p.privileges
 }
-fun access_in_privileges : Profile -> Object {
-	{ p : Profile, o : Object | 
+fun access_in_privileges : Profile -> Role -> Object {
+	{ p : Profile, r : Role, o : Object | 
 		some access : p.access {
-			access not in p.privileges and o = access.object 
+			access not in p.privileges and o = access.object and r = access.role
 		}
 	}
 }
