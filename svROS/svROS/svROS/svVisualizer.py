@@ -77,8 +77,8 @@ class ODInstanceParser(object):
         slides = instances.__len__()
         nodes, edges = self.get_nodes(instances[0])
         states       = self.get_states(instances[0])
-        instances    = self.__json__(edges=edges, instances=instances)
-        return instances, slides, nodes + states
+        instances    = self.__json__(nodes=nodes, edges=edges, states=states, instances=instances)
+        return instances, slides
 
     def remove_signature(self, value):
         return value.split('_', 1)[1].replace('_','/')
@@ -86,26 +86,23 @@ class ODInstanceParser(object):
     def get_nodes(self, instance):
         edges, nodes, advertises, subscribes = instance.find(f'.//skolem[@label="$this/isconnected"]').findall('./tuple'), {}, instance.find(f'.//field[@label="advertises"]').findall('./tuple'), instance.find(f'.//field[@label="subscribes"]').findall('./tuple')
         for adv in advertises:
-            node, adv = adv.findall('./atom')[0].get('label').split('$')[0], adv.findall('./atom')[1].get('label').split('$')[0]
-            node, adv = self.remove_signature(value=node), self.remove_signature(value=adv)
+            node = adv.findall('./atom')[0].get('label').split('$')[0]
+            node = self.remove_signature(value=node)
             if node not in nodes:
-                nodes[node] = {'name': node, 'subscribes': [], 'advertises':[], 'type': 'node'}
-            nodes[node]['advertises'].append(adv)
-            edges.add(adv)
+                nodes[node] = {'name': node, 'type': 'node'}
         for sub in subscribes:
-            node, sub = sub.findall('./atom')[0].get('label').split('$')[0], sub.findall('./atom')[1].get('label').split('$')[0]
-            node, sub = self.remove_signature(value=node), self.remove_signature(value=sub)
+            node = sub.findall('./atom')[0].get('label').split('$')[0]
+            node = self.remove_signature(value=node)
             if node not in nodes:
-                nodes[node] = {'name': node, 'subscribes': [], 'advertises':[], 'type': 'node'}
-            nodes[node]['subscribes'].append(sub)
-            edges.add(sub)
+                nodes[node] = {'name': node, 'type': 'node'}
         # PROCESS EDGES ::
         edges_json = {}
         for edge in edges:
             name, src, dest = edge.findall('./atom')[1].get('label').split('$')[0], edge.findall('./atom')[0].get('label').split('$')[0], edge.findall('./atom')[2].get('label').split('$')[0]
             # name, src, dest = self.remove_signature(value=name), self.remove_signature(value=src), self.remove_signature(value=dest)
-            edges_json[name] = {'src': src, 'dest': dest}
-        return list(map(lambda node: node, nodes.values())), edges_json
+            edges_json[name] = {'source': self.remove_signature(value=src), 'target': self.remove_signature(value=dest)}
+        # return list(map(lambda node: node, nodes.values())), edges_json
+        return nodes, edges_json
 
     def get_states(self, instance):
         states_json, parent_id = {}, '24'
@@ -114,10 +111,35 @@ class ODInstanceParser(object):
             name = state.get('label')
             if state not in states_json:
                 states_json[name] = {'name': name, 'type': 'state'}
-        return list(map(lambda state: state, states_json.values()))
+        return states
+        # return list(map(lambda state: state, states_json.values()))
 
-    def __json__(self, edges, instances):
+    def __json__(self, nodes, edges, states, instances):
+        __json__ = list()
         for index in range(len(instances)):
-            id, instance = index, instances[index]
-            
-            
+            id, instance, object = index, instances[index], {}
+            object['id'], object['edges'], object['nodes'] = id, list(), list()
+            # Treat inbox and nodes
+            inboxs = instance.find('.//field[@label="inbox"]').findall('./tuple')
+            for i in inboxs:
+                trace, name, pos, value = i.findall('./atom')[0].get('label').split('$')[0], i.findall('./atom')[1].get('label').split('$')[0], i.findall('./atom')[2].get('label').split('$')[0], i.findall('./atom')[3].get('label').split('$')[0]
+                channel = edges[name]
+                # Treat nodes
+                node1, node2 = nodes[channel['source']], nodes[channel['target']]
+                object['nodes'] += [node1, node2]
+                # Treat channel
+                channel['trace'], channel['relation'], channel['label'], channel['pos'] = trace, self.remove_signature(value=name), f'm = {value}', pos 
+                object['edges'].append(channel)
+
+            # Process states
+            parent_id = '24'
+            _states_ = instance.findall(f'.//field[@parentID="{parent_id}"][@label!="inbox"]')
+            for state in _states_:
+                name = state.get('label')
+                for tup in state.findall(f'./tuple'):
+                    trace, value = tup.findall('./atom')[0].get('label').split('$')[0], tup.findall('./atom')[1].get('label').split('$')[0]
+                    state_object = states[name]
+                    state_object['trace'], state_object['value'] = trace, value
+                    object['nodes'].append(state_object)
+            __json__.append(object)
+        return __json__            

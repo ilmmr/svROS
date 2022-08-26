@@ -1,72 +1,28 @@
-/* open util/natural */
-/* module for ros-based topic */
-module ros_base
--- open util/ordering[received] as ord
-
-/* Noção de ordem em Id */
--- sig Id {}
-
-/* --- Abstract Notations of the ROS elements --- */
-abstract sig Executable {
-	subscribes, advertises : set Topic,
-	var inbox0, outbox0 : set Message,
-	var inbox1, outbox1 : set Message
+/* === SIGNATURES === */
+abstract sig Node {
+	subscribes, advertises : set Channel
 }
-abstract sig Node extends Executable {}
-abstract sig Warner extends Executable {}
-abstract sig Field, Value {}
-abstract sig numeric, string, bool extends Value {}
-one sig true, false extends bool {}
-abstract sig Message {
-	// id: one Id, -- Later for ordering?
-	topic : one Topic,
-	-- interface: one Interface,
-	content: Field -> lone Value
-}
--- sig Box in Message {}
-/* content auxiliar: Message->Value */
-let message_value = {m: Message, v: Value | some f: Field | m->f->v in content}
-/* content auxiliar_2: Message->Var */
-let message_var = {m: Message, f: Field | lone v: Value | m->f->v in content}
-/* topic to interface */
--- let topic_interface = {t: Topic, i: Interface | some m: Message {m.topic = t and m.type = i}}
-/* 
-	-- Para já vou ignorar a Interface #i
-	abstract sig Interface {
-		fields: set Field
-	} 
-*/
-abstract sig Topic {}
-/* --- Abstract Notations of the ROS elements --- */
+abstract sig Msg {}
+sig Message = Msg + Int {}
+abstract sig Channel {}
+/* === SIGNATURES === */
 
-/* --- Some basic assumptions --- */
-fact ros_assumptions {
-	bool = true + false
-	/* Each node can not have corresponding messages at the beggining */
-	ros_functionality[inbox0, outbox0]
-	ros_functionality[inbox1, outbox1]
-	/* A topic must have been advertised or subscribed */
-	Topic = Executable.advertises + Executable.subscribes
-	/* Inbox and Outbox messages must consider its Topic message type */
-		-- Later we can check as a dynamic property --
-	/* #i - Message fields must be preserved */
-	-- content.Value in interface.fields
-	/* Messages have some content */
-	(Message->Message & iden) in message_value.~message_value
-	/* 
-		Each node has its corresponding topic
-		~advertises.advertises in iden
-		advertises.~advertises in iden
-	*/
+/* === INITIAL CONFIG === */
+fact initial_assumptions {
+	no inbox
+	always (nop[T1] or system[T2])	
+	always (nop[T1] or system[T2])
 }
-/* --- Some basic assumptions --- */
-
-/* --- Functionality assumptions --- */
-pred ros_functionality [inbox : Executable -> Message, outbox : Executable -> Message] {
-	-- behaviour duplication
-	no inbox + outbox
-	always (inbox.topic in subscribes and outbox.topic in advertises)
-	-- always (all m: Node.outbox, n: subscribes.(m.topic) | eventually (m in n.inbox))
-	-- always (all m: Message | m in Node.inbox implies (some n: advertises.(m.topic) | before once (m in n.outbox)))
+pred publish0[channel: Channel, m : Message] {
+	T1.inbox'[channel] = add[T1.inbox[channel], m]
 }
-/* --- Functionality assumptions --- */
+pred publish1[channel: Channel, m : Message] {
+	T2.inbox'[channel] = add[T2.inbox[channel], m]
+}
+fun active [] : set Node {
+	advertises.(Execution.inbox).Message + subscribes.(Execution.inbox).Message
+}
+fun isconnected [] : Node -> Channel -> Node {
+	{ n : Node , t : n.advertises, n1 : Node | t in n1.subscribes }
+}
+/* === INITIAL CONFIG === */

@@ -22,4 +22,7 @@ pred publish1[channel: Channel, m : Message] {
 fun active [] : set Node {
 	advertises.(Execution.inbox).Message + subscribes.(Execution.inbox).Message
 }
+fun isconnected [] : Node -> Channel -> Node {
+	{ n : Node , t : n.advertises, n1 : Node | t in n1.subscribes }
+}
 /* === INITIAL CONFIG === */
