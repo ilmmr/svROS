@@ -41,11 +41,19 @@ class svVisualizer(object):
                 data.write(render)
             data_path.close()
         if type == 'OD'          : 
+            json, slides = ODInstanceParser(file=file).parse()
             file, js = f'{self.directory}/template-obsdet.html', f'obsdet-script.js'
             template = jinja.get_template(f'{js}')
+            render    = template.render(instances=json, slides=slides)
+            with open(f'{self.directory}/js/{js}', 'w+') as data:
+                data.write(render)
         if type == 'SROS'        : 
+            nodes, edges = SecurityInstanceParser(file=file).parse()
             file, js = f'{self.directory}/template-sros.html', 'sros-script.js'
             template = jinja.get_template(f'{js}')
+            render    = template.render(nodes=nodes, edges=edges)
+            with open(f'{self.directory}/js/{js}', 'w+') as data:
+                data.write(render)
         # GENERATE JINJA
         return os.system(f'{self.COMMAND} {file}')
         

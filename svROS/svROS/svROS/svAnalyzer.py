@@ -74,18 +74,18 @@ class svAnalyzer(object):
             else: 
                 print(f'\n\t‣‣ {prop.split("2")[0]} =Observable Determinism=> {prop.split("2")[1]} {color.color("GREEN", "✅")}')
         # RUN VISUALIZER
-        visualizer = input(svWarning('Open counter-examples [Y/n]: ')).strip()
-        if visualizer == r"(?i)y": 
-            while True:
-                # open visualizer
-                options = list(map(lambda option: option, counter)) + ['Exit']
-                choice = TerminalMenu(options).show()
-                if options[choice] == r'(?i)Exit':
-                    break
-                else:
-                    viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'{options[choice]}.html'
-                    viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
-                    return viz.run_file(type='OD', file=file)
+        while True:
+            # open visualizer
+            options = list(map(lambda option: option, counter)) + ['Exit']
+            choice = TerminalMenu(options).show()
+            if options[choice] == r'(?i)Exit':
+                break
+            else:
+                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'{options[choice]}.html'
+                viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
+                viz.run_file(type='OD', file=file)
+                print(svInfo(f'Application OD counter-example is being displayed on your browser'), end='')
+                cont = input('...').strip()
         return True
 
     def generate_ros_model(self, NODES, TOPICS):
@@ -118,18 +118,23 @@ class svAnalyzer(object):
         else: return True
     
     def alloy_sros(self):
-        counter, file_path = 0, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
+        counter, file_path = False, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
         if not os.path.isfile(path=file_path): return False
-        properties = ['valid_configuration_1', 'valid_configuration_2', 'valid_configuration']
+        properties = ['valid_configuration']
         counter = svAnalyzer.execute_java(properties=properties, file=file_path)
-        if counter == []:
+        if counter:
             print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Every property seem to hold for the given configuration:\n\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")} \n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("GREEN", "✅")}'))
         else:
             print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Not every property seem to hold for the given configuration.'))
-            if 'valid_configuration_1' in counter:
-                print(f'\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("RED", "☒")}\n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("GREEN", "✅")}')
-            elif 'valid_configuration_2' in counter:
-                print(f'\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")}\n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("RED", "☒")}')
+            # RUN VISUALIZER
+            options = ['View SROS Counter-Example', 'Exit']
+            choice = TerminalMenu(options).show()
+            if choice == 1:
+                return True
+            else:
+                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'{options[choice]}.html'
+                viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
+                return viz.run_file(type='SROS', file=file)    
         return True
 
     @staticmethod
