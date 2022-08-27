@@ -150,10 +150,13 @@ class ODInstanceParser(object):
             inboxs = instance.find('.//field[@label="inbox"]').findall('./tuple')
             for i in inboxs:
                 trace, name, pos, value = i.findall('./atom')[0].get('label').split('$')[0], i.findall('./atom')[1].get('label').split('$')[0], i.findall('./atom')[2].get('label').split('$')[0], i.findall('./atom')[3].get('label').split('$')[0]
-                channel = edges[name]
+                channel = edges[name].copy()
                 # Treat nodes
-                node1, node2 = nodes[channel['source']], nodes[channel['target']]
-                object['nodes'] += [node1, node2]
+                node1, node2 = nodes[channel['source']].copy(), nodes[channel['target']].copy()
+                if node1 not in object['nodes']:
+                    object['nodes'].append(node1)
+                if node2 not in object['nodes']:
+                    object['nodes'].append(node2)
                 # Treat channel
                 channel['trace'], channel['relation'], channel['label'], channel['pos'] = trace, self.remove_signature(value=name), f'm = {value}', pos 
                 object['edges'].append(channel)
@@ -165,8 +168,13 @@ class ODInstanceParser(object):
                 name = state.get('label')
                 for tup in state.findall(f'./tuple'):
                     trace, value = tup.findall('./atom')[0].get('label').split('$')[0], tup.findall('./atom')[1].get('label').split('$')[0]
-                    state_object = states[name]
-                    state_object['trace'], state_object['value'] = trace, value
-                    object['nodes'].append(state_object)
+                    state_object = states[name].copy()
+                    # Process STATE -> STATE_VALUE
+                    state_value  = {'id': f'{name}_{value}', 'name': self.remove_signature(value=value), 'type': 'state_value'}
+                    if state_value not in object['nodes']:
+                        object['nodes'].append(state_value)
+                    object['edges'].append({'trace': trace, 'source': name, 'target': f'{name}_{value}', 'label': '', 'pos': ''})
+                    if state_object not in object['nodes']:
+                        object['nodes'].append(state_object)
             __json__.append(object)
         return __json__            

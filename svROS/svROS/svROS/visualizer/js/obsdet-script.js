@@ -1,26 +1,26 @@
-var instances = {{instances}}
-var slides    = {{slides}}
+var instances = {{}}
+var slides = {{}}
 
 /* LOAD SLIDES */
-var dots = document.getElementsByClassName("steps-shower")[0];
-for (i=1; i<=slides; i++){
-    var span = document.createElement("span");
-    span.className = "w3-badge demo w3-border w3-transparent"
-    span.onclick = `currentDiv(${i})`
-    dots.appendChild(span)
-}
-
+var dots = document.getElementById("steps-shower");
 /* LOAD GRAPHS */
 display_graph = document.getElementById('display_graph')
 for (i=0; i<slides; i++) {
+    var index = i + 1
+    var span = document.createElement("btn");
+    span.classList.add("w3-button", "demo");
+    span.style = "margin-right: 5px;"
+    span.textContent = index
+    dots.appendChild(span)
     var instance = instances[i]
-    /* CREATE EACH GRAPH DIV */
+    // CREATE EACH GRAPH DIV
     var graph_div = document.createElement("div");
     graph_div.id  = `graph_${i}`
-    graph_div.className = "slide"
-    graph_div.style = "width:100%"
+    console.log(graph_div.id)
+    graph_div.classList.add("display", "slide")
     display_graph.appendChild(graph_div)
-    /* LOAD cytoscape */
+    // LOAD cytoscape 
+    var cy = false;
     var cy = (window.cy = cytoscape({
         container: document.getElementById(`graph_${i}`), // container to render in
         elements: [],
@@ -36,16 +36,26 @@ for (i=0; i<slides; i++) {
                     'border-color': '#adcfe6', 
                     'background-color': '#adcfe6', 
                     "border-opacity" : 0.75, 'background-opacity': 0.5, "border-width" : 2.0,
-                    'label': 'data(label)', 
-                    'width': '100px', 'height': 'data(height)', 
+                    'label': 'data(name)', 
+                    'width': '100px', 
+                    'height': '100px', 
                     "shape" : "ellipse"
                 }
             },
 
             {
-                selector: "node[type = 'state']", 
+            selector: "node[type = 'state']", 
                 css: {
                     'background-color': '#FF6347',
+                    'border-color': '#FF6347'
+                }
+            },
+
+            {
+                selector: "node[type = 'state_value']", 
+                css: {
+                    'background-color': '#F8F8FF',
+                    'border-color': '#666',
                     'shape': "rectangle",
                 }
             },
@@ -59,16 +69,21 @@ for (i=0; i<slides; i++) {
                     "curve-style": "bezier",
                     "source-arrow-shape" : "triangle",
                     "target-arrow-shape" : "triangle",
-                    "label": function (edge) { { return `${edge.data('relation')}[${edge.data('pos')}]:: ${edge.data('label')}` } }
+                    "label": function (edge) { 
+                        if (edge.data('label') != '') { 
+                            return `${edge.data('relation')}[${edge.data('pos')}]:: ${edge.data('label')}` 
+                        }
+                        else { return 'value' }
+                    }
                 }
             },
 
             {
                 selector: "edge[trace = 'T1']", 
                 css: {
-                    "line-color" : "#6666ff",
-                    'source-arrow-color': '#6666ff',
-                    'target-arrow-color': '#6666ff'
+                    "line-color" : "#24248f",
+                    'source-arrow-color': '#24248f',
+                    'target-arrow-color': '#24248f'
                 }
             },
 
@@ -82,7 +97,7 @@ for (i=0; i<slides; i++) {
             },
         ],
     }));
-    /* FILL CY with DATA */
+    // FILL CY with DATA
     var nodes = instance['nodes']
     var edges = instance['edges']
     nodes.forEach(node => {
@@ -91,11 +106,12 @@ for (i=0; i<slides; i++) {
     edges.forEach(data => {
         cy.add({ group: 'edges', selectable: true, data: data})
     })
-    /* CONFIGURATIONS */
+    // CONFIGURATIONS
     cy.userZoomingEnabled( false );
     cy.nodes().forEach(function( n ){ n.data('height', n.width()); });
     cy.layout({ name: 'cose-bilkent' }).run();
 }
+
 
 var slideIndex = 1;
 showDivs(slideIndex);
@@ -115,8 +131,8 @@ function showDivs(n) {
     x[i].style.display = "none";  
   }
   for (i = 0; i < dots.length; i++) {
-    dots[i].className = dots[i].className.replace(" w3-white", "");
+    dots[i].className = dots[i].className.replace(" w3-orange", "");
   }
   x[slideIndex-1].style.display = "block";  
-  dots[slideIndex-1].className += " w3-white";
+  dots[slideIndex-1].className += " w3-orange";
 }
