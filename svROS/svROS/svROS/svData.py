@@ -188,28 +188,28 @@ class Node(object):
     @classmethod
     def process_config_file(cls):
         # Returning object.
-        ret_object = {}
+        nodes, topics = {}, {}, {}
         for index in cls.NODES:
             node  = cls.NODES[index]
-            ret_object[index]               = {}
-            ret_object[index]['rosname']    = node.rosname
-            ret_object[index]['enclave']    = node.enclave if node.enclave else Node.namespace(tag=index)
+            nodes[index]               = {}
+            nodes[index]['rosname']    = node.rosname
+            nodes[index]['enclave']    = '/private' if node.enclave else '/public' # else Node.namespace(tag=index)
             # Topic treatment.
-            if node.publishes:  ret_object[index]['advertise'] = {}
-            if node.subscribes: ret_object[index]['subscribe'] = {}
-            if not node.source:
-                continue
+            # if node.publishes:  ret_object[index]['advertise'] = {}
+            # if node.subscribes: ret_object[index]['subscribe'] = {}
+            # if not node.source:
+            #     continue
             for adv in node.publishes:
-                topic_type = adv.type
-                name       = Node.render_remap(topic=adv, remaps=node.remaps).rosname(node=node)
-                ret_object[index]['advertise'][name] = topic_type
+                topic_type   = adv.type
+                name         = Node.render_remap(topic=adv, remaps=node.remaps).rosname(node=node)
+                topics[name] = topic_type
             for sub in node.subscribes:
-                topic_type = sub.type
-                name       = Node.render_remap(topic=sub, remaps=node.remaps).rosname(node=node)
-                ret_object[index]['subscribe'][name] = topic_type
+                topic_type   = sub.type
+                name         = Node.render_remap(topic=sub, remaps=node.remaps).rosname(node=node)
+                topics[name] = topic_type
             # HPL Properties
             # ret_object[index]['analysis'] = {'states': None, 'properties': ['']}
-        return ret_object
+        return nodes, topics
 
     @classmethod
     def list_of_nodes(cls):
@@ -228,22 +228,31 @@ class Node(object):
             if node.enclave is not None:
                 enclave = None
                 for en in enclaves:
-                    if en.get('path') == str(node.enclave):
+                    if en.get('path') == '/private':
                         enclave  = en
                         profiles = enclave[0]
                         break
                 if enclave is None:
                     enclave  = ET.Element('enclave')
-                    enclave.set('path', str(node.enclave))
+                    # enclave.set('path', str(node.enclave))
+                    enclave.set('path', '/private')
                     profiles = ET.Element('profiles')
                     enclave.append(profiles)
                     enclaves.append(enclave)
             else:
-                enclave  = ET.Element('enclave')
-                enclave.set('path', Node.namespace(tag=node.index))
-                profiles = ET.Element('profiles')
-                enclave.append(profiles)
-                enclaves.append(enclave)
+                enclave = None
+                for en in enclaves:
+                    if en.get('path') == '/public':
+                        enclave  = en
+                        profiles = enclave[0]
+                        break
+                if enclave is None:
+                    enclave  = ET.Element('enclave')
+                    # enclave.set('path', str(node.enclave))
+                    enclave.set('path', '/public')
+                    profiles = ET.Element('profiles')
+                    enclave.append(profiles)
+                    enclaves.append(enclave)
             # Process Node
             profile = ET.Element('profile')
             if node.namespace: profile.set('ns', Node.namespace(tag=node.namespace) + '/')
@@ -352,51 +361,64 @@ class Node(object):
 class svROSNode(object):
     NODES        = {}
     OBSDT        = {}
-    PROPT        = list()
+    # Set of channels that are published by private but seen as public
     PUBSYNC      = set()
+    OBSERVATIONS = set()
     """
         svROSNode
             \__ Already parsed node
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
     def __init__(self, full_name, profile, **kwargs):
-        self.index, self.rosname, self.namespace, self.executable, self.advertise, self.subscribe, self.profile, self.predicate = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), kwargs.get('advertise'), kwargs.get('subscribe'), profile, None
-        self.enclave = self.profile.enclave if self.profile else None
+        self.index, self.rosname, self.namespace, self.executable, self.profile, self.predicate = full_name, kwargs.get('rosname'), kwargs.get('namespace'), kwargs.get('executable'), profile, None
+        self.enclave = profile.enclave if profile else None
         # Process node-package.
         self.package = self.index.replace(self.rosname, '') 
         if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
             raise svException(f'Package {self.package} defined in node {self.index} not defined.')
-        # TOPIC handler.
-        self.subscribe, self.advertise = svROSNode.topic_handler(topics=self.subscribe), svROSNode.topic_handler(topics=self.advertise)
         # Constrain topic allowance.
-        self.can_subscribe = profile.subscribe if self.secure else None 
-        self.can_publish   = profile.advertise if self.secure else None
+        self.subscribe, self.advertise = self.load_profile_topics()
         # GET from Pickle classes.
         if Node.NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
         # Store in class variable.
         svROSNode.NODES[self.index] = self
     
+    def load_profile_topics(self):
+        subs, advs = list(), list()
+        if self.profile.subscribe:
+            for subscribe in self.profile.subscribe:
+                if subscribe not in Topic.TOPICS:
+                    print(svWarning(f'Privilege {subscribe} of {self.rosname} defined in SROS file but not has no matching channel in config file!'))
+                else:
+                    subs.append(Topic.TOPICS[subscribe])
+        if self.profile.advertise:
+            for advertise in self.profile.advertise:
+                if advertise not in Topic.TOPICS:
+                    print(svWarning(f'Topic {advertise} of {self.rosname} of defined in SROS but not has no matching in config file!'))
+                else:
+                    advs.append(Topic.TOPICS[advertise])
+        return subs, advs
     # Constrain TOPIC ALLOWANCE.
-    def constrain_topics(self):
-        if not self.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
-        topic_allowance = {method: set() for method in ['advertise', 'subscribe']}
-        profile         = self.profile
-        namespace, allow_subscribe, allow_advertise = profile.namespace, profile.subscribe, profile.advertise
-        # Advertise.
-        if allow_advertise:
-            if self.advertise:
-                for adv in self.advertise:
-                    if adv.name in allow_advertise:
-                        topic_allowance['advertise'].add(adv)
-        else: topic_allowance['advertise'].clear()
-        # Subscribe
-        if allow_subscribe:
-            if self.subscribe:
-                for sub in self.subscribe:
-                    if sub.name in allow_subscribe:
-                        topic_allowance['subscribe'].add(sub)
-        else: topic_allowance['subscribe'].clear()
-        return topic_allowance['advertise'], topic_allowance['subscribe']
+    # def constrain_topics(self):
+    #     if not self.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
+    #     topic_allowance = {method: set() for method in ['advertise', 'subscribe']}
+    #     profile         = self.profile
+    #     namespace, allow_subscribe, allow_advertise = profile.namespace, profile.subscribe, profile.advertise
+    #     # Advertise.
+    #     if allow_advertise:
+    #         if self.advertise:
+    #             for adv in self.advertise:
+    #                 if adv.name in allow_advertise:
+    #                     topic_allowance['advertise'].add(adv)
+    #     else: topic_allowance['advertise'].clear()
+    #     # Subscribe
+    #     if allow_subscribe:
+    #         if self.subscribe:
+    #             for sub in self.subscribe:
+    #                 if sub.name in allow_subscribe:
+    #                     topic_allowance['subscribe'].add(sub)
+    #     else: topic_allowance['subscribe'].clear()
+    #     return topic_allowance['advertise'], topic_allowance['subscribe']
 
     # Get loaded Nodes from PICKLE.
     @classmethod
@@ -408,58 +430,23 @@ class svROSNode(object):
 
     def abstract(self, tag): return tag.capitalize().replace('/', '_')
 
-    @staticmethod
-    def topic_handler(topics):
-        returning_topics = set()
-        if not topics: return None
-        for topic in topics:
-            name, topic_type = topic, topics[topic]
-            topic = Topic.init_topic(name=name, topic_type=topic_type)
-            returning_topics.add(topic)
-        return returning_topics
-
     # This method will allow to check what the output might be when an unsecured enclave publishes something from one of its topics
     @classmethod
     def observalDeterminism(cls, scopes):
         # unsecured_nodes = list(filter(lambda node: (not node.secure) or (not node.enclave.secure if isinstance(node.enclave, svROSEnclave) else True), list(map(lambda n: n[1], cls.NODES.items()))))
-        for unsecured in cls.OBSDT:
-            paths            = dict()
-            channels_outputs, state_outputs = set(filter(lambda x: isinstance(x, svROSNode), cls.OBSDT[unsecured])), list(filter(lambda x: isinstance(x, svState), cls.OBSDT[unsecured]))
-            if unsecured.connection is None:
-                print(svWarning(f"Failed to check Observable Determinism in {unsecured.rosname}: Node has no active advertising connections."))
-                continue
-            for topic in unsecured.connection:
-                observable_outputs = cls.obsdet_paths(node=unsecured, current=None, connections=unsecured.connection[topic], output=[], path_nodes=[unsecured])
-                # FILTER and check!
-                if not (channels_outputs <= set(map(lambda obs: obs[0], observable_outputs))):
-                    raise svException(f'Failed to check Observable Determinism in {unsecured.rosname}: Some connections are either not observable or not correctly set!')
-                else:
-                    paths[topic] = []
-                    for obs in observable_outputs:
-                        if obs[0] in channels_outputs:
-                            print(svWarning(message=f'OD {unsecured.rosname} => {obs[0].rosname} :: {topic} --> {str(obs[1])}'))
-                        if isinstance(obs[1], list): paths[topic] += obs[1]
-                        else: paths[topic].append(obs[1])
-                    # States.
-                    paths[topic] += state_outputs
-            unsecured.node_observable_determinism = paths
-            cls.OBSDT[unsecured] = unsecured.sync_obs_det(scopes=scopes)
-
-    @staticmethod
-    def obsdet_paths(node, current, connections, output, path_nodes):
-        if connections == set() and current is not None: 
-            temp_output = list(map(lambda o: o[0], output))
-            if current not in temp_output:
-                output.append((current, [adv for adv in current.advertise]))
-        for c in connections:
-            # Revoke possible loops.
-            if (c in path_nodes and c is not node): continue
-            else: path_nodes.append(c)
-            # Process connections.
-            if c.connection is None: continue
-            for t in c.connection:
-                svROSNode.obsdet_paths(node=node, current=c, connections=c.connection[t], output=output, path_nodes=path_nodes)
-        return output
+        scope_steps = scopes.get('Steps')
+        if list(map(lambda node: node.connection, cls.NODES.values())) == []:
+            raise svException(f'Failed to check Observable Determinism: No connections set between public and private parts.')
+        if cls.OBSERVATIONS is set():
+            print(svWarning('Observable Determinism is respected: No connections between private and public parts, meaning that no observations can be verified!'))
+            return
+        observations = set()
+        for topic in cls.OBSERVATIONS:
+            if not isinstance(topic, Topic):
+                raise svException(f'{topic.signature} is not a topic!')
+            svROSNode.PUBSYNC.add(f"""\n\talways (all m0, m1 : Message | publish0[{topic.signature}, m0] iff publish1[{topic.signature}, m1])""")
+            observations.add(f'check {{always (all m0, m1 : Message | publish0[{topic.signature}, m0] and publish1[{topic.signature}, m1] implies m0 = m1)}} for 4 but 1..{scope_steps} steps')
+        cls.OBSERVATIONS = observations
 
     def set_connection(self):
         if not self.advertise: return None
@@ -472,6 +459,7 @@ class svROSNode(object):
                 for sub in subscribes_in:
                     if (not node.secure and self.secure):
                         print(svWarning(f'Connection through {sub} is not well supported. {node.rosname.capitalize()} is not secure, while {self.rosname.capitalize()} is secure: {color.color("BOLD", f"{self.rosname.capitalize()} -{sub}-> {node.rosname.capitalize()}")}'))
+                        svROSNode.OBSERVATIONS.add(Topic.TOPICS[sub])
                     elif (not self.secure and node.secure):
                         print(svWarning(f'Connection through {sub} is not well supported. {self.rosname.capitalize()} is not secure, while {node.rosname.capitalize()} is secure: {color.color("BOLD", f"{self.rosname.capitalize()} -{sub}-> {node.rosname.capitalize()}")}'))
                     access_to[sub].add(node)
@@ -495,7 +483,7 @@ class svROSNode(object):
 
     @property
     def secure(self):
-        return bool(self.profile is not None)
+        return bool(self.enclave.name == '/private')
 
     def __str__(self):
         advertises = None if (self.advertise is None) else ' + '.join(list(map(lambda t: t.signature, self.advertise)))
@@ -509,48 +497,18 @@ class svROSNode(object):
         self.signature = f"""node{self.abstract(tag=self.rosname)}"""
         return declaration
 
-    # Return predicates such as pred LowSync {low requires alarm}
-    def sync_obs_det(self, scopes):
-        scope_message, scope_steps = scopes.get('Message'), scopes.get('Steps') 
-        if self.secure: raise svException('You are not supposed to be here. (╯ ͡❛ ͜ʖ ͡❛)╯┻━┻')
-        signatures, topic_output = {}, self.node_observable_determinism
-        # For control reasons:
-        already_output = set()
-        for topic_name in topic_output:
-            topic, outputs, tmp = Topic.TOPICS.get(topic_name), topic_output[topic_name], {}
-            if (not topic) or (not topic.signature): raise svException(f'Topic {topic_name} does not exist.')
-            svROSNode.PUBSYNC.add(f"""\n\talways (all m : Message | publish0[{topic.signature}, m] iff publish1[{topic.signature}, m])""")
-            for out in outputs:
-                if out in already_output: continue
-                else: already_output.add(out) 
-                assertion_signature, comments = f'{topic.signature}2{out.name.lower()}', f'/* === {topic.name} => {out.name} === */\n'
-                # Can either be a Channel or a State.
-                if isinstance(out, Topic):
-                    # public output must be done at the same instance
-                    svROSNode.PUBSYNC.add(f"""\n\talways (all m1, m2 : Message | publish0[{out.signature}, m1] iff publish1[{out.signature}, m2])""")
-                    # OD signature.
-                    signature = f"""{comments}check {assertion_signature} {{always (all m0, m1 : Message | publish0[{out.signature}, m0] and publish1[{out.signature}, m1] implies m0 = m1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
-                elif isinstance(out, svState):
-                    signature = f"""{comments}check {assertion_signature} {{always (T1.{out.name.lower()}.1 = T2.{out.name.lower()}.1)}} for 4 but {scope_message} Msg, 1..{scope_steps} steps"""
-                else: svException('ERROR...')
-                svROSNode.PROPT.append(signature)
-                tmp[out.name] = assertion_signature
-            signatures[topic_name] = tmp
-        return signatures
-
     @classmethod
     def observable_determinism(cls):
         if cls.NODES is {}: raise svException("No nodes found, can not process handling of topic behaviour.")
-        signatures = []
-        for property_check in cls.PROPT[::-1]:
-            # if property_check[0].startswith('OD'):
-            signatures.append(property_check)
         # PUBLIC STATE...
+        public = list(filter(lambda node: node.enclave.name == '/public', cls.NODES.values()))
         public_event_synchronization = f"""// Public-Event Synchronization:\nfact public_event_synchronization {{"""
-        for public_sync in cls.PUBSYNC:
-            public_event_synchronization += public_sync
+        for unsecured in public:
+            public_event_synchronization += f"""\n\talways ({unsecured.predicate.signature}[T1] iff {unsecured.predicate.signature}[T2])"""
+        for sync in cls.PUBSYNC:
+            public_event_synchronization += sync
         public_event_synchronization += f"""\n}}\n"""
-        return public_event_synchronization + '\n\n'.join(signatures)
+        return public_event_synchronization + '\n\n'.join(list(cls.OBSERVATIONS))
 
     @property
     def predicate(self):
@@ -581,16 +539,18 @@ class svROSNode(object):
     def connections_to_json(cls):
         connections = []
         for node in cls.NODES.values():
-            for con in node.connection:
-                for node_connected in node.connection[con]:
-                    if not ((con, node_connected.rosname, node.rosname) in connections or (con, node.rosname, node_connected.rosname) in connections): 
-                        connections.append((con, node.rosname, node_connected.rosname))
+            if node.connection:
+                for con in node.connection:
+                    for node_connected in node.connection[con]:
+                        if not ((con, node_connected.rosname, node.rosname) in connections or (con, node.rosname, node_connected.rosname) in connections): 
+                            connections.append((con, node.rosname, node_connected.rosname))
         return list(map(lambda con: {'relation': con[0], 'source': con[1], 'target': con[2]}, connections))
 
 class svState(object):
     STATES = {}
-    def __init__(self, name, default, values, private=False, isint=False):
-        self.name, self.values, self.private, self.isint = name, values, private, isint
+    def __init__(self, name, default, values, isint=False):
+        self.name, self.values, self.isint = name, values, isint
+        # self.private = private
         self.default, self.signature = self.values_signature(value=default), svState.signature(tag=name)
         svState.STATES[self.name] = self
     
@@ -616,12 +576,9 @@ class svState(object):
     def init_state(cls, name, values):
         # Grammar to parse states.
         grammar = """
-            sentence: one | two | three | four
-            one: PRIV INT NAME
-            two: INT NAME
-            three: PRIV NAME
-            four: NAME
-            PRIV:"priv"
+            sentence: one | two
+            one: INT NAME
+            two: NAME
             INT:"int"
             NAME:/(?!\s)[a-zA-Z0-9_\/\-.\:]+/
             %import common.WS
@@ -630,14 +587,12 @@ class svState(object):
         parser = Lark(grammar, start='sentence', ambiguity='explicit')
         if not parser.parse(str(name)): raise svException(f'Failed to parse state {str(name)}.')
         t      = parser.parse(name)
-        if t.children[0].data == "one":   private, isint = True, True
-        if t.children[0].data == "two":   private, isint = False, True
-        if t.children[0].data == "three": private, isint = True, False
-        if t.children[0].data == "four":  private, isint = False, False
+        if t.children[0].data == "one":   isint = True
+        if t.children[0].data == "two":   isint = False
         name = str(t.children[0].children[::-1][0])
         values  = values.split('/')
         default = values[0]
-        return cls(name=name, default=default, values=values, private=private, isint=isint)
+        return cls(name=name, default=default, values=values, isint=isint)
 
 """ 
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
@@ -650,7 +605,10 @@ class svROSEnclave(object):
             \_ path
             \_ profiles
     """
+    ALLOWED = {'/private', '/public'}
     def __init__(self, path, profiles):
+        if path not in self.ALLOWED:
+            raise svException('Enclaves are only set as either private or public!')
         self.name, self.profiles, self.signature = path, {}, self.abstract(tag=path)
         for profile in profiles:
             p = svROSProfile.init_profile(profile, enclave=self)
@@ -681,7 +639,7 @@ class svROSProfile(object):
         self.privileges = dict()
         self.advertise, self.subscribe, self.deny_advertise, self.deny_subscribe = can_advertise, can_subscribe, deny_advertise, deny_subscribe
         # ERROR if this function not defined: Some profiles have no corresponding node and vice-versa!!
-        self.signature, self.privileges, self.access  = self.abstract(tag=namespace + name), [], []
+        self.signature, self.privileges  = self.abstract(tag=namespace + name), []
         self.profile_privileges()
         # INDEX processing.
         svROSProfile.PROFILES[self.index] = self
@@ -722,25 +680,9 @@ class svROSProfile(object):
     def node(self):
         return self._node
 
-    # NEEDED FOR ALLOY DEFINITION
     @node.setter
-    def node(self, node):
-        if not isinstance(node, svROSNode):
-            raise svException('Failed to load node into profile.')
-        rosname = self.signature
-        # Process topic access.
-        if node.advertise:
-            for adv in node.advertise:
-                name, topic_type = adv.name, adv.type
-                # LOAD PRIVILEGE 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=name, method='access')
-                self.access.append(privilege)
-        if node.subscribe:
-            for sub in node.subscribe:
-                name, topic_type = sub.name, sub.type
-                # LOAD PRIVILEGE 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=name, method='access')
-                self.access.append(privilege)
+    def node(self, value):
+        self._node = value
     
     # ASIDE FROM NODE DEFINITION
     def profile_privileges(self):
@@ -767,17 +709,13 @@ class svROSProfile(object):
 
     def profile_declaration(self):
         privileges = None if (self.privileges == []) else ' + '.join(list(map(lambda p: p.signature, self.privileges)))
-        access     = None if (self.access == [])     else ' + '.join(list(map(lambda p: p.signature, self.access)))
         if not privileges: privileges = "no privileges"
         else:              privileges = f"privileges = {privileges}"
-        if not access:     access     = "no access"
-        else:              access     = f"access = {access}"
-        return f"""one sig profile{self.signature} extends Profile {{}} {{{privileges}\n{access}}}\n"""
+        return f"""one sig profile{self.signature} extends Profile {{}} {{{privileges}}}\n"""
 
     def privilege_declaration(self):
         _str_return_ = ""
-        privileges   = list(set(self.privileges + self.access))
-        for privilege in privileges: _str_return_ += str(privilege)
+        for privilege in self.privileges: _str_return_ += str(privilege)
         return _str_return_
 
     def __str__(self):
@@ -805,7 +743,7 @@ class svROSObject(object):
 
 class svROSPrivilege(object):
     PRIVILEGES       = {'Advertise', 'Subscribe'}
-    METHODS          = {'Privilege', 'Access', 'Deny'}
+    METHODS          = {'Privilege', 'Deny'}
     PRIVILEGES_SET   = {}
     def __init__(self, index, signature, role, rosname, rule):
         self.signature       = self.abstract(tag=signature)
@@ -848,28 +786,29 @@ class svExecution(object):
         t1 = cls(name='Trace_1', signature='T1')
         t2 = cls(name='Trace_2', signature='T2')
         # Convert TO ALLOY. 
-        _str_  = f"""abstract sig Execution {{\n\tvar inbox: Channel -> (seq Message),\n\t"""
+        _str_  = f"""abstract sig Execution {{\n\tvar inbox: Channel -> (seq Message)"""
         # EXPLAINING INT VALUES
-        _str_ += """// Int related to each state indicates that if had occurred any change: 0 states no change, 1 states change"""
+        # _str_ += """// Int related to each state indicates that if had occurred any change: 0 states no change, 1 states change"""
         states, only_one_per_state = '', [] # only one with 1 at time. 1 corresponds to current value...
         nop = set()
         # Predicate SYSTEM
-        system_str   = f"""pred system [t : Execution] {{\n\t// Clear public states from holding a value for long."""
+        system_str   = f"""pred system [t : Execution] {{"""
         # PUBLIC SYNCH
         public_state = f"""fact public_state_equivalence {{"""
         for state in svState.STATES:
             state = svState.STATES[state]
             states += str(state)
-            if state.private:
-                _str_ += f""",\n\tvar {state.name.lower()}: one {state.signature}"""
-            if not state.private: 
-                # Execution signature:
-                _str_ += f""",\n\tvar {state.name.lower()}: {state.signature} lone -> (0 + 1)"""
-                only_one_per_state.append(f"""one {state.name.lower()}""")
-                # Aside from Execution Signature:
-                system_str   += f"""\n\tall s : {state.signature} | t.{state.name.lower()} = s->1 implies t.{state.name.lower()}' = s->0"""
-                # Public state equivalence?
-                public_state += f"""\n\tExecution.{state.name.lower()}) = {state.default}->0\n\talways (some T1.{state.name.lower()}.1 iff some T2.{state.name.lower()}.1)"""
+            _str_ += f""",\n\tvar {state.name.lower()}: one {state.signature}"""
+            # if state.private:
+            #     _str_ += f""",\n\tvar {state.name.lower()}: one {state.signature}"""
+            # if not state.private: 
+            #     # Execution signature:
+            #     _str_ += f""",\n\tvar {state.name.lower()}: {state.signature} lone -> (0 + 1)"""
+            #     only_one_per_state.append(f"""one {state.name.lower()}""")
+            #     # Aside from Execution Signature:
+            #     system_str   += f"""\n\tall s : {state.signature} | t.{state.name.lower()} = s->1 implies t.{state.name.lower()}' = s->0"""
+            #     # Public state equivalence?
+            #     public_state += f"""\n\tExecution.{state.name.lower()}) = {state.default}->0\n\talways (some T1.{state.name.lower()}.1 iff some T2.{state.name.lower()}.1)"""
             nop.add(state.name.lower())
         public_state += f"""\n}}\n"""
         _str_ += f"""\n}}""" # {{ {' and '.join(only_one_per_state)} }} \n"""
@@ -882,4 +821,4 @@ class svExecution(object):
         from svLanguage import svPredicate
         system_str += f"""\n\t// System executions.\n\t{'[t] or '.join(svPredicate.NODE_BEHAVIOURS.keys())}[t]\n}}"""
         _str_ += f"""one sig {t1.signature}, {t2.signature} extends Execution {{}}\n"""
-        return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str + '\n// Public-State Equivalence and Synchronization:\n' + public_state 
+        return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str # '\n// Public-State Equivalence and Synchronization:\n' + public_state 

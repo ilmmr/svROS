@@ -59,12 +59,14 @@ class svAnalyzer(object):
         else: return True
 
     def alloy_ros(self):
-        counter, file_path = False, f'{self.EXTRACTOR.PROJECT_DIR}models/ros-concrete.als'
+        counter, file_path = list(), f'{self.EXTRACTOR.PROJECT_DIR}models/ros-concrete.als'
         if not os.path.isfile(path=file_path): return False
         # CHECK PROPERTIES if it holds counter-examples
         properties = re.findall(r'check\s+(.*?)\s+\{', open(file_path, 'r').read())
         properties = list(map(lambda check: check.strip(), properties))
-        if counter:
+        # EXECUTE JAVA
+        counter    = svAnalyzer.execute_java(properties=properties, file=file_path)
+        if counter == []:
             print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every property seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
         else:
             print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Every property seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
@@ -81,7 +83,7 @@ class svAnalyzer(object):
             if options[choice] == r'(?i)Exit':
                 break
             else:
-                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'{options[choice]}.html'
+                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/svROS_models/{options[choice]}.html'
                 viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
                 viz.run_file(type='OD', file=file)
                 print(svInfo(f'Application OD counter-example is being displayed on your browser'), end='')
@@ -107,6 +109,7 @@ class svAnalyzer(object):
         model += svROSNode.observable_determinism()
         model += '\n/* === OBSERVABLE DETERMINISM === */'
         # with open(file_path, 'w+') as ros: ros.write(model)
+        print(model)
         return file_path
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
@@ -118,14 +121,15 @@ class svAnalyzer(object):
         else: return True
     
     def alloy_sros(self):
-        counter, file_path = False, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
+        counter, file_path = list(), f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
         if not os.path.isfile(path=file_path): return False
         properties = ['valid_configuration']
-        counter = svAnalyzer.execute_java(properties=properties, file=file_path)
-        if counter:
-            print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Every property seem to hold for the given configuration:\n\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")} \n\t‣‣ Every profile corresponding node object call is within its privileges {color.color("GREEN", "✅")}'))
+        # EXECUTE JAVA
+        counter    = svAnalyzer.execute_java(properties=properties, file=file_path)
+        if counter == []:
+            print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Every property seem to hold for the given configuration:\n\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")}'))
         else:
-            print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Not every property seem to hold for the given configuration.'))
+            print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Failed to verify SROS configuration.'))
             # RUN VISUALIZER
             options = ['View SROS Counter-Example', 'Exit']
             choice = TerminalMenu(options).show()
@@ -139,14 +143,14 @@ class svAnalyzer(object):
 
     @staticmethod
     def execute_java(properties, file):
-        models_path = f'/usr/generated_models'
-        returning   = []
+        counter, models_path = list(), f'/tmp/generated_models'
         for prop in properties:
-            javacmd = "java -jar generator/out/artifacts/generator_jar/generator.jar " + file + " " + prop
+            javacmd = "java -jar .svROS/bin/generator.jar " + file + " " + prop
             os.system(javacmd)
+            # Counter example created.
             if os.path.isfile(path=f'{models_path}/{prop}.xml'):
-                returning.append(prop)
-        return returning
+                counter.append(prop)
+        return counter
 
     def generate_sros_model(self, PROFILES, ENCLAVES, OBJECTS):
         model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
@@ -187,10 +191,12 @@ class svProjectExtractor:
 
     # Before Analyzing...
     def update_imported_data(self):
-        DATADIR = f'{self.PROJECT_DIR}/data'
+        DATADIR, OBJDIR = f'{self.PROJECT_DIR}/data', f'{self.PROJECT_DIR}/data/objects'
+        if not os.path.exists(OBJDIR):
+            os.makedirs(OBJDIR)
         # SAVE using PICKLE.
-        package_file, topic_file, node_file = open(f'{DATADIR}/Packages.obj', 'wb+'), open(f'{DATADIR}/Channels.obj', 'wb+'), open(f'{DATADIR}/Nodes.obj', 'wb+')
-        state, predicates, enclaves = open(f'{DATADIR}/States.obj', 'wb+'), open(f'{DATADIR}/Predicates.obj', 'wb+'), open(f'{DATADIR}/Enclaves.obj', 'wb+')
+        package_file, topic_file, node_file = open(f'{OBJDIR}/Packages.obj', 'wb+'), open(f'{OBJDIR}/Channels.obj', 'wb+'), open(f'{OBJDIR}/Nodes.obj', 'wb+')
+        state, predicates, enclaves = open(f'{OBJDIR}/States.obj', 'wb+'), open(f'{OBJDIR}/Predicates.obj', 'wb+'), open(f'{OBJDIR}/Enclaves.obj', 'wb+')
         pickle.dump(Package.PACKAGES, package_file, pickle.HIGHEST_PROTOCOL)
         pickle.dump(Topic.TOPICS, topic_file, pickle.HIGHEST_PROTOCOL)
         pickle.dump(svROSNode.NODES, node_file, pickle.HIGHEST_PROTOCOL)
@@ -254,75 +260,74 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
-        self.config, packages, nodes = config, list(set(config.get('packages'))), config.get('architecture')
+        self.config, packages, nodes, topics = config, list(set(config.get('packages'))), config.get('nodes'), config.get('channels')
         # ANALYSIS.
-        observable_determinism, types, states, analysing_nodes = config.get('analysis', {}).get('observable determinism'), config.get('analysis', {}).get('information flow').get('types'), config.get('analysis', {}).get('information flow').get('states'), config.get('analysis', {}).get('information flow').get('nodes') 
+        types, states, analysing_nodes = config.get('analysis', {}).get('verification').get('types'), config.get('analysis', {}).get('verification').get('states'), config.get('analysis', {}).get('verification').get('nodes') 
         # LOAD PICKLE.
         if not self.IMPORTED_DATA == {}: Node.NODES = self.IMPORTED_DATA['nodes']
         for package in packages: 
             Package.init_package_name(name=package, index=packages.index(package))
-        if not (nodes and observable_determinism):
+        if not nodes:
             raise svException(f'Failed to import config file of project.')
-        if not self.load_nodes_profiles(nodes=nodes, observable_determinism=observable_determinism, states=states):
+        if not self.load_nodes_profiles(nodes=nodes, topics=topics, states=states):
             raise svException(f'Failed to import config file of project.')
         if not self.load_analysis(nodes=analysing_nodes, types=types):
             raise svException(f'Failed to import config file of project.')
         return True
 
-    def load_nodes_profiles(self, nodes, observable_determinism, states):
+    def load_nodes_profiles(self, nodes, topics, states):
         if svROSEnclave.ENCLAVES is {}:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
         # Processing nodes.
+        if topics:
+            for topic in topics:
+                name, topic_type = topic, topics[topic]
+                Topic.init_topic(name=name, topic_type=topic_type)
         for node in nodes:
             name, node = node, nodes[node]
             unsecured, enclave = False, None
-            if node.get('enclave') == '' or node.get('enclave') == 'None': unsecured = True
-            elif node.get('enclave') not in svROSEnclave.ENCLAVES:
+            if node.get('enclave') not in svROSEnclave.ENCLAVES:
                 raise svException(f"{node.get('rosname')} enclave is not defined.")
             else:
                 enclave = svROSEnclave.ENCLAVES[node.get('enclave')]
-            if not unsecured:
-                rosname = node.get('rosname')
-                profile = enclave.profiles.get(rosname)
-                if not profile: raise svException(f"{node.get('rosname')} profile is not defined.")
-                node         = svROSNode(full_name=name, profile=profile, **node)
-                # Update NODE and PROFILE.
-                profile.node                   = node
-                node.advertise, node.subscribe = node.constrain_topics()
-            else: 
-                node['enclave'] = None
-                node            = svROSNode(full_name=name, profile=None, **node)
+            rosname = node.get('rosname')
+            profile = enclave.profiles.get(rosname)
+            if not profile: raise svException(f"{node.get('rosname')} profile is not defined.")
+            node         = svROSNode(full_name=name, profile=profile, **node)
+            # Update NODE and PROFILE.
+            profile.node                   = node
+            # node.advertise, node.subscribe = node.constrain_topics()
         if states:
             for state in states: svState.init_state(name=state, values=states[state])
-        for od in observable_determinism:
-            # PARSING OBSERVABLE DETERMINISM.
-            if not bool(re.match(pattern=r'(.*?)=>(.*?)', string=od)): raise svException(f"Failed to parse Observable Determinism rule.")
-            else: 
-                pattern = re.match(pattern=r'(.*?)=>(.*?)$', string=od)
-                un_node, od_output = pattern.groups()[0].strip(), pattern.groups()[1].strip()
-            # OD involving nodes.
-            un_node   = un_node[1:] if un_node.startswith('/') else un_node
-            if un_node not in svROSNode.NODES: 
-                raise svException(f"Unsecured node {un_node} is not defined.")
-            if not od_output.startswith('$'):
-                od_output = od_output[1:] if od_output.startswith('/') else od_output 
-                if od_output not in svROSNode.NODES:
-                    raise svException(f"Observable node {od_output} is not defined.")
-                od_output = svROSNode.NODES[od_output]
-                # Is it observable ?
-                if od_output.secure: raise svException(f"Node {od_output.rosname} is not observable, as it is secured.")
-            else:
-                if od_output[1:] not in svState.STATES:
-                    raise svException(f"Observable state {od_output} is not defined.")
-                od_output = svState.STATES[od_output[1:]]
-                if od_output.private: raise svException(f"State {od_output.name} is not observable, as it is private.")
-            # Parsing node...
-            node = svROSNode.NODES[un_node]
-            # Connections and NODE => OBSERVABLE
-            if node.secure: print(svWarning(f'Node is SROS secured, but its identified as an outsider to the determinism of the program.'))
-            if node not in svROSNode.OBSDT: 
-                svROSNode.OBSDT[node] = set()
-            svROSNode.OBSDT[node].add(od_output)
+        # for od in observable_determinism:
+        #     # PARSING OBSERVABLE DETERMINISM.
+        #     if not bool(re.match(pattern=r'(.*?)=>(.*?)', string=od)): raise svException(f"Failed to parse Observable Determinism rule.")
+        #     else: 
+        #         pattern = re.match(pattern=r'(.*?)=>(.*?)$', string=od)
+        #         un_node, od_output = pattern.groups()[0].strip(), pattern.groups()[1].strip()
+        #     # OD involving nodes.
+        #     un_node   = un_node[1:] if un_node.startswith('/') else un_node
+        #     if un_node not in svROSNode.NODES: 
+        #         raise svException(f"Unsecured node {un_node} is not defined.")
+        #     if not od_output.startswith('$'):
+        #         od_output = od_output[1:] if od_output.startswith('/') else od_output 
+        #         if od_output not in svROSNode.NODES:
+        #             raise svException(f"Observable node {od_output} is not defined.")
+        #         od_output = svROSNode.NODES[od_output]
+        #         # Is it observable ?
+        #         if od_output.secure: raise svException(f"Node {od_output.rosname} is not observable, as it is secured.")
+        #     else:
+        #         if od_output[1:] not in svState.STATES:
+        #             raise svException(f"Observable state {od_output} is not defined.")
+        #         od_output = svState.STATES[od_output[1:]]
+        #         if od_output.private: raise svException(f"State {od_output.name} is not observable, as it is private.")
+        #     # Parsing node...
+        #     node = svROSNode.NODES[un_node]
+        #     # Connections and NODE => OBSERVABLE
+        #     if node.secure: print(svWarning(f'Node is SROS secured, but its identified as an outsider to the determinism of the program.'))
+        #     if node not in svROSNode.OBSDT: 
+        #         svROSNode.OBSDT[node] = set()
+        #     svROSNode.OBSDT[node].add(od_output)
         # HANDLE class methods.
         svROSNode.handle_connections()  # Set connections up.
         svROSNode.observalDeterminism(scopes=self.scopes) # Observable determinism in Unsecured Nodes.
@@ -376,7 +381,7 @@ class svProjectExtractor:
     @property
     def scopes(self):
         scopes = self.config.get('analysis', {}).get('scope', {})
-        messages, steps = scopes.get('Message'), scopes.get('Steps') 
-        if not (messages and steps):
+        steps = scopes.get('Steps') 
+        if not steps:
             raise svException('Failed to retrieve scopes. Either Message or Steps scopes are not defined.')
         return scopes

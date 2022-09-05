@@ -7,8 +7,7 @@ abstract sig Enclave {
 } { some profiles }
 -- PROFILE --
 abstract sig Profile {
-	privileges: set Privilege,
-	access: set Privilege
+	privileges: set Privilege
 }
 -- PRIVILEGE: Can either be a SROS privilege or a ROS call. --
 abstract sig Privilege {
@@ -35,26 +34,9 @@ fun different_privileges : Profile -> Role -> Object {
 		}
 	}
 }
--- A profile must constrain its topic access to its privileges.
-pred rule_access_in_privileges [p : Profile] {
-	p.access in p.privileges
-}
-fun access_in_privileges : Profile -> Role -> Object {
-	{ p : Profile, r : Role, o : Object | 
-		some access : p.access {
-			access not in p.privileges and o = access.object and r = access.role
-		}
-	}
-}
 /* === ASSUMPTIONS === */
 
-assert valid_configuration_1 {
-	all p : Profile | rule_different_privileges[p]
-} check valid_configuration_1
-assert valid_configuration_2 {
-	all p : Profile | rule_access_in_privileges[p]
-} check valid_configuration_2
 assert valid_configuration {
-	all p : Profile | rule_access_in_privileges[p] and rule_different_privileges[p]
+	all p : Profile | rule_access_in_privileges[p]
 } check valid_configuration
 

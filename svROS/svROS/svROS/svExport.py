@@ -485,14 +485,18 @@ class svrosExport:
 
     # Retrieve to a YAML-based file
     def generate_config_file(self):
-        default_configuration = {'files': {'launch': self.launch, 'SROS': self.enclave_file}}
-        default_analysis = {'scope': {'Message': 8, 'Steps': 20}, 'information flow': {'types': Topic.list_of_types(), 'states': [None], 'nodes': Node.list_of_nodes()}, 'observable determinism': None}
-        return {'project': self.project, 'configurations': default_configuration, 'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'architecture': Node.process_config_file(), 'analysis': default_analysis }
+        default_configuration = {'project': self.project, 'launch': self.launch}
+        default_analysis = {'scope': {'Steps': 20}, 'information flow': {'types': Topic.list_of_types(), 'states': [None], 'nodes': Node.list_of_nodes()}}
+        tuple = Node.process_config_file()
+        return {'configurations': default_configuration, 'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': tuple[0], 'channels': tuple[1], 'analysis': default_analysis }
 
     # Retrieve to a JSON-based file
     def generate_data_file(self, DATADIR):
+        OBJDIR = f'{DATADIR}objects/'
+        if not os.path.exists(OBJDIR):
+            os.makedirs(OBJDIR)
         # SAVE using PICKLE.
-        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'wb+'), open(f'{DATADIR}Channels.obj', 'wb+'), open(f'{DATADIR}Nodes.obj', 'wb+')
+        package_file, topic_file, node_file = open(f'{OBJDIR}Packages.obj', 'wb+'), open(f'{OBJDIR}Channels.obj', 'wb+'), open(f'{OBJDIR}Nodes.obj', 'wb+')
         pickle.dump(Package.PACKAGES, package_file, pickle.HIGHEST_PROTOCOL)
         pickle.dump(Topic.TOPICS, topic_file, pickle.HIGHEST_PROTOCOL)
         pickle.dump(Node.NODES, node_file, pickle.HIGHEST_PROTOCOL)

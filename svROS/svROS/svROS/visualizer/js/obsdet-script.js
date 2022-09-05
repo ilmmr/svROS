@@ -1,5 +1,5 @@
-var instances = {{}}
-var slides = {{}}
+var instances = {{instances}}
+var slides = {{slides}}
 
 /* LOAD SLIDES */
 var dots = document.getElementById("steps-shower");
@@ -16,7 +16,6 @@ for (i=0; i<slides; i++) {
     // CREATE EACH GRAPH DIV
     var graph_div = document.createElement("div");
     graph_div.id  = `graph_${i}`
-    console.log(graph_div.id)
     graph_div.classList.add("display", "slide")
     display_graph.appendChild(graph_div)
     // LOAD cytoscape 
@@ -119,7 +118,7 @@ function plusDivs(n) {
   showDivs(slideIndex += n);
 }
 function currentDiv(n) {
-  showDivs(slideIndex = n);
+    showDivs(slideIndex = n);
 }
 function showDivs(n) {
   var i;

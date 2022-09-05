@@ -19,7 +19,7 @@ GRAMMAR = f"""
     reads_perf  : TOPIC THEN_OPERATOR "[" implication "]"
 
     implication : read (COMMA_OPERATOR read)*
-    read        : read_condition CONSEQUENCE_OPERATOR "{{" disjunction "}}"
+    read        : read_condition CONSEQUENCE_OPERATOR "{{" disjunction "}}" (ELSE_OPERATOR "{{" disjunction "}}")?
                 | disjunction
     
     read_condition   : read_condition_single
@@ -34,7 +34,9 @@ GRAMMAR = f"""
     conjunction      : [conjunction OR_OPERATOR] read_consequence
     read_consequence : ( TOPIC | STATE ) ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
     
-    publishes : TOPIC [ EQUAL_OPERATOR VALUE ]
+    publishes     : TOPIC [ EQUAL_OPERATOR publish_value ]
+    publish_value : VALUE
+                  | STATE
 
     alters           : [alters AND_OPERATOR] alters_condition
     alters_condition : STATE ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
@@ -52,6 +54,7 @@ GRAMMAR = f"""
     OR_OPERATOR          : "or"  | "++"
     AND_OPERATOR         : "and" | "&&"
     CONSEQUENCE_OPERATOR : "implies" | "=>"
+    ELSE_OPERATOR        : "else" | "/"
     
     EQUAL_OPERATOR   : "eql" | "="
     GREATER_OPERATOR : "gtr" | ">"
@@ -60,7 +63,7 @@ GRAMMAR = f"""
     INC_OPERATOR     : "add" | "+="
     DEC_OPERATOR     : "rmv" | "-="
 
-    MESSAGE_TOKEN    : "m"i
+    MESSAGE_TOKEN    : "msg"i
 
     VALUE     : /(?!=>)[a-zA-Z0-9_\/\-.\:]+/
     TOPIC     : /(?!\s)[a-zA-Z0-9_\/\-.\:]+/
@@ -162,15 +165,22 @@ class LanguageTransformer(Transformer):
         return Implication(conditions=children[0::2])
 
     def read(self, children):
-        disjunctions = DisjunctionConsequence(conditions=self.disj)
-        return ReadImplication(conditional=children[0], implication=disjunctions)
+        if hasattr(self, 'disj_implies'):
+            disjunctions      = DisjunctionConsequence(conditions=self.disj_implies)
+            more_disjunctions = DisjunctionConsequence(conditions=self.disj)
+        else:
+            disjunctions      = DisjunctionConsequence(conditions=self.disj)
+            more_disjunctions = None
+        return ReadImplication(conditional=children[0], implication=disjunctions, denial=more_disjunctions)
 
     def disjunction(self, children):
         conjunctions = ConjunctionConsequence(conditions=self.conj)
         if children[1] is None:
-            self.disj  = [conjunctions]
+            if hasattr(self, 'disj'): 
+                self.disj_implies = self.disj.copy()
+            self.disj = [conjunctions]
         else:
-            self.conj += [conjunctions]
+            self.disj += [conjunctions]
 
     def conjunction(self, children):
         if children[1] is None: 
@@ -203,9 +213,11 @@ class LanguageTransformer(Transformer):
     def publishes(self, children):
         if children.__len__() > 3: raise svException("")
         entity = children[0].value
-        if children.__len__() > 1: value = children[::-1][0]
-        else: value = None
-        publish = Publish(entity=entity, value=value)
+        if children[1] is not None: 
+            value = children[::-1][0].children[0]
+            type, value = value.type, value.value
+        else: value, type = None, None
+        publish = Publish(entity=entity, value=value, type=type)
         self.OBJECTS.add(publish)
         return publish
 
@@ -285,13 +297,15 @@ class Implication(object):
 
 class ReadImplication(object):
 
-    def __init__(self, conditional, implication):
-        self.conditional, self.implication = conditional, implication
+    def __init__(self, conditional, implication, denial=None):
+        self.conditional, self.implication, self.denial = conditional, implication, denial
     
     def __alloy__(self, channel):
         if self.conditional is None:
             return f'{self.implication.__alloy__(channel=channel)}'
-        return f'{self.conditional.__alloy__(channel=channel)} implies {{ {self.implication.__alloy__(channel=channel)} }}'
+        if self.denial is None:
+            return f'{self.conditional.__alloy__(channel=channel)} implies {{ {self.implication.__alloy__(channel=channel)} }}'
+        return f'{self.conditional.__alloy__(channel=channel)} implies {{ {self.implication.__alloy__(channel=channel)} }} else {{ {self.denial.__alloy__(channel=channel)} }}'
 
 class DisjunctionConsequence(object):
     
@@ -397,18 +411,23 @@ class Read(object):
 
 class Publish(object):
 
-    def __init__(self, entity, value=None):
-        try:
-            channel = Topic.TOPICS[entity]
-            if value not in channel.message_type.value.values: raise svException(f"Channel value {value} does not exist!")
-        except AttributeError as e : raise svException(f'{e}')
-        self.entity, self.object, self.value = entity, channel, value
+    def __init__(self, entity, value=None, type=None):
+        channel = Topic.TOPICS[entity]
+        if type == "VALUE":
+            try:
+                if value not in channel.message_type.value.values: raise svException(f"Channel value {value} does not exist!")
+            except AttributeError as e : raise svException(f'{e}')
+        elif type == "STATE":
+            value = value[1:]
+        self.entity, self.object, self.value, self.type = entity, channel, value, type
 
     def __alloy__(self):
         channel = self.object
         if self.value is None:
             return f"some m : Message | t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], m]"
-        return f"some m : Message | m = {self.value} implies t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], m]"
+        if self.type == "VALUE":
+            return f"some m : Message | m = {self.value} implies t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], m]"
+        return f"t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], t.{value}']"
 
 class Alter(object):
 

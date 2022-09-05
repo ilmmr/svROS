@@ -43,13 +43,9 @@ class svAlloyPredicate(object):
         if variables is None: variables = svState.STATES.values()
         else: variables = list(filter(lambda state: state not in variables, svState.STATES.values()))
         for state in variables: 
-            _str_ += f"""\n\tsome t.{state.name.lower()}.1 implies t.{state.name.lower()}' = (t.{state.name.lower()}.1)->0 else t.{state.name.lower()}' = t.{state.name.lower()}"""
+            # _str_ += f"""\n\tsome t.{state.name.lower()}.1 implies t.{state.name.lower()}' = (t.{state.name.lower()}.1)->0 else t.{state.name.lower()}' = t.{state.name.lower()}"""
+            _str_ += f"""\n\tt.{state.name.lower()}' = t.{state.name.lower()}"""
         return _str_
-
-class svProperty(object):
-    """
-        Each Node behaviour => svProperty
-    """
 
 class svPredicate(object):
     """
