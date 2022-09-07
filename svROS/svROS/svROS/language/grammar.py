@@ -5,9 +5,12 @@ from tools.InfoHandler import svException, svWarning
 GRAMMAR = f"""
 
     axiom : REQUIRES_TOKEN condition 
-          | READS_TOKEN reads 
-          | PUBLISHES_TOKEN publishes 
-          | ALTERS_TOKEN alters
+          | READS_TOKEN reads conditional?
+          | PUBLISHES_TOKEN publishes conditional?
+          | ALTERS_TOKEN alters conditional?
+    
+    conditional : IF_OPERATOR  condition
+                | IFF_OPERATOR condition
 
     condition  : [condition AND_OPERATOR] cond
     cond       : ( NO_OPERATOR | SOME_OPERATOR ) ( TOPIC | PREDICATE | evaluation )
@@ -48,6 +51,9 @@ GRAMMAR = f"""
 
     NO_OPERATOR     : "no" | "not"
     SOME_OPERATOR   : "some" | "exists"
+
+    IF_OPERATOR     : "if"
+    IFF_OPERATOR    : "iff"
 
     COMMA_OPERATOR       : ";" | ","
     THEN_OPERATOR        : "then" | "~"
@@ -129,8 +135,18 @@ class LanguageTransformer(Transformer):
         self.OBJECTS = set()
 
     def axiom(self, children):
-        if self.OBJECTS.__len__() == 1: return next(iter(self.OBJECTS))
-        else: return MultipleConditions(conditions=list(self.OBJECTS))
+        if self.OBJECTS.__len__() == 1: object = next(iter(self.OBJECTS))
+        else: object = MultipleConditions(conditions=list(self.OBJECTS))
+        if children.__len__() > 2:
+            conditional = children[2]
+            if conditional[0] == "if":
+                object = IfConditional(pre=object, conditional=conditional[1])
+            if conditional[0] == "iff":
+                object = IffConditional(pre=object, conditional=conditional[1])
+        return object
+
+    def conditional(self, children):
+        return (children[0].value, children[1])
 
     # CONDITIONAL
     def evaluation_cond(self, children):
@@ -450,3 +466,19 @@ class Alter(object):
         if not state.isint:
             return f" else (some st : {state.signature} - {value} | t.{state.name.lower()}' = st->1)"
         return f" else t.{state.name.lower()}' = (t.{state.name.lower()}.0)->1"
+
+class IfConditional(object):
+
+    def __init__(self, pre, conditional):
+        self.pre, self.conditional = pre, conditional
+
+    def __alloy__(self):
+        return f'({self.conditional.__alloy__()}) implies ({self.pre.__alloy__()})'
+
+class IffConditional(object):
+
+    def __init__(self, pre, conditional):
+        self.pre, self.conditional = pre, conditional
+
+    def __alloy__(self):
+        return f'({self.pre.__alloy__()}) iff ({self.conditional.__alloy__()})'
