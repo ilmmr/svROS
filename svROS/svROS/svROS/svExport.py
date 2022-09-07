@@ -485,10 +485,9 @@ class svrosExport:
 
     # Retrieve to a YAML-based file
     def generate_config_file(self):
-        default_configuration = {'project': self.project, 'launch': self.launch}
-        default_analysis = {'scope': {'Steps': 20}, 'information flow': {'types': Topic.list_of_types(), 'states': [None], 'nodes': Node.list_of_nodes()}}
+        default_configuration = {'project': self.project, 'launch': self.launch, 'analysis': {'type': 'OD', 'steps': 20}}
         tuple = Node.process_config_file()
-        return {'configurations': default_configuration, 'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': tuple[0], 'channels': tuple[1], 'analysis': default_analysis }
+        return {'configurations': default_configuration, 'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': tuple[0], 'channels': tuple[1], 'types': Topic.list_of_types(), 'states': [None] }
 
     # Retrieve to a JSON-based file
     def generate_data_file(self, DATADIR):

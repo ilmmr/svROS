@@ -467,16 +467,17 @@ class svRUN:
         # Loading pre-existing data:
         existing_data     = self.load_pickle_files()
         project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
-        if not (project_extractor.extract_sros() and project_extractor.extract_config()):
-            raise svException('Could not initiate running of project.')
-        project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
-        if not (project_analyzer.security_verification() and project_analyzer.ros_verification()):
-            raise svException('Could not initiate running of project => LAUNCHER FAILED.')
-        # UPDATE IMPORTED DATA
-        if not project_extractor.update_imported_data():
-            raise svException('Failed to update data on launching.')
-        # Feedback reporting and information
-        print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed. Make sure to run: {color.color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
+        print(svInfo(f'Enclaves paths can be defined as the user intends. However, path "/public" is restricted to nodes considered as non-trusted!'))
+        time.sleep(1)
+        if project_extractor.extract_sros() and project_extractor.extract_config():
+            project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
+            if not (project_analyzer.security_verification() and project_analyzer.ros_verification()):
+                raise svException('Could not initiate running of project => LAUNCHER FAILED.')
+            # UPDATE IMPORTED DATA
+            if not project_extractor.update_imported_data():
+                raise svException('Failed to update data on launching.')
+            # Feedback reporting and information
+            print(svInfo(f'Project {self.project.capitalize()} successfully generated {color.color("BOLD", "Alloy")} files (SROS and ROS), ready to be analyzed. Make sure to run: {color.  color("UNDERLINE", f"svROS analyze -p {self.project}")}!'))
         print(svInfo(f'Application architecture was succefully created.'))
         time.sleep(1)
         options = ["View Application Architecture", "Exit"]

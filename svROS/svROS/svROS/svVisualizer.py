@@ -76,10 +76,10 @@ class SecurityInstanceParser(object):
         tree = ET.parse(file)
         root = tree.getroot()
         rule = root.find('.//skolem[@label="$this/different_privileges"]').findall('./tuple')
-        if rule1 == []:
+        if rule == []:
             return None
         profiles_states_json, edges = dict(), dict()
-        for tup in rule1:
+        for tup in rule:
             profile, role, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), tup.findall('./atom')[1].get('label').split('$')[0], self.remove_signature(value=tup.findall('./atom')[2].get('label').split('$')[0].lower())
             # PROCESS TO JSON
             profiles_states_json[f'obj_{object}_allow'] = {'id': f'obj_{object}_allow', 'name': object,  'type': 'object', 'rule': 'Allow'}

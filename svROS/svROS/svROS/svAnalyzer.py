@@ -108,8 +108,7 @@ class svAnalyzer(object):
         model += '\n/* === NODE BEHAVIOUR === */\n\n/* === OBSERVABLE DETERMINISM === */\n'
         model += svROSNode.observable_determinism()
         model += '\n/* === OBSERVABLE DETERMINISM === */'
-        # with open(file_path, 'w+') as ros: ros.write(model)
-        print(model)
+        with open(file_path, 'w+') as ros: ros.write(model)
         return file_path
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
@@ -166,7 +165,7 @@ class svAnalyzer(object):
         model += '/* === PROFILES === */\n\n/* === OBJECTS === */\n'
         model += ''.join(list(map(lambda obj: str(OBJECTS[obj]), OBJECTS)))
         model += '/* === OBJECTS === */'
-        # with open(file_path, 'w+') as sros: sros.write(model)
+        with open(file_path, 'w+') as sros: sros.write(model)
         return file_path
 
 "Main exporter parser from current project's directory files: SROS and configuration file"
@@ -262,80 +261,27 @@ class svProjectExtractor:
         config = safe_load(stream=open(config_file, 'r'))
         self.config, packages, nodes, topics = config, list(set(config.get('packages'))), config.get('nodes'), config.get('channels')
         # ANALYSIS.
-        types, states, analysing_nodes = config.get('analysis', {}).get('verification').get('types'), config.get('analysis', {}).get('verification').get('states'), config.get('analysis', {}).get('verification').get('nodes') 
+        types, states = config.get('types', {}), config.get('states', {})
         # LOAD PICKLE.
         if not self.IMPORTED_DATA == {}: Node.NODES = self.IMPORTED_DATA['nodes']
         for package in packages: 
             Package.init_package_name(name=package, index=packages.index(package))
         if not nodes:
             raise svException(f'Failed to import config file of project.')
-        if not self.load_nodes_profiles(nodes=nodes, topics=topics, states=states):
-            raise svException(f'Failed to import config file of project.')
-        if not self.load_analysis(nodes=analysing_nodes, types=types):
-            raise svException(f'Failed to import config file of project.')
+        if not self.load_nodes_profiles(nodes=nodes, topics=topics, states=states, types=types):
+            return False
         return True
 
-    def load_nodes_profiles(self, nodes, topics, states):
+    def load_nodes_profiles(self, nodes, topics, states, types):
         if svROSEnclave.ENCLAVES is {}:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
-        # Processing nodes.
+        # Processing channels and types.
         if topics:
             for topic in topics:
                 name, topic_type = topic, topics[topic]
                 Topic.init_topic(name=name, topic_type=topic_type)
-        for node in nodes:
-            name, node = node, nodes[node]
-            unsecured, enclave = False, None
-            if node.get('enclave') not in svROSEnclave.ENCLAVES:
-                raise svException(f"{node.get('rosname')} enclave is not defined.")
-            else:
-                enclave = svROSEnclave.ENCLAVES[node.get('enclave')]
-            rosname = node.get('rosname')
-            profile = enclave.profiles.get(rosname)
-            if not profile: raise svException(f"{node.get('rosname')} profile is not defined.")
-            node         = svROSNode(full_name=name, profile=profile, **node)
-            # Update NODE and PROFILE.
-            profile.node                   = node
-            # node.advertise, node.subscribe = node.constrain_topics()
-        if states:
-            for state in states: svState.init_state(name=state, values=states[state])
-        # for od in observable_determinism:
-        #     # PARSING OBSERVABLE DETERMINISM.
-        #     if not bool(re.match(pattern=r'(.*?)=>(.*?)', string=od)): raise svException(f"Failed to parse Observable Determinism rule.")
-        #     else: 
-        #         pattern = re.match(pattern=r'(.*?)=>(.*?)$', string=od)
-        #         un_node, od_output = pattern.groups()[0].strip(), pattern.groups()[1].strip()
-        #     # OD involving nodes.
-        #     un_node   = un_node[1:] if un_node.startswith('/') else un_node
-        #     if un_node not in svROSNode.NODES: 
-        #         raise svException(f"Unsecured node {un_node} is not defined.")
-        #     if not od_output.startswith('$'):
-        #         od_output = od_output[1:] if od_output.startswith('/') else od_output 
-        #         if od_output not in svROSNode.NODES:
-        #             raise svException(f"Observable node {od_output} is not defined.")
-        #         od_output = svROSNode.NODES[od_output]
-        #         # Is it observable ?
-        #         if od_output.secure: raise svException(f"Node {od_output.rosname} is not observable, as it is secured.")
-        #     else:
-        #         if od_output[1:] not in svState.STATES:
-        #             raise svException(f"Observable state {od_output} is not defined.")
-        #         od_output = svState.STATES[od_output[1:]]
-        #         if od_output.private: raise svException(f"State {od_output.name} is not observable, as it is private.")
-        #     # Parsing node...
-        #     node = svROSNode.NODES[un_node]
-        #     # Connections and NODE => OBSERVABLE
-        #     if node.secure: print(svWarning(f'Node is SROS secured, but its identified as an outsider to the determinism of the program.'))
-        #     if node not in svROSNode.OBSDT: 
-        #         svROSNode.OBSDT[node] = set()
-        #     svROSNode.OBSDT[node].add(od_output)
-        # HANDLE class methods.
-        svROSNode.handle_connections()  # Set connections up.
-        svROSNode.observalDeterminism(scopes=self.scopes) # Observable determinism in Unsecured Nodes.
-        return True
-
-    def load_analysis(self, nodes, types):
-        if svROSNode.NODES is {}:
-            raise svException("No nodes found, loading is yet to be launched.")
+        if set(map(lambda type: type.name, MessageType.TYPES.values())) < set(types.keys()):
+            raise svException(f'Failed to load some Messages Types. Please defined every type related to each channel.')
         for t in types:
             tt, mtype_temp = t, types[t].split('/')
             pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))
@@ -349,39 +295,69 @@ class svProjectExtractor:
             mtype       = MessageType.TYPES[t]
             # SET isint.
             mtype.isint = isint
-            mtype.value.values = mtype_temp    
-        # LOAD PROPERTIES.
-        for n in nodes:
-            # PARSING.
-            grammar = """
-            sentence: one | two
-            one: NAME "as" NAME
-            two: NAME
-            NAME:/(?!\s)[a-zA-Z0-9_\/\-.\:]+/
-            %import common.WS
-            %ignore WS
-            """
-            parser, key = Lark(grammar, start='sentence', ambiguity='explicit'), n
-            if not parser.parse(n): raise svException(f'Failed to parse node behaviour {n}.')
-            t      = parser.parse(n)
-            if t.children[0].data == "one":
-                n, signature = n.split('as')[0].strip(), n.split('as')[1].strip()
+            mtype.value.values = mtype_temp  
+        # Processing nodes.
+        for node in nodes:
+            name, node = node, nodes[node]            
+            unsecured, enclave = False, None
+            if node.get('enclave') not in svROSEnclave.ENCLAVES:
+                raise svException(f"{node.get('rosname')} enclave is not defined. Enclaves available: {list(map(lambda enclave: enclave.name, svROSEnclave.ENCLAVES.values()))}.")
             else:
-                signature = n
-            # ...
-            if n not in svROSNode.NODES: raise svException(f"Node {n} failed to be found.")
-            node            = svROSNode.NODES[n]
-            predicate       = svPredicate.init_predicate(signature=signature, node=node, properties=nodes[key])
-            # Node predicate association.
-            if node.predicate is not None:
-                raise svException(f"Node {node.rosname} has two different predicates mentioned. Please remove 1!")
-            node.predicate  = predicate
+                enclave = svROSEnclave.ENCLAVES[node.get('enclave')]
+            rosname = node.get('rosname')
+            profile = enclave.profiles.get(rosname)
+            if not profile: raise svException(f"{node.get('rosname')} profile is not defined in enclave {enclave.name}.")
+            # PROPERTIES...
+            behaviour = list(filter(lambda key: key.startswith('behaviour'), node.keys()))[0]
+            if behaviour is None: raise svException(f'Must defined some node behaviour to {name}!')
+            properties = node.get(behaviour)
+            # Update NODE and PROFILE.
+            node         = svROSNode(full_name=name, profile=profile, **node)
+            profile.node                   = node
+            # PROPERTIES...
+            if not self.node_behaviour(node=node, behaviour=behaviour, properties=properties):
+                raise svException(f'Failed to properties from {node.rosname}.')
+        svROSNode.handle_connections()  # Set connections up.
+        steps, type = self.scopes
+        if type.lower() == "od" or type.lower() == "observable determinism":
+            # Observable determinism in Unsecured Nodes.
+            if not svROSNode.observalDeterminism(steps=steps): 
+                return False
+        if states:
+            for state in states: svState.init_state(name=state, values=states[state])
+        return True
+
+    def node_behaviour(self, node, behaviour, properties): 
+        # LOAD PROPERTIES ==> PARSING...
+        grammar = """
+        sentence: one | two
+        one: "behaviour" "as" NAME
+        two: "behaviour"
+        NAME:/(?!\s)[a-zA-Z0-9_\/\-.\:]+/
+        %import common.WS
+        %ignore WS
+        """
+        parser, key = Lark(grammar, start='sentence', ambiguity='explicit'), behaviour
+        if not parser.parse(behaviour): raise svException(f'Failed to parse node behaviour {node.rosname}.')
+        t      = parser.parse(behaviour)
+        if t.children[0].data == "one":
+            signature = behaviour.split('as')[1].strip()
+        else:
+            signature = node.rosname[1:]
+        # ...
+        predicate       = svPredicate.init_predicate(signature=signature, node=node, properties=properties)
+        # Node predicate association.
+        if node.predicate is not None:
+            raise svException(f"Node {node.rosname} has two different predicates mentioned. Please remove 1!")
+        node.predicate  = predicate
         return True
 
     @property
     def scopes(self):
-        scopes = self.config.get('analysis', {}).get('scope', {})
-        steps = scopes.get('Steps') 
+        steps = self.config.get('configurations').get('analysis', {}).get('steps', {})
+        type  = self.config.get('configurations').get('analysis', {}).get('type', {})
+        if not type:
+            raise svException('Failed to retrieve type of analysis: Define type in configurations/analysis area.')
         if not steps:
-            raise svException('Failed to retrieve scopes. Either Message or Steps scopes are not defined.')
-        return scopes
+            raise svException('Failed to retrieve scopes. Steps scopes are not defined.')
+        return steps, type

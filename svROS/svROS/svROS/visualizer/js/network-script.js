@@ -57,7 +57,7 @@ var enclaves = [];
 nodes.forEach(node => {
     var id =  node['rosname']
     var enclave = node['enclave']
-    if (enclave == '/private') {
+    if (enclave != '/public') {
         if (!enclaves.includes(enclave)) {
             cy.add({ group: 'nodes', data: { id: enclave }});
             enclaves.push(node['enclave'])
