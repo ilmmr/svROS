@@ -230,6 +230,8 @@ class svProjectExtractor:
         return True
 
     def validate_sros(self, sros):
+        if not os.path.isfile(path=sros):
+            raise svException(f'Policies file not found! Please define a {color.color("BOLD", "policies.xml")} file under project {self.project.capitalize()}\'s directory.')
         sch      = f'{SCHEMAS}sros/sros.xsd'
         schema   = xmlschema.XMLSchema(sch)
         template = ET.parse(sros).getroot()
@@ -296,6 +298,8 @@ class svProjectExtractor:
             # SET isint.
             mtype.isint = isint
             mtype.value.values = mtype_temp  
+        if states:
+            for state in states: svState.init_state(name=state, values=states[state])
         # Processing nodes.
         for node in nodes:
             name, node = node, nodes[node]            
@@ -323,8 +327,6 @@ class svProjectExtractor:
             # Observable determinism in Unsecured Nodes.
             if not svROSNode.observalDeterminism(steps=steps): 
                 return False
-        if states:
-            for state in states: svState.init_state(name=state, values=states[state])
         return True
 
     def node_behaviour(self, node, behaviour, properties): 

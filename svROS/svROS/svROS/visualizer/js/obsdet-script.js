@@ -24,6 +24,8 @@ for (i=0; i<slides; i++) {
         container: document.getElementById(`graph_${i}`), // container to render in
         elements: [],
         boxSelectionEnabled: false,
+        autounselectify: true,
+        wheelSensitivity: 0.1,
 
         style: [ 
 
@@ -106,7 +108,7 @@ for (i=0; i<slides; i++) {
         cy.add({ group: 'edges', selectable: true, data: data})
     })
     // CONFIGURATIONS
-    cy.userZoomingEnabled( false );
+    // cy.userZoomingEnabled( false );
     cy.nodes().forEach(function( n ){ n.data('height', n.width()); });
     cy.layout({ name: 'cose-bilkent' }).run();
 }

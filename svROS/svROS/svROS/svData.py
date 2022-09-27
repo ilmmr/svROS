@@ -417,7 +417,7 @@ class svROSNode(object):
         for topic in cls.OBSERVATIONS:
             if not isinstance(topic, Topic):
                 raise svException(f'{topic.signature} is not a topic!')
-            svROSNode.PUBSYNC.add(f"""\n\talways (all m0, m1 : Message | publish0[{topic.signature}, m0] iff publish1[{topic.signature}, m1])""")
+            svROSNode.PUBSYNC.add(f"""\n\talways ((some m0 : Message | publish0[{topic.signature}, m0]) iff (some m1 : Message | publish1[{topic.signature}, m1]))""")
             observations.add(f'check {{always (all m0, m1 : Message | publish0[{topic.signature}, m0] and publish1[{topic.signature}, m1] implies m0 = m1)}} for 4 but 1..{steps} steps')
         cls.OBSERVATIONS = observations
         return True
@@ -478,7 +478,9 @@ class svROSNode(object):
         public = list(filter(lambda node: node.secure == False, cls.NODES.values()))
         public_event_synchronization = f"""// Public-Event Synchronization:\nfact public_event_synchronization {{"""
         for unsecured in public:
-            public_event_synchronization += f"""\n\talways ({unsecured.predicate.signature}[T1] iff {unsecured.predicate.signature}[T2])"""
+            if unsecured.advertise:
+                for adv in unsecured.advertise:
+                    public_event_synchronization += f"""\n\talways (all m : Message | publish0[{adv.signature}, m] iff publish1[{adv.signature}, m])"""
         for sync in cls.PUBSYNC:
             public_event_synchronization += sync
         public_event_synchronization += f"""\n}}\n"""
@@ -522,9 +524,8 @@ class svROSNode(object):
 
 class svState(object):
     STATES = {}
-    def __init__(self, name, default, values, isint=False):
-        self.name, self.values, self.isint = name, values, isint
-        # self.private = private
+    def __init__(self, name, default, values, isint=False, private=False):
+        self.name, self.values, self.isint, self.private = name, values, isint, private
         self.default, self.signature = self.values_signature(value=default), svState.signature(tag=name)
         svState.STATES[self.name] = self
     
@@ -550,10 +551,13 @@ class svState(object):
     def init_state(cls, name, values):
         # Grammar to parse states.
         grammar = """
-            sentence: one | two
-            one: INT NAME
-            two: NAME
+            sentence: one | two | three | four
+            one: NAME
+            two: INT NAME
+            three: PUB NAME
+            four: PUB INT NAME
             INT:"int"
+            PUB:"public"
             NAME:/(?!\s)[a-zA-Z0-9_\/\-.\:]+/
             %import common.WS
             %ignore WS
@@ -561,12 +565,14 @@ class svState(object):
         parser = Lark(grammar, start='sentence', ambiguity='explicit')
         if not parser.parse(str(name)): raise svException(f'Failed to parse state {str(name)}.')
         t      = parser.parse(name)
-        if t.children[0].data == "one":   isint = True
-        if t.children[0].data == "two":   isint = False
+        if t.children[0].data == "one":   isint, private = False, True
+        if t.children[0].data == "two":   isint, private = True, True
+        if t.children[0].data == "three": isint, private = False, False
+        if t.children[0].data == "four":  isint, private = True, False
         name = str(t.children[0].children[::-1][0])
         values  = values.split('/')
         default = values[0]
-        return cls(name=name, default=default, values=values, isint=isint)
+        return cls(name=name, default=default, values=values, isint=isint, private=private)
 
 """ 
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.

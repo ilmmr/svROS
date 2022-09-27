@@ -4,75 +4,56 @@
 from tools.InfoHandler import svException, svWarning
 GRAMMAR = f"""
 
-    axiom : REQUIRES_TOKEN condition 
-          | READS_TOKEN reads conditional?
-          | PUBLISHES_TOKEN publishes conditional?
-          | ALTERS_TOKEN alters conditional?
+    property : pattern [ "iff" formula ]
+
+    pattern  : "requires"  formula 
+             | event
+
+    event    : "publishes" publishes
+             | "alters"    alters
+             | "reads"     reads
+
+    formula      : conditional
+    conditional  : [ conditional AND_OPERATOR ] conjunction 
+    conjunction  : [ conjunction OR_OPERATOR ] condition
+    condition    : [ NO_OPERATOR ] cond | event
+
+    reads       : TOPIC [ "as" message_token "[[" implication "]]" ]
+    implication : operation ( ";" operation )*
+    operation   : "if" formula "then" "{{" formula "}}" [ "else" "{{" formula "}}" ]
+                | formula
+
+    publishes   : TOPIC [ EQUAL_OPERATOR ( VALUE | STATE ) ]
+    alters      : STATE ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
     
-    conditional : IF_OPERATOR  condition
-                | IFF_OPERATOR condition
+    cond        : publishes
+                | alters
+                | PREDICATE
+                | message_cond
 
-    condition  : [condition AND_OPERATOR] cond
-    cond       : ( NO_OPERATOR | SOME_OPERATOR ) ( TOPIC | PREDICATE | evaluation )
-    evaluation : ( TOPIC | STATE ) EQUAL_OPERATOR VALUE
+    message_token: MESSAGE
+    message_cond : MESSAGE ( EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE
 
-    reads       : reads_only 
-                | reads_perf
-    reads_only  : TOPIC
-    reads_perf  : TOPIC THEN_OPERATOR "[" implication "]"
+    param       : TOPIC | STATE | PREDICATE | MESSAGE
+    binop       : EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR | INC_OPERATOR | DEC_OPERATOR
 
-    implication : read (COMMA_OPERATOR read)*
-    read        : read_condition CONSEQUENCE_OPERATOR "{{" disjunction "}}" (ELSE_OPERATOR "{{" disjunction "}}")?
-                | disjunction
-    
-    read_condition   : read_condition_single
-                     | read_condition_is_multiple
-                     | read_condition_is_either
-    
-    read_condition_is_multiple : read_condition_single (AND_OPERATOR read_condition_single)+
-    read_condition_is_either   : read_condition_single (OR_OPERATOR read_condition_single)+
-    read_condition_single      : MESSAGE_TOKEN ( EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE
-
-    disjunction      : [disjunction AND_OPERATOR] conjunction
-    conjunction      : [conjunction OR_OPERATOR] read_consequence
-    read_consequence : ( TOPIC | STATE ) ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
-    
-    publishes     : TOPIC [ EQUAL_OPERATOR publish_value ]
-    publish_value : VALUE
-                  | STATE
-
-    alters           : [alters AND_OPERATOR] alters_condition
-    alters_condition : STATE ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
-
-    REQUIRES_TOKEN  : "requires"
-    READS_TOKEN     : "reads"
-    PUBLISHES_TOKEN : "publishes"
-    ALTERS_TOKEN    : "alters"
+    AND_OPERATOR    : "and" | "&&"
+    OR_OPERATOR     : "or"  | "||"
 
     NO_OPERATOR     : "no" | "not"
     SOME_OPERATOR   : "some" | "exists"
-
-    IF_OPERATOR     : "if"
-    IFF_OPERATOR    : "iff"
-
-    COMMA_OPERATOR       : ";" | ","
-    THEN_OPERATOR        : "then" | "~"
-    OR_OPERATOR          : "or"  | "++"
-    AND_OPERATOR         : "and" | "&&"
-    CONSEQUENCE_OPERATOR : "implies" | "=>"
-    ELSE_OPERATOR        : "else" | "/"
     
-    EQUAL_OPERATOR   : "eql" | "="
-    GREATER_OPERATOR : "gtr" | ">"
-    LESSER_OPERATOR  : "les" | "<"
+    EQUAL_OPERATOR   : "="
+    GREATER_OPERATOR : ">"
+    LESSER_OPERATOR  : "<"
+    INC_OPERATOR     : "+="
+    ADD_OPERATOR     : "++"
+    DEC_OPERATOR     : "-="
+    DIFF_OPERATOR    : "!="
 
-    INC_OPERATOR     : "add" | "+="
-    DEC_OPERATOR     : "rmv" | "-="
-
-    MESSAGE_TOKEN    : "msg"i
-
+    MESSAGE   : /(?!\s)[a-z]/
     VALUE     : /(?!=>)[a-zA-Z0-9_\/\-.\:]+/
-    TOPIC     : /(?!\s)[a-zA-Z0-9_\/\-.\:]+/
+    TOPIC     : /(?!\s)\/[a-zA-Z0-9_\/\-.\:]+/
     STATE     : /(?!\s)\$[a-zA-Z0-9_\/\-.\:]+/
     PREDICATE : /(?!\s)\?[a-zA-Z0-9_\/\-.\:]+/
 
@@ -92,7 +73,7 @@ class GrammarParser(object):
     @classmethod
     def parse(cls, text=''):
         if text == '': return
-        grammar, parser = cls.GRAMMAR, Lark(cls.GRAMMAR, parser="lalr", start='axiom', transformer=LanguageTransformer())
+        grammar, parser = cls.GRAMMAR, Lark(cls.GRAMMAR, parser="lalr", start='property', transformer=LanguageTransformer())
         # PARSE!
         try:
             conditions = parser.parse(text)
@@ -107,96 +88,124 @@ ALLOY_OPERATORS = {
     "SOME_OPERATOR": "some",
     "OR_OPERATOR": "or",
     "AND_OPERATOR": "and",
-    "CONSEQUENCE_OPERATOR": "implies",
     "EQUAL_OPERATOR": "=",
+    "DIFF_OPERATOR": "!=",
     "GREATER_OPERATOR": "gt",
     "LESSER_OPERATOR": "le",
     "INC_OPERATOR": "plus",
     "DEC_OPERATOR": "minus"
 }
+
+MESSAGE_TOKENS = {}
         
 ###############################
 # === LANGUAGE TRANSFORMER  ===
 ###############################
 class BinaryOperator(object):
     # OPERATORS
-    OPERATORS = {"OR_OPERATOR", "AND_OPERATOR", "EQUAL_OPERATOR", "GREATER_OPERATOR", "LESSER_OPERATOR", "INC_OPERATOR", "DEC_OPERATOR"}
+    IN_OPERATORS = {"INC_OPERATOR", "DEC_OPERATOR"}
+    FT_OPERATORS = {"GREATER_OPERATOR", "LESSER_OPERATOR"}
+    BT_OPERATORS = {"EQUAL_OPERATOR", "DIFF_OPERATOR"}
 
     def __init__(self, op, argument, value):
-        assert op in self.OPERATORS
+        assert op in self.IN_OPERATORS + self.BT_OPERATORS + self.FT_OPERATORS
         self.operator, self.argument1, self.argument2 = op, argument, value
 
-    def children(self):
-        return (self.operand1, self.operand2)
+    def __str__(self):
+        if self.operator in self.IN_OPERATORS:
+            return f'= {ALLOY_OPERATORS[self.operator]}[{self.argument1},{self.argument2}]'
+        if self.operator in self.FT_OPERATORS:
+            return f'{ALLOY_OPERATORS[self.operator]}[{self.argument1},{self.argument2}]'
+        return f'{ALLOY_OPERATORS[self.operator]} {self.argument2}'
 
 class LanguageTransformer(Transformer):
 
     def __init__(self):
-        self.OBJECTS = set()
+        MESSAGE_TOKENS.clear()
 
-    def axiom(self, children):
-        if self.OBJECTS.__len__() == 1: object = next(iter(self.OBJECTS))
-        else: object = MultipleConditions(conditions=list(self.OBJECTS))
-        if children.__len__() > 2:
-            conditional = children[2]
-            if conditional[0] == "if":
-                object = IfConditional(pre=object, conditional=conditional[1])
-            if conditional[0] == "iff":
-                object = IffConditional(pre=object, conditional=conditional[1])
+    def property(self, children):
+        # CLEAR #
+        object = children[0]
+        if not children[1] is None:
+            conditional = children[1]
+            object = IffConditional(pre=object, conditional=conditional)
         return object
 
-    def conditional(self, children):
-        return (children[0].value, children[1])
+    def pattern(self, children):
+        pattern = children[0]
+        if isinstance(children[0], Event):
+            pattern = children[0].event
+        return pattern
 
-    # CONDITIONAL
-    def evaluation_cond(self, children):
-        if not children.__len__() == 3: raise svException("")
-        predicate, entity, relation, value = children[0].type, children[0].value, children[1].type, children[2].value
-        return predicate, entity, relation, value
+    def param(self, children):
+        type, value = children[0].type, children[0].value
+        if type in { "TOPIC" , "MESSAGE" }:
+            return type, value
+        return type, value[1:]
+
+    def event(self, children):
+        return Event(event=children[0])
 
     def cond(self, children):
-        if not children.__len__() == 2: raise svException("")
-        quantifier, predicate = children[0].type, children[1]
-        if isinstance(predicate, Token):
-            predicate, entity, relation, value = children[1].type, children[1].value, None, None
+        if isinstance(children[0], Token):
+            return children[0]
         else:
-            predicate, entity, relation, value = LanguageTransformer.evaluation_cond(self, children[1].children)
-        conditional = Conditional(quantifier=quantifier, type=predicate, entity=entity, value=value, relation=relation)
-        self.OBJECTS.add(conditional)
+            return Cond(cond=children[0])
+
+    def message_cond(self, children):
+        return MessageCond(token=children[0].value, relation=children[1].type, value=children[2].value)
+
+    def message_token(self, children):
+        MESSAGE_TOKENS[children[0].value] = None
+        return children[0]
+
+    def binop(self, children):
+        return children[0].type
+
+    def condition(self, children):
+        if isinstance(children[0], Event):
+            return children[0].event
+        # Quantifier
+        if not children[0] is None: no_quantifier = True
+        else: no_quantifier = False
+        # Predicate
+        if isinstance(children[1], Cond):
+            conditional = Conditional(no_quantifier=no_quantifier, predicate=children[1].cond)
+        else:
+            conditional = Conditional(no_quantifier=no_quantifier, token=children[1])
         return conditional
 
-    # READS
-    def reads_only(self, children):
-        read = Read(entity=children[0].value, conditions=None, readonly=True)
-        self.OBJECTS.add(read)
-        return read
-
-    def reads_perf(self, children):
-        topic, conditions = children[0].value, children[2]
-        read = Read(entity=topic, conditions=conditions, readonly=False)
-        self.OBJECTS.add(read)
+    def reads(self, children):
+        if children[1] is not None:
+            token = children[1].value
+            if token in MESSAGE_TOKENS.keys() and MESSAGE_TOKENS[token] != None: 
+                raise svException(f"Two message tokens with the same value {token}.")
+            read = Read(entity=children[0].value, token=children[1].value, conditions=children[2])
+            MESSAGE_TOKENS[token] = read
+        else:
+            read = Read(entity=children[0].value, token=None, conditions=None)
         return read
 
     def implication(self, children):
-        return Implication(conditions=children[0::2])
+        return Implication(conditions=children)
 
-    def read(self, children):
-        if hasattr(self, 'disj_implies'):
-            disjunctions      = DisjunctionConsequence(conditions=self.disj_implies)
-            more_disjunctions = DisjunctionConsequence(conditions=self.disj)
+    def operation(self, children):
+        if children.__len__() == 1:
+            conditional, more_disjunctions, disjunctions = None, None, children[0]
         else:
-            disjunctions      = DisjunctionConsequence(conditions=self.disj)
-            more_disjunctions = None
-        return ReadImplication(conditional=children[0], implication=disjunctions, denial=more_disjunctions)
+            conditional, more_disjunctions, disjunctions = children[0], children[2], children[1]
+        # conditional = None if children.__len__() < 2 else children[0]
+        return ReadImplication(conditional=conditional, implication=disjunctions, denial=more_disjunctions)
 
-    def disjunction(self, children):
-        conjunctions = ConjunctionConsequence(conditions=self.conj)
+    def formula(self, children):
+        return Disjunction(conditions=self.conditionals)
+
+    def conditional(self, children):
+        disjunction, conjunctions = None, Conjunction(conditions=self.conj)
         if children[1] is None:
-            if hasattr(self, 'disj'): 
-                self.disj_implies = self.disj.copy()
-            self.disj = [conjunctions]
+            self.conditionals = [conjunctions]
         else:
-            self.disj += [conjunctions]
+            self.conditionals += [conjunctions]
 
     def conjunction(self, children):
         if children[1] is None: 
@@ -204,45 +213,24 @@ class LanguageTransformer(Transformer):
         else: 
             self.conj += [children[2]]
 
-    def read_consequence(self, children):
-        if children.__len__() > 2:
-            entity, type, relation, value = children[0].value, children[0].type, children[1].type, children[2].value
-            return ReadConsequence(entity=entity, type=type, relation=relation, value=value)
-        else:
-            entity, type = children[1].value, children[0].type
-            return ReadConsequence(entity=entity, type=type, relation=None, value=None, predicate=True)
-
-    def read_condition(self, children):
-        return children[0]
-
-    def read_condition_is_multiple(self, children):
-        return MultipleReadConditional(conditions=children[0::2])
-    
-    def read_condition_is_either(self, children):
-        return EitherReadConditional(conditions=children[0::2])
-
-    def read_condition_single(self, children):
-        conditional, value = children[1].type, children[2].value
-        return ReadConditional(conditional=conditional, value=value)
-
     # PUBLISH
     def publishes(self, children):
         if children.__len__() > 3: raise svException("")
         entity = children[0].value
         if children[1] is not None: 
-            value = children[::-1][0].children[0]
+            value = children[::-1][0]
             type, value = value.type, value.value
         else: value, type = None, None
+        if type == "STATE":
+            value = value[1:]
         publish = Publish(entity=entity, value=value, type=type)
-        self.OBJECTS.add(publish)
         return publish
 
     # ALTERS
-    def alters_condition(self, children):
+    def alters(self, children):
         if not children.__len__() == 3: raise svException("")
         entity, relation, value = (children[0].value)[1:], children[1].type, children[2].value
         alter = Alter(entity=entity, relation=relation, value=value)
-        self.OBJECTS.add(alter)
         return alter
 
 ###############################
@@ -256,216 +244,162 @@ class MultipleConditions(object):
     def __alloy__(self):
         return ' and '.join([f'{cond.__alloy__()}' for cond in self.conditions])
 
+class Event(object):
+
+    def __init__(self, event):
+        self.event = event
+
+    def __alloy__(self):
+        return self.event.__alloy__()
+
+class Cond(object):
+
+    def __init__(self, cond):
+        self.cond = cond
+
+    def __alloy__(self):
+        return self.cond.__alloy__()
+
+class MessageCond(object):
+
+    def __init__(self, token, relation, value):
+        if token not in MESSAGE_TOKENS:
+            raise svException(f"Token {token} was not initiated.")
+        self.token, self.relation, self.value = token, relation, value
+
+    def __alloy__(self, no_quantifier):
+        channel, quantifier  = MESSAGE_TOKENS[self.token].object, 'no' if no_quantifier else ''
+        if self.value not in channel.message_type.value.values: raise svException(f"Channel {channel.signature} value {self.value} does not exist!")
+        value = self.value
+        if self.relation == 'EQUAL_OPERATOR': 
+            return f"{quantifier} m = {value}"
+        if self.relation == 'DIFF_OPERATOR':
+            return f"{quantifier} m != {value}"
+        assert channel.message_type.isint
+        return f"{quantifier} {ALLOY_OPERATORS[self.relation]}[m, {value}]"
+
 class Conditional(object):
 
-    def __init__(self, quantifier, type, entity, relation=None, value=None):
-        if type == 'TOPIC':
-            try:
-                self.object = Topic.TOPICS[entity]
-                if value:
-                    if value not in self.object.message_type.value.values: raise svException(f"Channel value {value} does not exist!")
-            except AttributeError as e:
-                raise svException(f"Channel {entity} does not exist!")
-        if type == 'STATE':
-            try:
-                self.object = svState.STATES[entity]
-                if value:    
-                    if value not in self.object.values: raise svException(f"State value {value} does not exist!")
-            except AttributeError as e:
-                raise svException(f"State {entity} does not exist!")
-        # Remaining attributes.
-        self.quantifier, self.type, self.value, self.relation = quantifier, type, value, relation
-        if self.type in {'PREDICATE', 'STATE'}: self.entity = entity[1:]
-        else: self.entity = entity
-        
+    def __init__(self, no_quantifier, token=None, predicate=None):
+        self.no_quantifier, self.token, self.predicate = no_quantifier, token, predicate
+            
     def __alloy__(self):
-        entity     = str(self.entity).lower().replace('/','_')
-        quantifier = ALLOY_OPERATORS[str(self.quantifier)] if self.quantifier else ''
-        if self.type == 'PREDICATE':
-            if self.quantifier == 'NO_OPERATOR':
-                return f'{quantifier} {entity}[t]'
-            else: return f'{entity}[t]'
-        else: 
-            if self.value is None:
-                if self.type == 'TOPIC':
-                    if self.quantifier: return f'no t.inbox[{self.object.signature}]'
-                    return f'some t.inbox[{self.object.signature}]'
-                else: raise svException('Failed to parse. Non expected error occurred.')
-            if self.type == 'TOPIC':
-                if self.relation == 'EQUAL_OPERATOR': 
-                    if quantifier == '': return f"{self.value} in t.inbox[{self.object.signature}].elems"
-                    else: return f"{self.value} not in t.inbox[{self.object.signature}].elems"
-                assert self.object.message_type.isint
-                return f"(all elem : t.inbox[{self.object.signature}].elems | {quantifier} {ALLOY_OPERATORS[self.relation]}[{elem}, {self.value}]"
-            if self.type == 'STATE':
-                if self.relation == 'EQUAL_OPERATOR': 
-                    return f"{quantifier} t.{self.object.name.lower()}.Int = {self.value}"
-                assert self.object.isint
-                return f"{quantifier} {ALLOY_OPERATORS[self.relation]}[t.{self.object.name.lower()}.Int, {self.value}]"
+        if self.ispredicate:
+            return self.predicate.__alloy__(no_quantifier=self.no_quantifier)
+        else:
+            quantifier = 'no' if self.no_quantifier else ''
+            return f'{quantifier} {self.token.value[1:]}[t]'
+
+    @property
+    def ispredicate(self):
+        return bool(self.predicate is not None)
 
 class Implication(object):
     
     def __init__(self, conditions):
         self.conditions = conditions
     
-    def __alloy__(self, channel):
-        return '\n\t\t'.join([f'{cond.__alloy__(channel=channel)}' for cond in self.conditions])
+    def __alloy__(self):
+        return '\n\t\t'.join([f'{cond.__alloy__()}' for cond in self.conditions])
 
 class ReadImplication(object):
 
     def __init__(self, conditional, implication, denial=None):
         self.conditional, self.implication, self.denial = conditional, implication, denial
     
-    def __alloy__(self, channel):
+    def __alloy__(self):
         if self.conditional is None:
-            return f'{self.implication.__alloy__(channel=channel)}'
+            return f'{self.implication.__alloy__()}'
         if self.denial is None:
-            return f'{self.conditional.__alloy__(channel=channel)} implies {{ {self.implication.__alloy__(channel=channel)} }}'
-        return f'{self.conditional.__alloy__(channel=channel)} implies {{ {self.implication.__alloy__(channel=channel)} }} else {{ {self.denial.__alloy__(channel=channel)} }}'
+            return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }}'
+        return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }} else {{ {self.denial.__alloy__()} }}'
 
-class DisjunctionConsequence(object):
+class Disjunction(object):
     
     def __init__(self, conditions):
         self.conditions = conditions
     
-    def __alloy__(self, channel):
-        return ' and '.join([f'({cond.__alloy__(channel=channel)})' for cond in self.conditions])
+    def __alloy__(self):
+        return '(' + ' and '.join([f'{cond.__alloy__()}' for cond in self.conditions]) + ')'
 
-class ConjunctionConsequence(object):
-
-    def __init__(self, conditions):
-        self.conditions = conditions
-    
-    def __alloy__(self, channel):
-        return ' or '.join([f'({cond.__alloy__(channel=channel)})' for cond in self.conditions])
-
-class ReadConsequence(object):
-
-    def __init__(self, entity, type, relation, value, predicate=False):
-        if not predicate:
-            match type:
-                case 'STATE':
-                    try:
-                        self.object = svState.STATES[entity[1:]]
-                        if value not in ( self.object.values + ["m"] ): raise svException(f"State value {value} does not exist!")
-                    except AttributeError as e:
-                        raise svException(f"State {entity} does not exist!") 
-                case 'TOPIC':
-                    try:
-                        self.object = Topic.TOPICS[entity]
-                        if value not in ( self.object.message_type.value.values + ["m"] ): raise svException(f"Channel value {value} does not exist!")
-                    except AttributeError as e:
-                        raise svException(f"Channel {entity} does not exist!") 
-            # Entity identification.
-            if type in {'PREDICATE', 'STATE'}: entity = entity[1:]
-            # Value can be m => Replicate.
-            replicate = True if value == "m" else False
-            self.entity, self.type, self.relation, self.value, self.replicate = entity, type, relation, value, replicate
-        else:
-            self.entity, self.object, self.type, self.relation, self.value, self.predicate = entity, None, type, None, None, True 
-
-    def __alloy__(self, channel):
-        if self.type is None:
-            assert self.predicate
-            if self.type: return f'{ALLOY_OPERATORS[self.type]} {self.entity}[t]'
-            return f'{self.entity}[t]'
-        if self.type == 'TOPIC':
-            conseq_channel = Topic.TOPICS[self.entity]
-            if self.relation in {'EQUAL_OPERATOR', 'INC_OPERATOR'}:
-                if not self.replicate:
-                    if self.value not in conseq_channel.message_type.value.values: 
-                        raise svException(f"Channel {conseq_channel.signature} value {self.value} does not exist!")
-                else:
-                    if not bool(channel.message_type == conseq_channel.message_type):
-                        raise svException(f"Channel {conseq_channel.signature} can not replicate value of {channel.signature}, as they have different message types.")
-                return f"t.inbox'[{conseq_channel.signature}] = add[t.inbox[{conseq_channel.signature}], {self.value}]"
-        # STATE
-        alter = Alter(entity=self.entity, relation=self.relation, value=self.value)
-        return alter.__alloy__() + alter.__else__()
-
-class MultipleReadConditional(object):
+class Conjunction(object):
 
     def __init__(self, conditions):
         self.conditions = conditions
     
-    def __alloy__(self, channel):
-        return '(' + ' and '.join([f'{cond.__alloy__(channel=channel)}' for cond in self.conditions]) + ')'
-
-class EitherReadConditional(object):
-
-    def __init__(self, conditions):
-        self.conditions = conditions
-    
-    def __alloy__(self, channel):
-        return '(' + ' or '.join([f'{cond.__alloy__(channel=channel)}' for cond in self.conditions]) + ')'
-
-class ReadConditional(object):
-
-    def __init__(self, conditional, value):
-        self.conditional, self.value = conditional, value
-
-    def __alloy__(self, channel):
-        if self.value not in channel.message_type.value.values: raise svException(f"Channel {channel.signature} value {self.value} does not exist!")
-        value = self.value
-        if self.conditional == 'EQUAL_OPERATOR': 
-            return f"m = {value}" # implies {self.consequence.__alloy__(channel=channel)}"
-        assert channel.message_type.isint
-        return f"{ALLOY_OPERATORS[self.conditional]}[m, {value}]" # implies {self.consequence.__alloy__(channel=channel)}"
+    def __alloy__(self):
+        return '(' + ' or '.join([f'{cond.__alloy__()}' for cond in self.conditions]) + ')'
 
 class Read(object):
 
-    def __init__(self, entity, conditions, readonly=False):
+    def __init__(self, entity, token, conditions):
         try:
             channel = Topic.TOPICS[entity]
         except AttributeError as e:
             raise svException(f"Channel {entity} does not exist!")
-        self.entity, self.object, self.conditions, self.readonly = entity, channel, conditions, readonly
+        self.entity, self.object, self.conditions, self.token = entity, channel, conditions, token
 
     def __alloy__(self):
         channel = self.object
-        return f"let m = first[t.inbox[{channel.signature}]] {{\n\t\t" + self.conditions.__alloy__(channel=channel) + f"\n\t}}" + f"\n\tt.inbox'[{channel.signature}] = rest[t.inbox[{channel.signature}]] "
+        if self.token:
+            return f"let m = first[t.inbox[{channel.signature}]] {{\n\t\t" + self.conditions.__alloy__() + f"\n\t}}" + f"\n\tt.inbox'[{channel.signature}] = rest[t.inbox[{channel.signature}]] "
+        return f"t.inbox'[{channel.signature}] = rest[t.inbox[{channel.signature}]]"
 
 class Publish(object):
 
     def __init__(self, entity, value=None, type=None):
-        channel = Topic.TOPICS[entity]
-        if type == "VALUE":
-            try:
-                if value not in channel.message_type.value.values: raise svException(f"Channel value {value} does not exist!")
-            except AttributeError as e : raise svException(f'{e}')
-        elif type == "STATE":
-            value = value[1:]
+        try:
+            channel = Topic.TOPICS[entity]
+            if type == "VALUE":
+                if value not in ( channel.message_type.value.values + list(MESSAGE_TOKENS.keys())): raise svException(f"Channel value {value} does not exist!")
+        except AttributeError as e : raise svException(f'{e}')
         self.entity, self.object, self.value, self.type = entity, channel, value, type
 
-    def __alloy__(self):
-        channel = self.object
-        if self.value is None:
-            return f"some m : Message | t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], m]"
-        if self.type == "VALUE":
-            return f"some m : Message | m = {self.value} implies t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], m]"
-        return f"t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], t.{value}']"
+    def __alloy__(self, no_quantifier=None):
+        # CONDITION
+        if isinstance(no_quantifier, bool):
+            quantifier = 'no' if no_quantifier else 'some'
+            if self.value is None:
+                return f'{quantifier} t.inbox[{self.object.signature}]'
+            isstate = 't.' if self.type == "STATE" else ''
+            if not no_quantifier: return f"{isstate}{self.value} in t.inbox[{self.object.signature}].elems"
+            else: return f"{isstate}{self.value} not in t.inbox[{self.object.signature}].elems"
+        # EVENT
+        else:
+            channel = self.object
+            if self.value is None:
+                return f"some m : Message | t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], m]"
+            if self.type == "VALUE":
+                if self.value in MESSAGE_TOKENS.keys():
+                    read = MESSAGE_TOKENS[self.value].object
+                    if not bool(channel.message_type == read.message_type):
+                        raise svException(f"Channel {channel.signature} can not use value of {read.signature} through {self.value}, as they have different message types.")
+                return f"t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], {self.value}]"
+            return f"t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], t.{self.value}']"
 
 class Alter(object):
 
     def __init__(self, entity, relation, value):
         try:
             state = svState.STATES[entity]
-            if value not in state.values: raise svException(f"State value {value} does not exist!")
+            if value not in ( state.values + list(MESSAGE_TOKENS.keys()) ): raise svException(f"State value {value} does not exist!")
         except AttributeError as e : raise svException(f'{e}')
         self.entity, self.object, self.relation, self.value = entity, state, relation, value
 
-    def __alloy__(self):
-        value, state = self.object.values_signature(value=self.value), self.object
-        if self.relation == 'EQUAL_OPERATOR': 
-            return f"t.{state.name.lower()}' = {value}->1"
-        assert state.isint
-        return f"t.{state.name.lower()}' = {ALLOY_OPERATORS[self.relation]}[t.{state.name.lower()}, {value}]"
-
-    def __else__(self):
-        value, state = self.object.values_signature(value=self.value), self.object
-        if not state.isint:
-            return f" else (some st : {state.signature} - {value} | t.{state.name.lower()}' = st->1)"
-        return f" else t.{state.name.lower()}' = (t.{state.name.lower()}.0)->1"
+    def __alloy__(self, no_quantifier=None):
+        # CONDITION
+        if isinstance(no_quantifier, bool):
+            quantifier = 'no' if no_quantifier else ''
+            if self.relation == 'EQUAL_OPERATOR': 
+                    return f"{quantifier} t.{self.object.name.lower()} = {self.value}"
+            assert self.object.isint
+            return f"{quantifier} {ALLOY_OPERATORS[self.relation]}[t.{self.object.name.lower()}, {self.value}]"
+        else:
+            value, state = self.value, self.object
+            if self.relation == 'EQUAL_OPERATOR': 
+                return f"t.{state.name.lower()}' = {value}"
+            assert state.isint
+            return f"t.{state.name.lower()}' = {ALLOY_OPERATORS[self.relation]}[t.{state.name.lower()}, {value}]"
 
 class IfConditional(object):
 

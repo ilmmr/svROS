@@ -5,6 +5,8 @@ var cy = (window.cy = cytoscape({
     container: document.getElementById('display_graph'), // container to render in
     elements: [],
     boxSelectionEnabled: false,
+    autounselectify: true,
+    wheelSensitivity: 0.1,
     
     style: [ 
         
@@ -72,6 +74,6 @@ connections.forEach(data => {
     cy.add({ group: 'edges', selectable: true, data: data})
 })
 /* CONFIGURATIONS */
-cy.userZoomingEnabled( false );
+// cy.userZoomingEnabled( false );
 cy.nodes().forEach(function( n ){ n.data('height', n.width()); });
 cy.layout({ name: 'cose-bilkent' }).run();

@@ -19,9 +19,6 @@ pred publish0[channel: Channel, m : Message] {
 pred publish1[channel: Channel, m : Message] {
 	T2.inbox'[channel] = add[T2.inbox[channel], m]
 }
-fun active [] : set Node {
-	advertises.(Execution.inbox).Message + subscribes.(Execution.inbox).Message
-}
 fun isconnected [] : Node -> Channel -> Node {
 	{ n : Node , t : n.advertises, n1 : Node | t in n1.subscribes }
 }

@@ -114,8 +114,15 @@ body {font-size:16px;}
 }
 
 .privilege {
-  background-color:#FFFFFF;
-  border: 1px solid;
+  height: 15px;
+  width: 50px;
+  margin: auto;
+  flex: 0 0 10%;
+}
+
+.profile {
+
+  border-radius: 50%;
   height: 15px;
   width: 50px;
   margin: auto;

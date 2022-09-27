@@ -1,10 +1,15 @@
-var nodes = {{nodes}}
-var edges = {{edges}}
+//var nodes = {{nodes}}
+//var edges = {{edges}}
+
+var nodes = [{'id': 'o', 'name': 'object o',  'type': 'object'}, {'id': 'p', 'name': 'profile p', 'type': 'profile'}]
+var edges = [{'relation': 'rel1', 'source': 'p', 'target': 'o', 'role': 'Subscribe', 'call': 'privilege', 'rule': 'Allow'}, {'relation': 'rel2', 'source': 'p', 'target': 'o', 'role': 'Subscribe', 'call': 'privilege', 'rule': 'Deny'}]
 
 var cy = (window.cy = cytoscape({
     container: document.getElementById('display_graph'), // container to render in
     elements: [],
     boxSelectionEnabled: false,
+    autounselectify: true,
+    wheelSensitivity: 0.1,
     
     style: [ 
         
@@ -25,26 +30,7 @@ var cy = (window.cy = cytoscape({
         {
             selector: "node[type = 'object']", 
             css: {
-                'background-color': 'white',
                 'shape': "rectangle",
-            }
-        },
-
-        {
-            selector: "node[rule = 'Allow']", 
-            css: {
-                'background-color': 'white',
-                'shape': "rectangle",
-                'border-color': '#FF6347'
-            }
-        },
-
-        {
-            selector: "node[rule = 'Deny']", 
-            css: {
-                'background-color': 'white',
-                'shape': "rectangle",
-                'border-color': '#262626'
             }
         },
 
@@ -55,37 +41,20 @@ var cy = (window.cy = cytoscape({
                 "width" : 2,
                 "line-style" : "solid",
                 "curve-style": "bezier",
-                "source-arrow-shape" : "triangle",
                 "target-arrow-shape" : "triangle",
-                "label": 'data(role)'
+                "label": 'data(role)',
+                "line-color" : "#262626",
+                'source-arrow-color': '#262626',
+                'target-arrow-color': '#262626'
             }
         },
 
         {
-            selector: "edge[call = 'privilege']", 
+            selector: "edge[rule = 'Deny']", 
             css: {
-                "line-color" : "#666",
-                'source-arrow-color': '#666',
-                'target-arrow-color': '#666'
-            }
-        },
-
-        {
-            selector: "edge[call = 'source call']", 
-            css: {
-                "line-color" : "orange",
-                'source-arrow-color': 'orange',
-                'target-arrow-color': 'orange'
-            }
-        },
-
-        {
-            selector: "edge[call = 'no privilege']", 
-            css: {
-                "line-style" : "dotted",
-                "line-color" : "#666",
-                'source-arrow-color': '#666',
-                'target-arrow-color': '#666'
+                "line-color" : "#FF6347",
+                'source-arrow-color': '#FF6347',
+                'target-arrow-color': '#FF6347'
             }
         },
     ],
@@ -98,6 +67,6 @@ edges.forEach(data => {
     cy.add({ group: 'edges', selectable: true, data: data})
 })
 /* CONFIGURATIONS */
-cy.userZoomingEnabled( false );
+// cy.userZoomingEnabled( false );
 cy.nodes().forEach(function( n ){ n.data('height', n.width()); });
 cy.layout({ name: 'cose-bilkent' }).run();

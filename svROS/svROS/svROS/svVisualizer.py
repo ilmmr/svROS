@@ -82,11 +82,10 @@ class SecurityInstanceParser(object):
         for tup in rule:
             profile, role, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), tup.findall('./atom')[1].get('label').split('$')[0], self.remove_signature(value=tup.findall('./atom')[2].get('label').split('$')[0].lower())
             # PROCESS TO JSON
-            profiles_states_json[f'obj_{object}_allow'] = {'id': f'obj_{object}_allow', 'name': object,  'type': 'object', 'rule': 'Allow'}
-            profiles_states_json[f'obj_{object}_deny'] = {'id': f'obj_{object}_deny', 'name': object,  'type': 'object', 'rule': 'Deny'}
+            profiles_states_json[f'obj_{object}'] = {'id': f'obj_{object}', 'name': object,  'type': 'object'}
             profiles_states_json[f'prof_{profile}'] = {'id': f'prof_{profile}', 'name': profile, 'type': 'profile'}
-            edges[f'{profile}_to_{object}_priv_all'] = {'relation': f'{profile}_to_{object}_priv_all', 'source': f'prof_{profile}', 'target': f'obj_{object}_allow', 'role': role, 'call': 'privilege'}
-            edges[f'{profile}_to_{object}_priv_deny'] = {'relation': f'{profile}_to_{object}_priv_deny', 'source': f'prof_{profile}', 'target': f'obj_{object}_deny', 'role': role, 'call': 'privilege'}
+            edges[f'{profile}_to_{object}_priv_all'] = {'relation': f'{profile}_to_{object}_priv_all', 'source': f'prof_{profile}', 'target': f'obj_{object}', 'role': role, 'rule': 'Allow'}
+            edges[f'{profile}_to_{object}_priv_deny'] = {'relation': f'{profile}_to_{object}_priv_deny', 'source': f'prof_{profile}', 'target': f'obj_{object}', 'role': role, 'rule': 'Deny'}
         # for tup in rule2:
         #     profile, role, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), tup.findall('./atom')[1].get('label').split('$')[0], self.remove_signature(value=tup.findall('./atom')[2].get('label').split('$')[0])
         #     # PROCESS TO JSON

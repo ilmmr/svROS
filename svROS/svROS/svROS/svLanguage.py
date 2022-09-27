@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from lark import Lark, tree
 import itertools
 
-from language.grammar import GrammarParser, Read, Publish, Alter, ReadConditional, ReadConsequence
+from language.grammar import GrammarParser, Read, Publish, Alter
 from svData import Topic, svROSNode, svState
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -95,19 +95,19 @@ class svPredicate(object):
                 entity = Topic.TOPICS[prop.entity]
                 if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {prop.entity}.")
                 changable_channels.append(entity)
-                for condition in prop.conditions.conditions:
-                    implication = condition.implication.conditions
-                    for conjunction in implication:
-                        for cond in conjunction.conditions:
-                            # PARSE TYPE
-                            assert isinstance(cond, ReadConsequence)
-                            if cond.type == "TOPIC":
-                                entity = Topic.TOPICS[cond.entity]
-                                if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {cond.entity}.")
-                                changable_channels.append(entity)
-                            else:
-                                state = svState.STATES[cond.entity]
-                                changable_variables.append(state)
+                if prop.conditions:
+                    for condition in prop.conditions.conditions:
+                        implication = condition.implication.conditions
+                        for conjunction in implication:
+                            for cond in conjunction.conditions:
+                                # PARSE TYPE
+                                if isinstance(cond, Publish):
+                                    entity = Topic.TOPICS[cond.entity]
+                                    if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {cond.entity}.")
+                                    changable_channels.append(entity)
+                                if isinstance(cond, Alter):
+                                    state = svState.STATES[cond.entity]
+                                    changable_variables.append(state)
             # PUBLISH        
             if isinstance(prop, Publish):
                 entity = Topic.TOPICS[prop.entity]
@@ -116,6 +116,8 @@ class svPredicate(object):
             # ALTER
             if isinstance(prop, Alter):
                 state = svState.STATES[prop.entity]
+                if state.private and not self.node.secure:
+                    raise svException(f"Node {self.node.rosname} is public and can not access {state.name}.")
                 changable_variables.append(state)     
         # Return accessable channels and variables!
         return list(set(changable_channels)), list(set(changable_variables))
@@ -155,4 +157,4 @@ class svPredicate(object):
         return  '\n\t// Sub-Predicates:\n\t' + ' or '.join([f'{s.signature}[t]' for s in self.sub_predicates])
 
     def __str__(self):
-        return re.sub('\n\n', '\n', f"""pred {self.signature} [t : Execution] {{{self.__subpredicates__()}\n{self.behaviour}\n}}""")
+        return re.sub('\n\n', '\n', f"""pred {self.signature} [t : Execution] {{{self.behaviour}\n{self.__subpredicates__()}\n}}""")
