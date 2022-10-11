@@ -13,11 +13,8 @@ fact initial_assumptions {
 	always (nop[T1] or system[T2])	
 	always (nop[T1] or system[T2])
 }
-pred publish0[channel: Channel, m : Message] {
-	T1.inbox'[channel] = add[T1.inbox[channel], m]
-}
-pred publish1[channel: Channel, m : Message] {
-	T2.inbox'[channel] = add[T2.inbox[channel], m]
+pred publish[t : Trace, channel: Channel, m : Message] {
+	t.inbox'[channel] = add[t.inbox[channel], m]
 }
 fun isconnected [] : Node -> Channel -> Node {
 	{ n : Node , t : n.advertises, n1 : Node | t in n1.subscribes }

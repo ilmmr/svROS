@@ -507,7 +507,7 @@ class svRUN:
 
     def load_pickle_files(self, analyze=False):
         DATADIR = f'{self.project_path}data/objects/'
-        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Channels.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
+        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Topcis.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
         if not (package_file and topic_file and node_file):
             return {}
         if analyze == True:

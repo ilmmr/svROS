@@ -194,7 +194,7 @@ class svProjectExtractor:
         if not os.path.exists(OBJDIR):
             os.makedirs(OBJDIR)
         # SAVE using PICKLE.
-        package_file, topic_file, node_file = open(f'{OBJDIR}/Packages.obj', 'wb+'), open(f'{OBJDIR}/Channels.obj', 'wb+'), open(f'{OBJDIR}/Nodes.obj', 'wb+')
+        package_file, topic_file, node_file = open(f'{OBJDIR}/Packages.obj', 'wb+'), open(f'{OBJDIR}/Topics.obj', 'wb+'), open(f'{OBJDIR}/Nodes.obj', 'wb+')
         state, predicates, enclaves = open(f'{OBJDIR}/States.obj', 'wb+'), open(f'{OBJDIR}/Predicates.obj', 'wb+'), open(f'{OBJDIR}/Enclaves.obj', 'wb+')
         pickle.dump(Package.PACKAGES, package_file, pickle.HIGHEST_PROTOCOL)
         pickle.dump(Topic.TOPICS, topic_file, pickle.HIGHEST_PROTOCOL)
@@ -261,7 +261,7 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
-        self.config, packages, nodes, topics = config, list(set(config.get('packages'))), config.get('nodes'), config.get('channels')
+        self.config, packages, nodes, topics = config, list(set(config.get('packages'))), config.get('nodes'), config.get('topics')
         # ANALYSIS.
         types, states = config.get('types', {}), config.get('states', {})
         # LOAD PICKLE.
@@ -283,21 +283,21 @@ class svProjectExtractor:
                 name, topic_type = topic, topics[topic]
                 Topic.init_topic(name=name, topic_type=topic_type)
         if set(map(lambda type: type.name, MessageType.TYPES.values())) < set(types.keys()):
-            raise svException(f'Failed to load some Messages Types. Please defined every type related to each channel.')
-        for t in types:
-            tt, mtype_temp = t, types[t].split('/')
-            pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))
-            if not bool(pattern): isint = False
-            else:
-                if not pattern.groups()[0].strip() == 'int': raise svException(f'Failed to parse type {str(t)}.')
-                t, isint = pattern.groups()[1].strip(), True
-            # ...
-            t = t.replace('/', '_').lower()
-            if t not in MessageType.TYPES: raise svException(f"Message Type {tt} not found.")
-            mtype       = MessageType.TYPES[t]
-            # SET isint.
-            mtype.isint = isint
-            mtype.value.values = mtype_temp  
+            raise svException(f'Failed to load some Messages Types. Please defined every type related to each topic.')
+        # for t in types:
+        #     tt, mtype_temp = t, types[t].split('/')
+        #     pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))
+        #     if not bool(pattern): isint = False
+        #     else:
+        #         if not pattern.groups()[0].strip() == 'int': raise svException(f'Failed to parse type {str(t)}.')
+        #         t, isint = pattern.groups()[1].strip(), True
+        #     # ...
+        #     t = t.replace('/', '_').lower()
+        #     if t not in MessageType.TYPES: raise svException(f"Message Type {tt} not found.")
+        #     mtype       = MessageType.TYPES[t]
+        #     # SET isint.
+        #     mtype.isint = isint
+        #     mtype.value.values = mtype_temp  
         if states:
             for state in states: svState.init_state(name=state, values=states[state])
         # Processing nodes.
@@ -322,11 +322,11 @@ class svProjectExtractor:
             if not self.node_behaviour(node=node, behaviour=behaviour, properties=properties):
                 raise svException(f'Failed to properties from {node.rosname}.')
         svROSNode.handle_connections()  # Set connections up.
-        steps, type = self.scopes
-        if type.lower() == "od" or type.lower() == "observable determinism":
-            # Observable determinism in Unsecured Nodes.
-            if not svROSNode.observalDeterminism(steps=steps): 
-                return False
+        steps, inbox = self.scopes
+        #if type.lower() == "od" or type.lower() == "observable determinism":
+        # Observable determinism in Unsecured Nodes.
+        if not svROSNode.observalDeterminism(steps=steps, inbox=inbox): 
+            return False
         return True
 
     def node_behaviour(self, node, behaviour, properties): 
@@ -356,10 +356,10 @@ class svProjectExtractor:
 
     @property
     def scopes(self):
-        steps = self.config.get('configurations').get('analysis', {}).get('steps', {})
-        type  = self.config.get('configurations').get('analysis', {}).get('type', {})
-        if not type:
-            raise svException('Failed to retrieve type of analysis: Define type in configurations/analysis area.')
+        steps = self.config.get('configurations').get('model', {}).get('steps', {})
+        inbox = self.config.get('configurations').get('model', {}).get('inbox', {})
+        if not inbox:
+            raise svException('Failed to retrieve scopes on inbox: Define type in configurations/model area.')
         if not steps:
-            raise svException('Failed to retrieve scopes. Steps scopes are not defined.')
-        return steps, type
+            raise svException('Failed to retrieve scopes on steps: Define type in configurations/model area.')
+        return steps, inbox

@@ -39,7 +39,7 @@ class svAlloyPredicate(object):
         # channels
         if channels is None: _str_ += f"""\n\tt.inbox' = t.inbox"""
         else:
-            _str_ += f"""\n\tall c : Channel - {' - '.join([c.signature for c in channels])} | t.inbox'[c] = t.inbox[c]"""
+            _str_ += f"""\n\tall c : Topic - {' - '.join([c.signature for c in channels])} | t.inbox'[c] = t.inbox[c]"""
         if variables is None: variables = svState.STATES.values()
         else: variables = list(filter(lambda state: state not in variables, svState.STATES.values()))
         for state in variables: 
@@ -157,4 +157,4 @@ class svPredicate(object):
         return  '\n\t// Sub-Predicates:\n\t' + ' or '.join([f'{s.signature}[t]' for s in self.sub_predicates])
 
     def __str__(self):
-        return re.sub('\n\n', '\n', f"""pred {self.signature} [t : Execution] {{{self.behaviour}\n{self.__subpredicates__()}\n}}""")
+        return re.sub('\n\n', '\n', f"""pred {self.signature} [t : Trace] {{{self.behaviour}\n{self.__subpredicates__()}\n}}""")

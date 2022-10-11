@@ -33,40 +33,12 @@ class Package:
         if index == 0: cls.PACKAGES.clear()
         return cls(name=name, path='', nodes=None)
 
-"ROS2-based for message value related to a topic_type as this tool focus on Topic-Message processing."
-class MessageValue(object):
-    VALUES = {}
-    def __init__(self, name, isint):
-        self.name, self.isint, self.signature, self.values = name, isint, name, set()
-        # self.values.add(f'{self.signature}_Default')
-        MessageValue.VALUES[name] = self
-
-    @classmethod
-    def init_message_value(cls, name, isint):
-        if name in cls.VALUES:
-            value = cls.VALUES[name] 
-            if not bool(isint == value.isint): raise svException('Fail to load already loaded value: Coherency does not hold.')
-            return cls.VALUES[name]
-        return cls(name=name, isint=isint)
-    
-    def __str__(self):
-        if self.isint:
-            _str_ = f"""sig {self.signature} in Int {{}}"""
-            values = set()
-            for v in self.values:
-                if not v.lstrip("-").isdigit(): raise svException(f"{self.signature} can not be Int: {v} is not a digit.")
-                values.add(v)
-            _str_ += f"""\nfact {{{self.signature} in {'+'.join(values)}}}"""
-        else:
-            values     = None if (self.values == set()) else ','.join(self.values)
-            _str_ = f'abstract sig {self.signature} extends Msg {{}}\none sig {values} extends {self.signature} {{}}'
-        return _str_ + '\n'
-
 "ROS2-based for message topic_type as this tool focus on Topic-Message processing."
 class MessageType(object):
-    TYPES = {}
+    TYPES  = {}
+    VALUES = set()
     def __init__(self, name, signature, topic):
-        self.name, self.signature, self.topics = name, signature, set()
+        self.name, self.signature, self.topics, self.values = name, signature, set(), set()
         self.topics.add(topic)
         MessageType.TYPES[name]   = self
 
@@ -85,16 +57,14 @@ class MessageType(object):
     
     def __str__(self):
         # {{\n\tvalue in {self.value.signature}\n}}
-        return str(self.value)
-
-    @property
-    def isint(self):
-        return self._isint
-    
-    @isint.setter
-    def isint(self, b):
-        self._isint = b
-        self.value  = MessageValue.init_message_value(name=self.abstract(tag=self.name), isint=b)
+        _str_ = f"""sig {self.signature} extends Message {{}}"""
+        values = set()
+        for v in self.values:
+            if not v.lstrip("-").isdigit():
+                MessageType.VALUES.add(v)
+            values.add(v)
+        _str_ += f"""\nfact {{{self.signature} in {'+'.join(values)}}}"""
+        return _str_ + '\n'
 
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
@@ -105,7 +75,7 @@ class Topic(object):
             \__ Type
     """
     def __init__(self, name, topic_type, message_type=None):
-        self.name, self.type, self.remap, self.signature, self.message_type = name, topic_type, None, 'channel'+self.abstract(tag=name), message_type
+        self.name, self.type, self.remap, self.signature, self.message_type = name, topic_type, None, 'topic'+self.abstract(tag=name), message_type
         Topic.TOPICS[name] = self
         
     @classmethod
@@ -135,7 +105,7 @@ class Topic(object):
 
     def declaration(self):
         abstract_type, self.message_type = self.abstract(tag=self.type), MessageType.TYPES[self.abstract(tag=self.type).lower()]
-        return f"""one sig {self.signature} extends Channel {{}}\n"""
+        return f"""one sig {self.signature} extends Topic {{}}\n"""
         #"""{{(box0 + box1) in {self.message_type.signature}}}\n"""
 
     @classmethod
@@ -143,16 +113,19 @@ class Topic(object):
         TOPICS       = cls.TOPICS
         declaration  = ''.join(list(map(lambda topic: TOPICS[topic].declaration(), TOPICS))) + '\n'
         # CHANNEL COHENRECY
-        declaration  += f"""fact channel_coherency {{\n\talways ("""
+        declaration  += f"""fact type_coherency {{\n\talways ("""
         temp          = []
         for topic in TOPICS:
             topic = TOPICS[topic]
-            temp.append(f"""elems[{topic.signature}.(Execution.inbox)] in {topic.message_type.signature}""")
+            temp.append(f"""elems[{topic.signature}.(Trace.inbox)] in {topic.message_type.signature}""")
         declaration  += ' and '.join(temp) + f""")\n}}\n\n"""
+        # VALUES
+        VALUES       = MessageType.VALUES
+        for v in VALUES:
+            declaration += f'\none sig {self.signature} extends Msg'
         # TYPES
         TYPES        = MessageType.TYPES
         declaration += '\n'.join(list(map(lambda msgtp: str(TYPES[msgtp]) , TYPES )))
-        # VALUES?
         return declaration
 
     @classmethod
@@ -293,7 +266,7 @@ class Node(object):
         node   = Node.NODES[node]
         # Enclave is not needed at this point
         topics = {'subscribe': list(map(lambda subs: subs.rosname(node=node), node.subscribes)), 'advertise': list(map(lambda pubs: pubs.rosname(node=node), node.publishes)), 'remaps': node.remaps}
-        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'calls': topics}
+        return {'package': node.package, 'executable': node.executable, 'namespace': node.namespace, 'rosname': node.rosname, 'topics': topics}
 
     @staticmethod
     def render_remap(topic, remaps):
@@ -384,7 +357,7 @@ class svROSNode(object):
         if self.profile.subscribe:
             for subscribe in self.profile.subscribe:
                 if subscribe not in Topic.TOPICS:
-                    print(svWarning(f'Privilege {subscribe} of {self.rosname} defined in SROS file but not has no matching channel in config file!'))
+                    print(svWarning(f'Privilege {subscribe} of {self.rosname} defined in SROS file but not has no matching topic in config file!'))
                 else:
                     subs.append(Topic.TOPICS[subscribe])
         if self.profile.advertise:
@@ -407,7 +380,7 @@ class svROSNode(object):
 
     # This method will allow to check what the output might be when an unsecured enclave publishes something from one of its topics
     @classmethod
-    def observalDeterminism(cls, steps):
+    def observalDeterminism(cls, steps, inbox):
         if list(map(lambda node: node.connection, cls.NODES.values())) == []:
             raise svException(f'Failed to check Observable Determinism: No connections set between public and private parts.')
         if cls.OBSERVATIONS is set():
@@ -417,8 +390,8 @@ class svROSNode(object):
         for topic in cls.OBSERVATIONS:
             if not isinstance(topic, Topic):
                 raise svException(f'{topic.signature} is not a topic!')
-            svROSNode.PUBSYNC.add(f"""\n\talways ((some m0 : Message | publish0[{topic.signature}, m0]) iff (some m1 : Message | publish1[{topic.signature}, m1]))""")
-            observations.add(f'check {{always (all m0, m1 : Message | publish0[{topic.signature}, m0] and publish1[{topic.signature}, m1] implies m0 = m1)}} for 4 but 1..{steps} steps')
+            svROSNode.PUBSYNC.add(f"""\n\talways ((some m0 : Message | publish[T1, {topic.signature}, m0]) iff (some m1 : Message | publish[T2, {topic.signature}, m1]))""")
+            observations.add(f'check {{always (all m0, m1 : Message | publish[T1, {topic.signature}, m0] and publish[T2, {topic.signature}, m1] implies m0 = m1)}} for 4 but {inbox} seq, 1..{steps} steps')
         cls.OBSERVATIONS = observations
         return True
 
@@ -480,7 +453,7 @@ class svROSNode(object):
         for unsecured in public:
             if unsecured.advertise:
                 for adv in unsecured.advertise:
-                    public_event_synchronization += f"""\n\talways (all m : Message | publish0[{adv.signature}, m] iff publish1[{adv.signature}, m])"""
+                    public_event_synchronization += f"""\n\talways (all m : Message | publish[T1, {adv.signature}, m] iff publish[T2, {adv.signature}, m])"""
         for sync in cls.PUBSYNC:
             public_event_synchronization += sync
         public_event_synchronization += f"""\n}}\n"""
@@ -509,7 +482,7 @@ class svROSNode(object):
         # Enclave is not needed at this point
         topics  = {'subscribe': subscribe, 'advertise': advertise}
         enclave = node.profile.enclave.name if node.profile else ''
-        return {'node': node.index.replace('::', '/'), 'package': node.package if node.package else '', 'namespace': node.namespace if node.namespace else '', 'rosname': node.rosname if node.rosname else '', 'enclave': enclave, 'calls': topics}
+        return {'node': node.index.replace('::', '/'), 'package': node.package if node.package else '', 'namespace': node.namespace if node.namespace else '', 'rosname': node.rosname if node.rosname else '', 'enclave': enclave, 'topics': topics}
 
     @classmethod
     def connections_to_json(cls):
@@ -766,11 +739,11 @@ class svExecution(object):
         t1 = cls(name='Trace_1', signature='T1')
         t2 = cls(name='Trace_2', signature='T2')
         # Convert TO ALLOY. 
-        _str_  = f"""abstract sig Execution {{\n\tvar inbox: Channel -> (seq Message)"""
+        _str_  = f"""abstract sig Trace {{\n\tvar inbox: Topic -> (seq Message)"""
         states, only_one_per_state = '', []
         nop = set()
         # Predicate SYSTEM
-        system_str   = f"""pred system [t : Execution] {{"""
+        system_str   = f"""pred system [t : Trace] {{"""
         # PUBLIC SYNCH
         public_state = f"""fact public_state_equivalence {{"""
         for state in svState.STATES:
@@ -791,12 +764,12 @@ class svExecution(object):
         public_state += f"""\n}}\n"""
         _str_ += f"""\n}}""" # {{ {' and '.join(only_one_per_state)} }} \n"""
         # Predicate NOP
-        nop_str = f"""pred nop [t : Execution] {{\n\tt.inbox' = t.inbox"""
+        nop_str = f"""pred nop [t : Trace] {{\n\tt.inbox' = t.inbox"""
         for n in nop:
             nop_str    += f"""\n\tt.{n}' = t.{n}"""
         nop_str += f"""\n}}\n"""
         # svPredicate
         from svLanguage import svPredicate
-        system_str += f"""\n\t// System executions.\n\t{'[t] or '.join(svPredicate.NODE_BEHAVIOURS.keys())}[t]\n}}"""
-        _str_ += f""" one sig {t1.signature}, {t2.signature} extends Execution {{}}\n"""
+        system_str += f"""\n\t// System trace executions.\n\t{'[t] or '.join(svPredicate.NODE_BEHAVIOURS.keys())}[t]\n}}"""
+        _str_ += f""" one sig {t1.signature}, {t2.signature} extends Trace {{}}\n"""
         return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str # '\n// Public-State Equivalence and Synchronization:\n' + public_state 

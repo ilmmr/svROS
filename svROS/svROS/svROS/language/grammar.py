@@ -269,14 +269,15 @@ class MessageCond(object):
 
     def __alloy__(self, no_quantifier):
         channel, quantifier  = MESSAGE_TOKENS[self.token].object, 'no' if no_quantifier else ''
-        if self.value not in channel.message_type.value.values: raise svException(f"Channel {channel.signature} value {self.value} does not exist!")
+        channel.message_type.values.add(self.value)
+        # if self.value not in channel.message_type.value.values: raise svException(f"Channel {channel.signature} value {self.value} does not exist!")
         value = self.value
         if self.relation == 'EQUAL_OPERATOR': 
-            return f"{quantifier} m = {value}"
+            return f"{quantifier} {self.token} = {value}"
         if self.relation == 'DIFF_OPERATOR':
-            return f"{quantifier} m != {value}"
+            return f"{quantifier} {self.token} != {value}"
         assert channel.message_type.isint
-        return f"{quantifier} {ALLOY_OPERATORS[self.relation]}[m, {value}]"
+        return f"{quantifier} {ALLOY_OPERATORS[self.relation]}[{self.token}, {value}]"
 
 class Conditional(object):
 
@@ -350,8 +351,8 @@ class Publish(object):
     def __init__(self, entity, value=None, type=None):
         try:
             channel = Topic.TOPICS[entity]
-            if type == "VALUE":
-                if value not in ( channel.message_type.value.values + list(MESSAGE_TOKENS.keys())): raise svException(f"Channel value {value} does not exist!")
+            # if type == "VALUE":
+            #    if value not in ( channel.message_type.value.values + list(MESSAGE_TOKENS.keys())): raise svException(f"Channel value {value} does not exist!")
         except AttributeError as e : raise svException(f'{e}')
         self.entity, self.object, self.value, self.type = entity, channel, value, type
 
@@ -361,6 +362,8 @@ class Publish(object):
             quantifier = 'no' if no_quantifier else 'some'
             if self.value is None:
                 return f'{quantifier} t.inbox[{self.object.signature}]'
+            elif self.value not in list(MESSAGE_TOKENS.keys()):
+                self.object.message_type.values.add(self.value)
             isstate = 't.' if self.type == "STATE" else ''
             if not no_quantifier: return f"{isstate}{self.value} in t.inbox[{self.object.signature}].elems"
             else: return f"{isstate}{self.value} not in t.inbox[{self.object.signature}].elems"
@@ -374,6 +377,8 @@ class Publish(object):
                     read = MESSAGE_TOKENS[self.value].object
                     if not bool(channel.message_type == read.message_type):
                         raise svException(f"Channel {channel.signature} can not use value of {read.signature} through {self.value}, as they have different message types.")
+                else:
+                    channel.message_type.values.add(self.value)
                 return f"t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], {self.value}]"
             return f"t.inbox'[{channel.signature}] = add[t.inbox[{channel.signature}], t.{self.value}']"
 
