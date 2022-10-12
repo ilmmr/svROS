@@ -57,6 +57,9 @@ class svPredicate(object):
             raise svException('Failed to create property parser since given node is not a Node.')
         signature = svPredicate.signature(value=signature)
         self.signature, self.node, self.sub_predicates = signature, node, set()
+        # CHANGABLE
+        node.changable_channels  == []
+        node.changable_variables == []
         if properties: 
             properties = list(map(lambda prop: self.create_prop(text=prop), properties))
             properties = list(filter(lambda prop: not isinstance(prop, svPredicate), properties))
@@ -72,55 +75,18 @@ class svPredicate(object):
         return str(value).lower().replace('/','_')
 
     def parse_predicate(self):
-        # Building non-accessable!
-        node_access = list(self.node.advertise) if self.node.advertise is not None else []
-        node_access += list(self.node.subscribe) if self.node.subscribe is not None else []
-        non_accessable = list(filter(lambda t: t not in node_access, Topic.TOPICS.values()))
-        try:
-            changable_channels, changable_variables = self.check_accessable(non_accessable=non_accessable)
-            if changable_channels  == []: changable_channels  = None
-            if changable_variables == []: changable_variables = None
-        except AttributeError:
-            raise svException(f"Failed to parse predicate {self.signature}.")
+        if self.properties is None: 
+            changable_channels, changable_variables = None, None
+        if self.node.changable_channels  == []: changable_channels  = None
+        if self.node.changable_variables == []: changable_variables = None
+        # try:
+        #     changable_channels, changable_variables = self.check_accessable(non_accessable=non_accessable)
+        #     if changable_channels  == []: changable_channels  = None
+        #     if changable_variables == []: changable_variables = None
+        # except AttributeError:
+        #     raise svException(f"Failed to parse predicate {self.signature}.")
         alloy = svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
         return alloy
-
-    # Method that either checks node access capacities as it outputs the non frame conditions under such node.
-    def check_accessable(self, non_accessable=None):
-        changable_variables, changable_channels = list(), list()
-        if self.properties is None: return changable_channels, changable_variables
-        for prop in self.properties:
-            # READ
-            if isinstance(prop, Read):
-                entity = Topic.TOPICS[prop.entity]
-                if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {prop.entity}.")
-                changable_channels.append(entity)
-                if prop.conditions:
-                    for condition in prop.conditions.conditions:
-                        implication = condition.implication.conditions
-                        for conjunction in implication:
-                            for cond in conjunction.conditions:
-                                # PARSE TYPE
-                                if isinstance(cond, Publish):
-                                    entity = Topic.TOPICS[cond.entity]
-                                    if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access read object {cond.entity}.")
-                                    changable_channels.append(entity)
-                                if isinstance(cond, Alter):
-                                    state = svState.STATES[cond.entity]
-                                    changable_variables.append(state)
-            # PUBLISH        
-            if isinstance(prop, Publish):
-                entity = Topic.TOPICS[prop.entity]
-                if entity in non_accessable: raise svException(f"Predicate under node {self.node.rosname} can not access publish object {prop.entity}.")
-                changable_channels.append(entity)
-            # ALTER
-            if isinstance(prop, Alter):
-                state = svState.STATES[prop.entity]
-                if state.private and not self.node.secure:
-                    raise svException(f"Node {self.node.rosname} is public and can not access {state.name}.")
-                changable_variables.append(state)     
-        # Return accessable channels and variables!
-        return list(set(changable_channels)), list(set(changable_variables))
 
     # Method to extract and parse text properties into class properties!
     def create_prop(self, text):
@@ -134,7 +100,7 @@ class svPredicate(object):
                 self.sub_predicates.add(sub_predicate)
                 return sub_predicate
             elif isinstance(text, str):
-                property = GrammarParser.parse(text=text)
+                property = GrammarParser.parse(text=text, node=self.node)
                 return property
             else:
                 raise svException(f'Failed to parse property {text}.')

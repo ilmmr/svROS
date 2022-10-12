@@ -58,13 +58,18 @@ class MessageType(object):
     def __str__(self):
         # {{\n\tvalue in {self.value.signature}\n}}
         _str_ = f"""sig {self.signature} extends Message {{}}"""
-        values = set()
+        values, isdigit = set(), False
         for v in self.values:
             if not v.lstrip("-").isdigit():
                 MessageType.VALUES.add(v)
+            else:
+                isdigit = True
             values.add(v)
-        _str_ += f"""\nfact {{{self.signature} in {'+'.join(values)}}}"""
-        return _str_ + '\n'
+        if isdigit:
+            _str_ += f"""\nfact {{ {self.signature} in {'+'.join(values)} + Int {{}} }}\n"""
+        else:
+            _str_ += f"""\nfact {{ {self.signature} in {'+'.join(values)} }}\n"""
+        return _str_
 
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
@@ -469,6 +474,12 @@ class svROSNode(object):
         if predicate is None: self._predicate = None
         elif not isinstance(predicate, svPredicate): raise svException("Not a predicate!")
         else: self._predicate = predicate
+
+    @property
+    def non_accessable(self):
+        node_access = list(self.advertise) if self.advertise is not None else []
+        node_access += list(self.subscribe) if self.subscribe is not None else []
+        return list(filter(lambda t: t not in node_access, Topic.TOPICS.values()))
 
     # Retrieve JSON-based dict information
     @staticmethod

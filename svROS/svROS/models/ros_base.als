@@ -1,9 +1,10 @@
+open numeric
 /* === SIGNATURES === */
 abstract sig Node {
 	subscribes, advertises : set Channel
 }
-abstract sig Msg {}
-sig Message = Msg + Int {}
+abstract sig Not_Numeric {}
+sig Message = Numeric + Not_Numeric
 abstract sig Channel {}
 /* === SIGNATURES === */
 

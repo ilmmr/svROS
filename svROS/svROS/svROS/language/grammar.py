@@ -18,7 +18,7 @@ GRAMMAR = f"""
     conjunction  : [ conjunction OR_OPERATOR ] condition
     condition    : [ NO_OPERATOR ] cond | event
 
-    reads       : TOPIC [ "as" message_token "[[" implication "]]" ]
+    reads       : TOPIC [ "as" message_token "::" implication "]]"
     implication : operation ( ";" operation )*
     operation   : "if" formula "then" "{{" formula "}}" [ "else" "{{" formula "}}" ]
                 | formula
@@ -71,9 +71,9 @@ class GrammarParser(object):
     GRAMMAR = f'{GRAMMAR}'
 
     @classmethod
-    def parse(cls, text=''):
+    def parse(cls, node, text=''):
         if text == '': return
-        grammar, parser = cls.GRAMMAR, Lark(cls.GRAMMAR, parser="lalr", start='property', transformer=LanguageTransformer())
+        grammar, parser = cls.GRAMMAR, Lark(cls.GRAMMAR, parser="lalr", start='property', transformer=LanguageTransformer(node=node, text=text))
         # PARSE!
         try:
             conditions = parser.parse(text)
@@ -120,8 +120,9 @@ class BinaryOperator(object):
 
 class LanguageTransformer(Transformer):
 
-    def __init__(self):
+    def __init__(self, node, text):
         MESSAGE_TOKENS.clear()
+        self.node, self.text = node, text
 
     def property(self, children):
         # CLEAR #
@@ -180,6 +181,12 @@ class LanguageTransformer(Transformer):
             token = children[1].value
             if token in MESSAGE_TOKENS.keys() and MESSAGE_TOKENS[token] != None: 
                 raise svException(f"Two message tokens with the same value {token}.")
+            #### #### ####
+            entity = Topic.TOPICS[children[0].value]
+            if entity in self.node.non_accessable:
+                raise svException(f"Property '{self.text}' failed: Node {self.node.rosname} can not access read object {children[0].value}.")
+            self.node.changable_channels.append(entity)
+            #### #### ####
             read = Read(entity=children[0].value, token=children[1].value, conditions=children[2])
             MESSAGE_TOKENS[token] = read
         else:
@@ -195,7 +202,7 @@ class LanguageTransformer(Transformer):
         else:
             conditional, more_disjunctions, disjunctions = children[0], children[2], children[1]
         # conditional = None if children.__len__() < 2 else children[0]
-        return ReadImplication(conditional=conditional, implication=disjunctions, denial=more_disjunctions)
+        return ReadImplication(conditional=conditional, implication=disjunctions, denial=more_disjunctions, frame_conditions=disjunctions.conditions)
 
     def formula(self, children):
         return Disjunction(conditions=self.conditionals)
@@ -216,21 +223,32 @@ class LanguageTransformer(Transformer):
     # PUBLISH
     def publishes(self, children):
         if children.__len__() > 3: raise svException("")
-        entity = children[0].value
+        #### #### ####
+        entity = Topic.TOPICS[children[0].value]
+        if entity in self.node.non_accessable:
+            raise svException(f"Property '{self.text}' failed: Node {self.node.rosname} can not access publish object {children[0].value}.")
+        self.node.changable_channels.append(entity)
+        #### #### ####
         if children[1] is not None: 
             value = children[::-1][0]
             type, value = value.type, value.value
         else: value, type = None, None
         if type == "STATE":
             value = value[1:]
-        publish = Publish(entity=entity, value=value, type=type)
+        publish = Publish(entity=children[0].value, value=value, type=type)
         return publish
 
     # ALTERS
     def alters(self, children):
         if not children.__len__() == 3: raise svException("")
-        entity, relation, value = (children[0].value)[1:], children[1].type, children[2].value
-        alter = Alter(entity=entity, relation=relation, value=value)
+        #### #### ####
+        entity = svState.STATES[(children[0].value)[1:]]
+        if entity.private and not self.node.secure:
+            raise svException(f"Property '{self.text}' failed: Node {self.node.rosname} is public and can not access {state.name}.")
+        self.node.changable_variables.append(entity)
+        #### #### ####
+        relation, value = children[1].type, children[2].value
+        alter = Alter(entity=(children[0].value)[1:], relation=relation, value=value)
         return alter
 
 ###############################
@@ -305,15 +323,28 @@ class Implication(object):
 
 class ReadImplication(object):
 
-    def __init__(self, conditional, implication, denial=None):
-        self.conditional, self.implication, self.denial = conditional, implication, denial
+    def __init__(self, conditional, implication, frame_conditions, denial=None):
+        self.conditional, self.implication, self.denial, self.frame_conditions = conditional, implication, denial, frame_conditions
     
     def __alloy__(self):
         if self.conditional is None:
             return f'{self.implication.__alloy__()}'
         if self.denial is None:
             return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }}'
-        return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }} else {{ {self.denial.__alloy__()} }}'
+        return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }} else {{ {self.denial.__alloy__()} {self.resolve_frame_conditions() }}}'
+
+    def resolve_frame_conditions(self):
+        denial = self.denial.conditions
+        frame  = list(map(lambda c : c.object, list(map(lambda cond : cond.conditions, self.frame_conditions.conditions))))
+        denial = list(map(lambda c : c.object, list(map(lambda cond : cond.conditions, denial.conditions)))) 
+        _str_ = ""
+        for f in frame:
+            if f not in denial:
+                if isinstance(f, Topic):
+                    _str_ += f" and t.inbox'[{f.signature}] = t.inbox[{f.signature}]"
+                if isinstance(f, svState):
+                    _str_ += f" and t.{f.name.lower()}' = t.{f.name.lower()}"
+        return _str_
 
 class Disjunction(object):
     
