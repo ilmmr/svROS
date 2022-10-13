@@ -33,6 +33,10 @@ class svAlloyPredicate(object):
         else:
             return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in properties]) + svAlloyPredicate.frame_conditions(channels=changable_channels, variables=changable_variables)
 
+    @classmethod
+    def parse_only_properties(cls, node, properties):
+        return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in properties])
+    
     @staticmethod
     def frame_conditions(channels=None, variables=None):
         _str_ = f"""\n\t// Frame Conditions:"""
@@ -52,7 +56,7 @@ class svPredicate(object):
         Overall Node behaviour => svPredicate
     """
     NODE_BEHAVIOURS = {}
-    def __init__(self, signature, node, properties):
+    def __init__(self, signature, node, properties, is_sub_predicate=False):
         if not isinstance(node, svROSNode):
             raise svException('Failed to create property parser since given node is not a Node.')
         signature = svPredicate.signature(value=signature)
@@ -66,13 +70,19 @@ class svPredicate(object):
             self.properties = None if properties == [] else properties 
         else: 
             self.properties = None
-        self.behaviour = self.parse_predicate()
-        # Only store top-level predicates.
+        # REGARD TOP-LEVEL SIG.
+        self.is_sub_predicate = is_sub_predicate
         svPredicate.NODE_BEHAVIOURS[signature] = self
 
     @staticmethod
     def signature(value):
         return str(value).lower().replace('/','_')
+
+    @classmethod
+    def parse_into_alloy(cls):
+        for predicate in cls.NODE_BEHAVIOURS.values():
+            predicate.behaviour = predicate.parse_predicate()
+        return True
 
     def parse_predicate(self):
         if self.properties is None: 
@@ -85,8 +95,9 @@ class svPredicate(object):
         #     if changable_variables == []: changable_variables = None
         # except AttributeError:
         #     raise svException(f"Failed to parse predicate {self.signature}.")
-        alloy = svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
-        return alloy
+        if self.sub_predicates is not set():
+            return svAlloyPredicate.parse_only_properties(node=self.node, properties=self.properties)
+        return svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
 
     # Method to extract and parse text properties into class properties!
     def create_prop(self, text):
@@ -95,7 +106,7 @@ class svPredicate(object):
             if isinstance(text, dict):
                 if list(text.keys()).__len__() != 1: raise svException(f'Failed to parse property {text}.')
                 signature, properties, node  = str(self.signature + '_' + list(text.keys())[0]).strip(), text[list(text.keys())[0]], self.node
-                sub_predicate = svPredicate.init_predicate(signature, node, properties)
+                sub_predicate = svPredicate.init_predicate(signature, node, properties, is_sub_predicate=True)
                 if sub_predicate in self.sub_predicates: raise svException(f'Sub-Predicate {signature} of predicate {self.signature} already specified.')
                 self.sub_predicates.add(sub_predicate)
                 return sub_predicate

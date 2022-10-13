@@ -450,9 +450,17 @@ class svROSNode(object):
         return declaration
 
     @classmethod
-    def observable_determinism(cls):
+    def observable_determinism(cls, assumptions=None):
         if cls.NODES is {}: raise svException("No nodes found, can not process handling of topic behaviour.")
-        # PUBLIC STATE...
+        # PUBLIC STATE
+        public_state_equivalence = f"""// Public-State Equivalence:\nfact public_state_equivalence {{\n\tno inbox"""
+        states = list(filter(lambda state: not state.private and state not in svState.ASSUMPTIONS), svState.STATES.values())
+        if assumptions:
+            public_state_equivalence += '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in assumptions])
+        for state in states:
+            public_state_equivalence += f"""\n\tT1.{state.name.lower()} = T2.{state.name.lower()}"""
+        public_state_equivalence += f"""\n}}\n"""
+        # PUBLIC EVENT
         public = list(filter(lambda node: node.secure == False, cls.NODES.values()))
         public_event_synchronization = f"""// Public-Event Synchronization:\nfact public_event_synchronization {{"""
         for unsecured in public:
@@ -462,7 +470,7 @@ class svROSNode(object):
         for sync in cls.PUBSYNC:
             public_event_synchronization += sync
         public_event_synchronization += f"""\n}}\n"""
-        return public_event_synchronization + '\n\n'.join(list(cls.OBSERVATIONS))
+        return public_state_equivalence + public_event_synchronization + '\n\n'.join(list(cls.OBSERVATIONS))
 
     @property
     def predicate(self):
@@ -507,7 +515,8 @@ class svROSNode(object):
         return list(map(lambda con: {'relation': con[0], 'source': con[1], 'target': con[2]}, connections))
 
 class svState(object):
-    STATES = {}
+    STATES      = {}
+    ASSUMPTIONS = set()
     def __init__(self, name, default, values, isint=False, private=False):
         self.name, self.values, self.isint, self.private = name, values, isint, private
         self.default, self.signature = self.values_signature(value=default), svState.signature(tag=name)
@@ -755,8 +764,6 @@ class svExecution(object):
         nop = set()
         # Predicate SYSTEM
         system_str   = f"""pred system [t : Trace] {{"""
-        # PUBLIC SYNCH
-        public_state = f"""fact public_state_equivalence {{"""
         for state in svState.STATES:
             state = svState.STATES[state]
             states += str(state)
@@ -772,7 +779,6 @@ class svExecution(object):
             #     # Public state equivalence?
             #     public_state += f"""\n\tExecution.{state.name.lower()}) = {state.default}->0\n\talways (some T1.{state.name.lower()}.1 iff some T2.{state.name.lower()}.1)"""
             nop.add(state.name.lower())
-        public_state += f"""\n}}\n"""
         _str_ += f"""\n}}""" # {{ {' and '.join(only_one_per_state)} }} \n"""
         # Predicate NOP
         nop_str = f"""pred nop [t : Trace] {{\n\tt.inbox' = t.inbox"""
@@ -781,6 +787,6 @@ class svExecution(object):
         nop_str += f"""\n}}\n"""
         # svPredicate
         from svLanguage import svPredicate
-        system_str += f"""\n\t// System trace executions.\n\t{'[t] or '.join(svPredicate.NODE_BEHAVIOURS.keys())}[t]\n}}"""
+        system_str += f"""\n\t// System trace executions.\n\t{'[t] or '.join(list(filter(lambda not_sub: not not_sub.is_sub_predicate, svPredicate.NODE_BEHAVIOURS.keys())))}[t]\n}}"""
         _str_ += f""" one sig {t1.signature}, {t2.signature} extends Trace {{}}\n"""
         return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str # '\n// Public-State Equivalence and Synchronization:\n' + public_state 

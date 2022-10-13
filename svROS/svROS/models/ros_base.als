@@ -9,8 +9,7 @@ abstract sig Channel {}
 /* === SIGNATURES === */
 
 /* === INITIAL CONFIG === */
-fact initial_assumptions {
-	no inbox
+fact system_behaviour {
 	always (nop[T1] or system[T2])	
 	always (nop[T1] or system[T2])
 }

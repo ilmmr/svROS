@@ -14,6 +14,7 @@ from svLanguage import svPredicate
 import xml.etree.ElementTree as ET
 # Visualizer
 from svVisualizer import svVisualizer
+from language.aspt_grammar import GrammarParser
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -105,9 +106,9 @@ class svAnalyzer(object):
         model += svExecution.create_executions()
         model += '\n/* === NODE BEHAVIOUR === */\n'
         model += svPredicate.node_behaviour()
-        model += '\n/* === NODE BEHAVIOUR === */\n\n/* === OBSERVABLE DETERMINISM === */\n'
-        model += svROSNode.observable_determinism()
-        model += '\n/* === OBSERVABLE DETERMINISM === */'
+        model += '\n/* === NODE BEHAVIOUR === */\n\n/* === OBSERVATIONAL DETERMINISM === */\n'
+        model += svROSNode.observable_determinism(assumptions=self.EXTRACTOR.assumptions)
+        model += '\n/* === OBSERVATIONAL DETERMINISM === */'
         with open(file_path, 'w+') as ros: ros.write(model)
         return file_path
     
@@ -323,6 +324,7 @@ class svProjectExtractor:
                 raise svException(f'Failed to properties from {node.rosname}.')
         svROSNode.handle_connections()  # Set connections up.
         steps, inbox = self.scopes
+        svPredicate.parse_into_alloy()
         #if type.lower() == "od" or type.lower() == "observable determinism":
         # Observable determinism in Unsecured Nodes.
         if not svROSNode.observalDeterminism(steps=steps, inbox=inbox): 
@@ -363,3 +365,19 @@ class svProjectExtractor:
         if not steps:
             raise svException('Failed to retrieve scopes on steps: Define type in configurations/model area.')
         return steps, inbox
+
+    @property
+    def assumptions(self):
+        behaviour   = self.config.get('configurations').get('model', {}).get('behaviour', {})
+        assumptions = list(map(lambda prop: self.create_prop(text=prop), behaviour))
+        if assumptions == []: return None
+        return assumptions
+
+    def create_prop(self, txt):
+        try: 
+            if isinstance(text, str):
+                property = GrammarParser.parse(text=text)
+                return property
+            else:
+                raise svException(f'Failed to parse property {text}.')
+        except Exception: raise svException(f'Failed to parse property {text}.')

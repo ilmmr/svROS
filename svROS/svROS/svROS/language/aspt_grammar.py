@@ -149,6 +149,7 @@ class State(object):
             state = svState.STATES[entity]
             if value not in ( state.values + list(MESSAGE_TOKENS.keys()) ): raise svException(f"State value {value} does not exist!")
         except AttributeError as e : raise svException(f'{e}')
+        svState.ASSUMPTIONS.add(state)
         self.entity, self.object, self.relation, self.value = entity, state, relation, value
 
     def __alloy__(self, trace=None, no_quantifier=False):
