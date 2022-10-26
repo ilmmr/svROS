@@ -10,3 +10,5 @@ fact considerations {
 	no iden & adj /* The graph contains no loops.  */
 	Node->Node in *(adj + ~adj)  /* The graph is connected. */
 }
+
+run {} for exactly 5 Node

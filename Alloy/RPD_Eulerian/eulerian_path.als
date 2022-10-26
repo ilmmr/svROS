@@ -28,6 +28,9 @@ fact eulerian_assumptions {
 	all x : Node | x->Node in ^adj
 }
 
+run example {
+} for exactly 5 Node
+
 pred assumptions {
 	/* Initial configuration */
 	//some adj
