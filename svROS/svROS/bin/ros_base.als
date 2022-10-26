@@ -14,7 +14,8 @@ fact system_behaviour {
 	always (nop[T1] or system[T2])
 }
 pred publish[t : Trace, channel: Channel, m : Message] {
-	t.inbox'[channel] = add[t.inbox[channel], m]
+	not (t.inbox[topic].lastIdx = max[seq/Int]) 
+	t.inbox'[topic] = add[t.inbox[topic], m]
 }
 fun isconnected [] : Node -> Channel -> Node {
 	{ n : Node , t : n.advertises, n1 : Node | t in n1.subscribes }

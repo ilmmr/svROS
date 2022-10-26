@@ -118,12 +118,12 @@ class Topic(object):
         TOPICS       = cls.TOPICS
         declaration  = ''.join(list(map(lambda topic: TOPICS[topic].declaration(), TOPICS))) + '\n'
         # CHANNEL COHENRECY
-        declaration  += f"""fact type_coherency {{\n\talways ("""
-        temp          = []
-        for topic in TOPICS:
-            topic = TOPICS[topic]
-            temp.append(f"""elems[{topic.signature}.(Trace.inbox)] in {topic.message_type.signature}""")
-        declaration  += ' and '.join(temp) + f""")\n}}\n\n"""
+        # declaration  += f"""fact type_coherency {{\n\talways ("""
+        # temp          = []
+        # for topic in TOPICS:
+        #    topic = TOPICS[topic]
+        #    temp.append(f"""elems[{topic.signature}.(Trace.inbox)] in {topic.message_type.signature}""")
+        # declaration  += ' and '.join(temp) + f""")\n}}\n\n"""
         # VALUES
         VALUES       = MessageType.VALUES
         for v in VALUES:
@@ -171,7 +171,7 @@ class Node(object):
             node  = cls.NODES[index]
             nodes[index]               = {}
             nodes[index]['rosname']    = node.rosname
-            nodes[index]['enclave']    = '/private' if node.enclave else '/public' # else Node.namespace(tag=index)
+            nodes[index]['enclave']    = str(node.enclave) if node.enclave else '/public'
             # Behaviour
             nodes[index]['behaviour']  = ['']
             # Topic treatment.
@@ -202,14 +202,13 @@ class Node(object):
             if node.enclave is not None:
                 enclave = None
                 for en in enclaves:
-                    if en.get('path') == '/private':
+                    if en.get('path') == str(node.enclave):
                         enclave  = en
                         profiles = enclave[0]
                         break
                 if enclave is None:
                     enclave  = ET.Element('enclave')
-                    # enclave.set('path', str(node.enclave))
-                    enclave.set('path', '/private')
+                    enclave.set('path', str(node.enclave))
                     profiles = ET.Element('profiles')
                     enclave.append(profiles)
                     enclaves.append(enclave)
@@ -455,8 +454,9 @@ class svROSNode(object):
         # PUBLIC STATE
         public_state_equivalence = f"""// Public-State Equivalence:\nfact public_state_equivalence {{\n\tno inbox"""
         states = list(filter(lambda state: not state.private and state not in svState.ASSUMPTIONS), svState.STATES.values())
+        initial_assumptions = ''
         if assumptions:
-            public_state_equivalence += '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in assumptions])
+            initial_assumptions = 'fact initial_assumptions {\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in assumptions]) + '\n}\n'
         for state in states:
             public_state_equivalence += f"""\n\tT1.{state.name.lower()} = T2.{state.name.lower()}"""
         public_state_equivalence += f"""\n}}\n"""
@@ -470,7 +470,7 @@ class svROSNode(object):
         for sync in cls.PUBSYNC:
             public_event_synchronization += sync
         public_event_synchronization += f"""\n}}\n"""
-        return public_state_equivalence + public_event_synchronization + '\n\n'.join(list(cls.OBSERVATIONS))
+        return initial_assumptions + public_state_equivalence + public_event_synchronization + '\n\n'.join(list(cls.OBSERVATIONS))
 
     @property
     def predicate(self):
@@ -517,31 +517,28 @@ class svROSNode(object):
 class svState(object):
     STATES      = {}
     ASSUMPTIONS = set()
-    def __init__(self, name, default, values, isint=False, private=False):
-        self.name, self.values, self.isint, self.private = name, values, isint, private
-        self.default, self.signature = self.values_signature(value=default), svState.signature(tag=name)
+    def __init__(self, name, isint=False, private=False):
+        self.name, self.isint, self.private = name, isint, private
+        self.signature = svState.signature(tag=name)
+        self.values = set()
         svState.STATES[self.name] = self
     
     def __str__(self):
         if self.isint:
             _str_ = f"""\nsig {self.signature} in Int {{}}"""
-            values = set()
-            for v in self.values:
-                values.add(v)
-            _str_ += f"""\nfact {{{self.signature} in {'+'.join(values)}}}"""
         else:
             _str_  = f"""\nabstract sig {self.signature} {{}}"""
             _str_ += f"""\none sig {','.join([self.values_signature(value) for value in self.values])} extends {self.signature} {{}}"""
         return _str_
 
     @staticmethod
-    def signature(tag): return 'State_' + tag.capitalize()
+    def signature(tag): return 'Var_' + tag.capitalize()
 
     def values_signature(self, value): 
         return self.name.capitalize() + '_' + value.capitalize()
 
     @classmethod
-    def init_state(cls, name, values):
+    def init_state(cls, name):
         # Grammar to parse states.
         grammar = """
             sentence: one | two | three | four
@@ -563,9 +560,7 @@ class svState(object):
         if t.children[0].data == "three": isint, private = False, False
         if t.children[0].data == "four":  isint, private = True, False
         name = str(t.children[0].children[::-1][0])
-        values  = values.split('/')
-        default = values[0]
-        return cls(name=name, default=default, values=values, isint=isint, private=private)
+        return cls(name=name, isint=isint, private=private)
 
 """ 
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
@@ -578,10 +573,7 @@ class svROSEnclave(object):
             \_ path
             \_ profiles
     """
-    ALLOWED = {'/private', '/public'}
     def __init__(self, path, profiles):
-        # if path not in self.ALLOWED:
-        #    raise svException('Enclaves are only set as either /private or /public!')
         self.name, self.profiles, self.signature, self.ispublic = path, {}, self.abstract(tag=path), True if path == '/public' else False
         for profile in profiles:
             p = svROSProfile.init_profile(profile, enclave=self)

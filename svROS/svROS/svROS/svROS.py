@@ -185,11 +185,12 @@ class svINIT:
                 return False
             # Copy and generate files.
             try:
-                files = glob.iglob(os.path.join(f'{WORKDIR}/../models', "*.als"))
+                files = glob.iglob(os.path.join(f'{WORKDIR}/../bin', "*.als"))
                 for xfile in (list(filter(lambda x : os.path.isfile(x), files))):
                     shutil.copy(xfile, f'{dir}/.bin/')
-                # Create environment dir with content.
-                shutil.copy(f'{WORKDIR}/../models/org.alloytools.alloy.dist.jar', f'{dir}/.bin/')
+                # Create environment dir with content. => ALLOY and GENERATOR jar
+                shutil.copy(f'{WORKDIR}/../bin/org.alloytools.alloy.dist.jar', f'{dir}/.bin/')
+                shutil.copy(f'{WORKDIR}/../bin/generator.jar', f'{dir}/.bin/')
             except Exception as error:
                 print("[svROS] Failed to set up svROS default directory!")
                 return False
@@ -529,7 +530,7 @@ class svRUN:
 """ 
     This works as an application-launcher parser, that will eventually call up one of these classes:
         => svINIT,   if $ svROS init
-        => svEXPORT, if $ svROS import
+        => svEXPORT, if $ svROS export
         => svRUN,    if $ svROS launch
 """
 @dataclass
@@ -540,7 +541,7 @@ class Launcher:
 
     OPTIONS:
         => svROS init [ , --reset]
-        => svROS import -f $file [ , optional]
+        => svROS export -f $file [ , optional]
             '-> optional:
                 --force-init => Force creation of svROS dir           
                 --reset      => Reset project directory 
@@ -657,7 +658,7 @@ class Launcher:
         # SUBSPARSERS: init, extract and run
         options = interpreter.add_subparsers(help='sub-command')
         init    = options.add_parser('init')
-        export  = options.add_parser('import')
+        export  = options.add_parser('export')
         run     = options.add_parser('launch')
         analyze = options.add_parser('analyze')
         # Handling functions
@@ -705,7 +706,7 @@ class Launcher:
         parser.add_argument("--reset",  help = "Reset the svROS directory and all the directory subdirectories.", action="store_true")
         parser.set_defaults(func = self.setup)
 
-    # Handler svROS import
+    # Handler svROS export
     def command_export(self, args):
         # Check if init file exists.
         exists, init = self._check_file(f'{self._DIR}/.init', mode=False)
@@ -741,7 +742,7 @@ class Launcher:
         self.log.info(f"Exporting file {args.file} into a project: Setup operation.")
         return export._default_export()
         
-    # => svROS import -f (--file) $file [, --force-init, --reset] (optional)
+    # => svROS export -f (--file) $file [, --force-init, --reset] (optional)
     def _export(self, parser):
         parser.add_argument("-f", "--file",  help = "Provide yaml-based file.", required=True)
         parser.add_argument("--force-init",  help = "Force creation of svROS directory, if not created.", action="store_true")

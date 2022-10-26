@@ -300,7 +300,7 @@ class svProjectExtractor:
         #     mtype.isint = isint
         #     mtype.value.values = mtype_temp  
         if states:
-            for state in states: svState.init_state(name=state, values=states[state])
+            for state in states: svState.init_state(name=state)
         # Processing nodes.
         for node in nodes:
             name, node = node, nodes[node]            

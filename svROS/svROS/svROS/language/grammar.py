@@ -35,7 +35,7 @@ GRAMMAR = f"""
     message_cond : MESSAGE ( EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE
 
     param       : TOPIC | STATE | PREDICATE | MESSAGE
-    binop       : EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR | INC_OPERATOR | DEC_OPERATOR
+    binop       : EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR | INC_OPERATOR | DEC_OPERATOR | GT_EQ | LS_EQ
 
     AND_OPERATOR    : "and" | "&&"
     OR_OPERATOR     : "or"  | "||"
@@ -45,7 +45,9 @@ GRAMMAR = f"""
     
     EQUAL_OPERATOR   : "="
     GREATER_OPERATOR : ">"
+    GT_EQ            : ">="
     LESSER_OPERATOR  : "<"
+    LS_EQ            : "<="
     INC_OPERATOR     : "+="
     ADD_OPERATOR     : "++"
     DEC_OPERATOR     : "-="
@@ -418,7 +420,12 @@ class Alter(object):
     def __init__(self, entity, relation, value):
         try:
             state = svState.STATES[entity]
-            if value not in ( state.values + list(MESSAGE_TOKENS.keys()) ): raise svException(f"State value {value} does not exist!")
+            if state.isint:
+                if not value.lstrip("-").isdigit():
+                    raise svException(f"State value is not a number but state is numeric!")
+            else:
+                if value not in list(MESSAGE_TOKENS.keys()):
+                    state.values.add(value)
         except AttributeError as e : raise svException(f'{e}')
         self.entity, self.object, self.relation, self.value = entity, state, relation, value
 

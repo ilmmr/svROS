@@ -10,18 +10,13 @@ GRAMMAR = f"""
     formula      : conditional
     conditional  : [ conditional AND_OPERATOR ] conjunction 
     conjunction  : [ conjunction OR_OPERATOR ] condition
-    condition    : [ NO_OPERATOR ] event
+    condition    : [ NO_OPERATOR ] cond
 
-    event        : [trace "."] cond
-    trace        : T1 | T2
     cond         : STATE ( EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE
 
     AND_OPERATOR    : "and" | "&&"
     OR_OPERATOR     : "or"  | "||"
     NO_OPERATOR     : "no" | "not"
-
-    T1 : "t1" | "T1"
-    T2 : "t2" | "T2"
     
     EQUAL_OPERATOR   : "="
     GREATER_OPERATOR : ">"
@@ -77,14 +72,10 @@ ALLOY_OPERATORS = {
 class LanguageTransformer(Transformer):
 
     def condition(self, children):
+        assumpt = GlobalAssumption(assumption=children[1])
         if children[0] is not None:
-            children[1].deny = True
-
-    def event(self, children):
-        if children[0] is None:
-            return GlobalAssumption(assumption=children[1])
-        else:
-            return TraceAssumption(trace=children[0].value.upper(), assumption=children[1])
+            assumpt.deny = True
+        return assumpt
 
     def cond(self, children):
         relation, value = children[1].type, children[2].value
@@ -147,7 +138,11 @@ class State(object):
     def __init__(self, entity, relation, value):
         try:
             state = svState.STATES[entity]
-            if value not in ( state.values + list(MESSAGE_TOKENS.keys()) ): raise svException(f"State value {value} does not exist!")
+            if state.isint:
+                if not value.lstrip("-").isdigit():
+                    raise svException(f"State value is not a number but state is numeric!")
+            else:
+                state.values.add(value)
         except AttributeError as e : raise svException(f'{e}')
         svState.ASSUMPTIONS.add(state)
         self.entity, self.object, self.relation, self.value = entity, state, relation, value

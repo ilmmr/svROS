@@ -1,5 +1,5 @@
-var instances = {{instances}}
-var slides = {{slides}}
+var instances = {{}}
+var slides = {{}}
 
 /* LOAD SLIDES */
 var dots = document.getElementById("steps-shower");

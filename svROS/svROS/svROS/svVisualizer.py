@@ -86,13 +86,6 @@ class SecurityInstanceParser(object):
             profiles_states_json[f'prof_{profile}'] = {'id': f'prof_{profile}', 'name': profile, 'type': 'profile'}
             edges[f'{profile}_to_{object}_priv_all'] = {'relation': f'{profile}_to_{object}_priv_all', 'source': f'prof_{profile}', 'target': f'obj_{object}', 'role': role, 'rule': 'Allow'}
             edges[f'{profile}_to_{object}_priv_deny'] = {'relation': f'{profile}_to_{object}_priv_deny', 'source': f'prof_{profile}', 'target': f'obj_{object}', 'role': role, 'rule': 'Deny'}
-        # for tup in rule2:
-        #     profile, role, object = self.remove_signature(value=tup.findall('./atom')[0].get('label').split('$')[0]), tup.findall('./atom')[1].get('label').split('$')[0], self.remove_signature(value=tup.findall('./atom')[2].get('label').split('$')[0])
-        #     # PROCESS TO JSON
-        #     profiles_states_json[f'obj_{object}_allow'] = {'id': f'obj_{object}_allow', 'name': object,  'type': 'object', 'rule': 'Allow'}
-        #     profiles_states_json[f'prof_{profile}'] = {'id': f'prof_{profile}', 'name': profile, 'type': 'profile'}
-        #     edges[f'{profile}_to_{object}_sc'] = {'relation': f'{profile}_to_{object}_sc', 'source': f'prof_{profile}', 'target': f'obj_{object}_allow', 'role': role, 'call': 'source call'}
-        #     edges[f'{profile}_to_{object}_nopriv'] = {'relation': f'{profile}_to_{object}_nopriv', 'source': f'prof_{profile}', 'target': f'obj_{object}_allow', 'role': role, 'call': 'no privilege'}
         return list(profiles_states_json.values()), list(edges.values())
 
     def remove_signature(self, value):
@@ -146,7 +139,6 @@ class ODInstanceParser(object):
             if state not in states_json:
                 states_json[name] = {'name': name, 'type': 'state'}
         return states
-        # return list(map(lambda state: state, states_json.values()))
 
     def __json__(self, nodes, edges, states, instances):
         __json__ = list()
