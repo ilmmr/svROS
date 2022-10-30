@@ -1,39 +1,14 @@
-## Formalizing ROS2 security configuration with Alloy - svROS
+# SECURITY VERIFICATION IN ROS - *svROS*
 
-<p align="center">
-   <img width="200" height="182" src="https://upload.wikimedia.org/wikipedia/commons/9/93/EEUMLOGO.png">
-</p>
+Verification of security in robotic systems is one of the most difficult tasks from the standpoint of software development, as it might lead to a variety of loose ends. However, it has been shown how security hyperproperties, in particular OD, can be verified by resorting to the use of formal methods.
 
-This dissertation reports on academic work that can be used by third parties as long as the internationally accepted standards and good practices are respected concerning copyright and related rights. This work can thereafter be used under the terms established in the license below. Readers needing authorization conditions not provided for in the indicated licensing should contact the author through the RepositóriUM of the University of Minho.
+Using formal frameworks for verification, such as Alloy, requires a significant level of expertise, which a common ROS developer does not possess. In addition, no state-of-art tool contemplates techniques to formally verify security in ROS2, which naturally motivates the study considered within the scope of this dissertation.
 
----
+Therefore, a verification tool was developed, named Security Verification in ROS (svROS), which focuses on abstracting formal verification approaches, to provide a less-formal, easier to use, solution to verify OD in ROS2 system applications. To check the correctness of a ROS application behaviour in respect to OD, it is necessary to specify how the system behaves atomically in each node. For this, the tool incorporates a specification language that is more user-friendly than Alloy and, it enables the specification of intra-node operations, in respect to the publish-subscribe paradigm.
 
-### Contextualization
-
-Industrial manufacturing is becoming highly reliant on automation developments, as they bring more efficient and accurate processes with less associated cost. Consequently, robots are increasingly being deployed in a wide range of scenarios, especially where safety is demanded. In such cases, it is critical to employ appropriate procedures to verify both the system's quality and safety.
-
-Following the current growth of cyber-physical system, as well as their usage in various technology domains, the development of software applications is becoming more demanding due to the complexity behind the integration of needed services, beyond those provided by the operating system. Therefore, software middleware is increasingly used, since it offers services that support application development and delivery.
-
-One of the most popular open-source software platforms for building robotic systems is the Robot Operating System (ROS) middleware, where highly configurable robots are usually built by composing third-party modules. A major factor behind its popularity and widespread adoption is its flexibility and interoperability. One drawback of this flexibility, however, lies in the increased security risks that ROS applications face. The emergence of performance and scalability challenges connected to the ROS middleware standard, in addition to security concerns, prompted the creation of ROS2.
-
-Robot Operating System 2 (ROS2), which continues to provide a simple, uniform message passing interface, to allow components to communicate with each other, is implemented using the Data Distribution Service (DDS) communication protocol, where security guarantees are ensured by the DDS-Security specification. Using DDS-Security, it is possible to configure ROS2 to run with security guarantees using the SROS2 toolset.
-
----
-
-### Contributions
-
-The intended goal of this work is to propose a technique based on the software verification perspective, to automatically verify system-wide properties related to the security configuration of ROS2-based applications.
-
-To that purpose it will model the ROS architecture, as well as the network communication behaviour, in Alloy, a formal specification language and analysis tool supported by a model-finder, with which system-wide properties will subsequently model-checked.
-
-This tool is later regarded as *Security Verification in ROS* (**[svROS](https://luis1ribeiro.github.io/svROS/)**).
-
----
-
-### Developed Content
-
-* [Dissertation's Work Plan](./workplan.pdf)
-* **January's Checkpoint:**
-   * [RPD - Dissertation Checkpoint](./rpd-checkpoint.pdf)
-   * [RPD - Presentation](./rpd-presentation.pdf)
-
+svROS supports the following capabilities:
+* Source code fetching from ROS2 application packages.
+* Reverse engineering methods to infer an architecture topology from the extracted code.
+* Generation of configuration file templates, to allow a ROS developer to easily configure its application network.
+* Methods to translate the system configuration into a model in Alloy, to later perform the verification of OD.
+* A domain specific language to specify the intra-node behaviour of a ROS application, and methods to translate such specifications into Alloy.
