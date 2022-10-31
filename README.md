@@ -1,6 +1,6 @@
 # SECURITY VERIFICATION IN ROS - *svROS*
 
-Verification of security in robotic systems is one of the most difficult tasks from the standpoint of software development, as it might lead to a variety of loose ends. However, it has been shown how security hyperproperties, in particular OD, can be verified by resorting to the use of formal methods.
+Verification of security in robotic systems is one of the most difficult tasks from the standpoint of software development, as it might lead to a variety of loose ends. However, it has been shown how security hyperproperties, in particular Observational Determinism, can be verified by resorting to the use of formal methods.
 
 Using formal frameworks for verification, such as Alloy, requires a significant level of expertise, which a common ROS developer does not possess. In addition, no state-of-art tool contemplates techniques to formally verify security in ROS2, which naturally motivates the study considered within the scope of this dissertation.
 
