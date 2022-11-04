@@ -12,3 +12,5 @@ svROS supports the following capabilities:
 * Generation of configuration file templates, to allow a ROS developer to easily configure its application network.
 * Methods to translate the system configuration into a model in Alloy, to later perform the verification of OD.
 * A domain specific language to specify the intra-node behaviour of a ROS application, and methods to translate such specifications into Alloy.
+
+Enjoy! (ง ͡❛ ͜ʖ ͡❛)ง
