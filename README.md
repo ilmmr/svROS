@@ -15,14 +15,12 @@ svROS supports the following capabilities:
 
 You can find the full documentation [here](https://luis1ribeiro.github.io/svROS/).
 
---
-
 ## INSTALL AND USE
 
 svROS functionalities was compacted into a single python package and can be easily installed using the python package installer *pip*.
 
 ```
-    pip install svROS
+pip install svROS
 ```
 
 Enjoy! (ง ͡❛ ͜ʖ ͡❛)ง
