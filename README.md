@@ -13,4 +13,16 @@ svROS supports the following capabilities:
 * Methods to translate the system configuration into a model in Alloy, to later perform the verification of OD.
 * A domain specific language to specify the intra-node behaviour of a ROS application, and methods to translate such specifications into Alloy.
 
+You can find the full documentation [here](https://luis1ribeiro.github.io/svROS/).
+
+--
+
+## INSTALL AND USE
+
+svROS functionalities was compacted into a single python package and can be easily installed using the python package installer *pip*.
+
+```
+    pip install svROS
+```
+
 Enjoy! (ง ͡❛ ͜ʖ ͡❛)ง
