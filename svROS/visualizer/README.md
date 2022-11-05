@@ -5,5 +5,5 @@ The svROS Visualizer enjoys a web interface to present counter-examples automati
 For instance, in the next figure an example of the network topology is shown, with regard to how the Visualizer depicts nodes, topics and enclaves.
 
 <p align="center">
-   <img width="100%" src="./vis-example.png">
+   <img width="70%" src="./vis-example.png">
 </p>
