@@ -23,5 +23,6 @@ svROS functionalities was compacted into a single python package and can be easi
 ```
 pip install svROS
 ```
+After installing, see the [Quick Reference](./svROS/) to the see the tool's commands and usage instructions.
 
 Enjoy! (ง ͡❛ ͜ʖ ͡❛)ง
