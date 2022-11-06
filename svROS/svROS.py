@@ -658,7 +658,7 @@ class Launcher:
         # SUBSPARSERS: init, extract and run
         options = interpreter.add_subparsers(help='sub-command')
         init    = options.add_parser('init')
-        export  = options.add_parser('export')
+        export  = options.add_parser('extract')
         run     = options.add_parser('launch')
         analyze = options.add_parser('analyze')
         # Handling functions

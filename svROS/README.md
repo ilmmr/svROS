@@ -12,11 +12,11 @@ svROS init
 This functionality helps to easily set up a working environment for this specific purpose. After this operation, the reader can now proceed for the architecture extraction of a ROS application, and later, translate the inferred architecture to perform formal analysis.
 
 ---
-### Exporting
+### Extracting
 
-Exporting of data through several nested parsers is made possible by this functionality, which deduces the topology of a ROS application by interpreting and converting ROS launch files and their associated nodes. To run this, a file must be passed as an input.
+Extracting of data through several nested parsers is made possible by this functionality, which deduces the topology of a ROS application by interpreting and converting ROS launch files and their associated nodes. To run this, a file must be passed as an input.
 ```
-svROS export -f $file
+svROS extract -f $file
 ```
 Every file path inputted must respect the following syntax: A project name must be instantiated along with paths to launch files, that will be interpreted and respectively parsed.
 
