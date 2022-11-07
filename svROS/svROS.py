@@ -286,7 +286,7 @@ class svINIT:
         return True
         """ === Predefined functions === """
 
-"=> if $ svROS import"
+"=> if $ svROS extract"
 @dataclass
 class svEXPORT:
     file       : str      = ''
@@ -530,7 +530,7 @@ class svRUN:
 """ 
     This works as an application-launcher parser, that will eventually call up one of these classes:
         => svINIT,   if $ svROS init
-        => svEXPORT, if $ svROS export
+        => svEXPORT, if $ svROS extract
         => svRUN,    if $ svROS launch
 """
 @dataclass

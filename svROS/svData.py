@@ -395,7 +395,7 @@ class svROSNode(object):
             if not isinstance(topic, Topic):
                 raise svException(f'{topic.signature} is not a topic!')
             svROSNode.PUBSYNC.add(f"""\n\talways ((some m0 : Message | publish[T1, {topic.signature}, m0]) iff (some m1 : Message | publish[T2, {topic.signature}, m1]))""")
-            observations.add(f'check {{always (all m0, m1 : Message | publish[T1, {topic.signature}, m0] and publish[T2, {topic.signature}, m1] implies m0 = m1)}} for 4 but {inbox} seq, 1..{steps} steps')
+            observations.add(f'check {topic.signature} {{always (all m0, m1 : Message | publish[T1, {topic.signature}, m0] and publish[T2, {topic.signature}, m1] implies m0 = m1)}} for 4 but {inbox} seq, 1..{steps} steps')
         cls.OBSERVATIONS = observations
         return True
 

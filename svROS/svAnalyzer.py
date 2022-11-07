@@ -68,23 +68,23 @@ class svAnalyzer(object):
         # EXECUTE JAVA
         counter    = svAnalyzer.execute_java(properties=properties, file=file_path)
         if counter == []:
-            print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every property seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
+            print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every observation seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
         else:
-            print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Every property seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
+            print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Every observation seem to hold for the given configuration.'))
+        map = {}
         for prop in properties:
-            if prop in counter:
-                print(f'\n\t‣‣ {prop.split("2")[0]} =Observable Determinism=> {prop.split("2")[1]} {color.color("RED", "☒")}')
-            else: 
-                print(f'\n\t‣‣ {prop.split("2")[0]} =Observable Determinism=> {prop.split("2")[1]} {color.color("GREEN", "✅")}')
+            if prop in list(map(lambda st: st.split('.xml')[0], counter)):
+                print(f'\n\t‣‣ Observation in topic {prop.split("topic_")[1].replace("_","/")} is not deterministic {color.color("RED", "☒")}')
+                map[prop.split("topic_")[1].replace("_","/")] = f'{prop}.xml'
         # RUN VISUALIZER
         while True:
             # open visualizer
-            options = list(map(lambda option: option, counter)) + ['Exit']
+            options = list(map(lambda option: option, map.keys())) + ['Exit']
             choice = TerminalMenu(options).show()
             if options[choice] == r'(?i)Exit':
                 break
             else:
-                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/svROS_models/{options[choice]}.html'
+                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/{map[options[choice]]}'
                 viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
                 viz.run_file(type='OD', file=file)
                 print(svInfo(f'Application OD counter-example is being displayed on your browser'), end='')
@@ -136,22 +136,20 @@ class svAnalyzer(object):
             if choice == 1:
                 return True
             else:
-                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'{options[choice]}.html'
+                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/valid_configuration.xml'
                 viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
                 return viz.run_file(type='SROS', file=file)    
         return True
 
     @staticmethod
-    def execute_java(properties, file):
-        counter, models_path = list(), f'/tmp/generated_models'
+    def execute_java(file, properties):
+        models_path = f'/tmp/generated_models'
+        os.system(javacmd)    
         for prop in properties:
-            javacmd = "java -jar .svROS/bin/generator.jar " + file + " " + prop
+            javacmd = "java -jar ~/.svROS/bin/generator.jar " + file + " " + prop
             os.system(javacmd)
-            # Counter example created.
-            if os.path.isfile(path=f'{models_path}/{prop}.xml'):
-                counter.append(prop)
-        return counter
-
+        return os.listdir(models_path)
+        
     def generate_sros_model(self, PROFILES, ENCLAVES, OBJECTS):
         model, file_path = self.sros_model, f'{self.EXTRACTOR.PROJECT_DIR}models/sros-concrete.als'
         if not os.path.exists(path=file_path): open(file_path, 'w+').close()

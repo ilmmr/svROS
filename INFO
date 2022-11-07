@@ -12,7 +12,7 @@
 ║                                                                      ║
 ║     => svROS init [ ,reset]                                          ║
 ║         . initializes the .svROS directory                           ║
-║     => svROS import [args]                                           ║
+║     => svROS extract [args]                                          ║
 ║         . extract node info and creates sros-based file              ║
 ║         -f (--file) file [ ,options]                                 ║
 ║            options:                                                  ║

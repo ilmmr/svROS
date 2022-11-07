@@ -9,31 +9,34 @@ GRAMMAR = f"""
     pattern  : "requires"  formula 
              | event
 
-    event    : "publishes" publishes
-             | "alters"    alters
-             | "reads"     reads
+    event    : publishes
+             | updates
+             | reads
+
+    reads       : "reads"     TOPIC topics
+    publishes   : "publishes" TOPIC topics
+    updates     : "updates"   STATE evaluate
+    topics      : [ "as" message_token "::" implication "]]"
+                | evaluate
+
+    implication : operation ( ";" operation )*
+    operation   : "if" formula "then" "{{" formula "}}" [ "else" "{{" formula "}}" ]
+                | formula
 
     formula      : conditional
     conditional  : [ conditional AND_OPERATOR ] conjunction 
     conjunction  : [ conjunction OR_OPERATOR ] condition
     condition    : [ NO_OPERATOR ] cond | event
 
-    reads       : TOPIC [ "as" message_token "::" implication "]]"
-    implication : operation ( ";" operation )*
-    operation   : "if" formula "then" "{{" formula "}}" [ "else" "{{" formula "}}" ]
-                | formula
-
-    publishes   : TOPIC [ EQUAL_OPERATOR ( VALUE | STATE ) ]
-    alters      : STATE ( EQUAL_OPERATOR | INC_OPERATOR | DEC_OPERATOR ) VALUE
-    
-    cond        : publishes
-                | alters
+    cond        : TOPIC evaluate
+                | STATE evaluate
                 | PREDICATE
                 | message_cond
 
-    message_token: MESSAGE
+    evaluate     : binop ( VALUE | STATE )
     message_cond : MESSAGE ( EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE
 
+    message_token: MESSAGE
     param       : TOPIC | STATE | PREDICATE | MESSAGE
     binop       : EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR | INC_OPERATOR | DEC_OPERATOR | GT_EQ | LS_EQ
 
