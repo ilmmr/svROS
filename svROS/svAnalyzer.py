@@ -66,7 +66,7 @@ class svAnalyzer(object):
         properties = re.findall(r'check\s+(.*?)\s+\{', open(file_path, 'r').read())
         properties = list(map(lambda check: check.strip(), properties))
         # EXECUTE JAVA
-        counter    = svAnalyzer.execute_java(properties=properties, file=file_path)
+        counter    = svAnalyzer.execute_java(properties=properties, file=file_path, type="ros")
         if counter == []:
             print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every observation seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
         else:
@@ -84,7 +84,7 @@ class svAnalyzer(object):
             if options[choice] == r'(?i)Exit':
                 break
             else:
-                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/{map[options[choice]]}'
+                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/ros/{map[options[choice]]}'
                 viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
                 viz.run_file(type='OD', file=file)
                 print(svInfo(f'Application OD counter-example is being displayed on your browser'), end='')
@@ -125,7 +125,7 @@ class svAnalyzer(object):
         if not os.path.isfile(path=file_path): return False
         properties = ['valid_configuration']
         # EXECUTE JAVA
-        counter    = svAnalyzer.execute_java(properties=properties, file=file_path)
+        counter    = svAnalyzer.execute_java(properties=properties, file=file_path, type="sros")
         if counter == []:
             print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Every property seem to hold for the given configuration:\n\t‣‣ No profile has different privileges of access (ALLOW, DENY) to the same object {color.color("GREEN", "✅")}'))
         else:
@@ -136,17 +136,17 @@ class svAnalyzer(object):
             if choice == 1:
                 return True
             else:
-                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/valid_configuration.xml'
+                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/sros/valid_configuration.xml'
                 viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
                 return viz.run_file(type='SROS', file=file)    
         return True
 
     @staticmethod
-    def execute_java(file, properties):
-        models_path = f'/tmp/generated_models'
+    def execute_java(file, properties, type):
+        models_path = f'/tmp/generated_models/{type}'
         os.system(javacmd)    
         for prop in properties:
-            javacmd = "java -jar ~/.svROS/bin/generator.jar " + file + " " + prop
+            javacmd = "java -jar ~/.svROS/bin/generator.jar " + file + " " + type + " " + prop
             os.system(javacmd)
         return os.listdir(models_path)
         
