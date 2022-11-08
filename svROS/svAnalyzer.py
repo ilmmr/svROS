@@ -114,7 +114,6 @@ class svAnalyzer(object):
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
     def security_verification(self):
-        # NODES = dict(filter(lambda node: node[1].profile is not None, svROSNode.NODES.items())) ==> NOT NEEDED. 
         ENCLAVES, OBJECTS, PROFILES = svROSEnclave.ENCLAVES, svROSObject.OBJECTS, svROSProfile.PROFILES
         SROS_FILE = self.generate_sros_model(PROFILES=PROFILES, ENCLAVES=ENCLAVES, OBJECTS=OBJECTS)
         if not os.path.isfile(path=SROS_FILE): return False
@@ -283,20 +282,6 @@ class svProjectExtractor:
                 Topic.init_topic(name=name, topic_type=topic_type)
         if set(map(lambda type: type.name, MessageType.TYPES.values())) < set(types.keys()):
             raise svException(f'Failed to load some Messages Types. Please defined every type related to each topic.')
-        # for t in types:
-        #     tt, mtype_temp = t, types[t].split('/')
-        #     pattern    = re.match(pattern=r'(.*?) (.*?)$', string=str(t))
-        #     if not bool(pattern): isint = False
-        #     else:
-        #         if not pattern.groups()[0].strip() == 'int': raise svException(f'Failed to parse type {str(t)}.')
-        #         t, isint = pattern.groups()[1].strip(), True
-        #     # ...
-        #     t = t.replace('/', '_').lower()
-        #     if t not in MessageType.TYPES: raise svException(f"Message Type {tt} not found.")
-        #     mtype       = MessageType.TYPES[t]
-        #     # SET isint.
-        #     mtype.isint = isint
-        #     mtype.value.values = mtype_temp  
         if states:
             for state in states: svState.init_state(name=state)
         # Processing nodes.

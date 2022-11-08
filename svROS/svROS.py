@@ -171,29 +171,28 @@ class svINIT:
     def _create(self, log_not_reseted=False):
         created = os.path.exists(f"{self._DIR}")
         dir     =   f"{self._DIR}"
-        if dir == f'{self._DIR}':
-            if log_not_reseted == False:
-                os.mkdir(f'{dir}', mode=0o777)
-            # Generate dir using a dir structure.
-            try:
-                os.mkdir(f'{dir}/projects', mode=0o777)
-                os.mkdir(f'{dir}/.bin', mode=0o777)
-                self._init_file(file=f'{dir}/.init', mode=True)
-                self._log_file(file=f'{dir}/.log')
-            except OSError as error:
-                print("[svROS] Failed to set up svROS default directory!")
-                return False
-            # Copy and generate files.
-            try:
-                files = glob.iglob(os.path.join(f'{WORKDIR}/../bin', "*.als"))
-                for xfile in (list(filter(lambda x : os.path.isfile(x), files))):
-                    shutil.copy(xfile, f'{dir}/.bin/')
-                # Create environment dir with content. => ALLOY and GENERATOR jar
-                shutil.copy(f'{WORKDIR}/../bin/org.alloytools.alloy.dist.jar', f'{dir}/.bin/')
-                shutil.copy(f'{WORKDIR}/../bin/generator.jar', f'{dir}/.bin/')
-            except Exception as error:
-                print("[svROS] Failed to set up svROS default directory!")
-                return False
+        if log_not_reseted == False and not os.path.exists(dir):
+            os.mkdir(f'{dir}', mode=0o777)
+        # Generate dir using a dir structure.
+        try:
+            os.mkdir(f'{dir}/projects', mode=0o777)
+            os.mkdir(f'{dir}/.bin', mode=0o777)
+            self._init_file(file=f'{dir}/.init', mode=True)
+            self._log_file(file=f'{dir}/.log')
+        except OSError as error:
+            print("[svROS] Failed to set up svROS default directory!")
+            return False
+        # Copy and generate files.
+        try:
+            files = glob.iglob(os.path.join(f'{WORKDIR}/../bin', "*.als"))
+            for xfile in (list(filter(lambda x : os.path.isfile(x), files))):
+                shutil.copy(xfile, f'{dir}/.bin/')
+            # Create environment dir with content. => ALLOY and GENERATOR jar
+            shutil.copy(f'{WORKDIR}/../bin/org.alloytools.alloy.dist.jar', f'{dir}/.bin/')
+            shutil.copy(f'{WORKDIR}/../bin/generator.jar', f'{dir}/.bin/')
+        except Exception as error:
+            print("[svROS] Failed to set up svROS default directory!")
+            return False
         self.log.info('Default directory setup was completed.')
         print("[svROS] svROS default directory setup was completed with success.")
         return True
@@ -258,8 +257,6 @@ class svINIT:
                     return False
             else:
                 return False
-        else:
-            return False
         # Return to the parser.
         self.log.info("svROS directory is valid.")
         print("[svROS] svROS default directory is validated.")
@@ -317,18 +314,14 @@ class svEXPORT:
     def _config_file(self, project_name, config_file, mode=False):
         f,v = validate(file=config_file, schema=f'{_PROJECT_SCHEMA}')
         if not mode:
-            try:
-                exists = os.path.exists(f'{config_file}') and os.path.isfile(f'{config_file}')
-                assert(exists)
-            except AssertionError as error:
-                print(f'[svROS] {color.color("BOLD", color.color("RED", f"Config file from {project_name} is corrupted!"))}')
-                return False
-            # Validate.
-            try:
-                assert(f)
-            except AssertionError as error:
-                print(f'[svROS] {color.color("BOLD", color.color("RED", f"Config file from {project_name} is corrupted!"))}')
-                return False
+            exists = os.path.exists(f'{config_file}') and os.path.isfile(f'{config_file}')
+            if exists:
+                # Validate.
+                try:
+                    assert(f)
+                except AssertionError as error:
+                    print(f'[svROS] {color.color("BOLD", color.color("RED", f"Config file from {project_name} is corrupted!"))}')
+                    return False
         # Create file.
         else:
             name                = f'{project_name}'
@@ -498,17 +491,20 @@ class svRUN:
             raise svException('Failed to load imported data!')
         project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
         # VERIFYING SROS
-        if not project_analyzer.alloy_sros():
-            raise svException('Could not initiate running of project => ANALYZER FAILED.')
-        _continue_ = input(svWarning(f'Continue to ROS-Alloy model verification? [Y/n] ')).strip()
-        if not _continue_ == r'(?i)y': return
+        _continue_ = input(svWarning(f'Perform verification of SROS model... [N/y] ')).strip()
+        if _continue_ == r'(?i)y':
+            if not project_analyzer.alloy_sros():
+                raise svException('Could not initiate running of project => ANALYZER FAILED.')
         # VERIFYING ROS
+        _continue_ = input(svWarning(f'Perform verification of ROS-Alloy... [Y/n] ')).strip()
+        if not _continue_ in {r'(?i)y',""}: return
         if not project_analyzer.alloy_ros():
             raise svException('Could not initiate running of project => ANALYZER FAILED.')
+        exit
 
     def load_pickle_files(self, analyze=False):
         DATADIR = f'{self.project_path}data/objects/'
-        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Topcis.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
+        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Topics.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
         if not (package_file and topic_file and node_file):
             return {}
         if analyze == True:
@@ -563,7 +559,12 @@ class Launcher:
     log : logging.getLogger() = None
 
     def __post_init__(self):
+        if not os.path.exists(self._DIR):
+            os.makedirs(self._DIR)
         self._LOG      = os.path.join(self._DIR, ".log")
+        if not os.path.exists(self._LOG):
+            with open(self._LOG, 'w+') as fp:
+                pass
         self.log       = set_logger(log_path=self._LOG, new=(False, ''))
         self._BIN      = os.path.join(self._DIR, ".bin/")
         self._PROJECTS = os.path.join(self._DIR, "projects/")
@@ -600,7 +601,6 @@ class Launcher:
         home   = getattr(args, "home",  None)
         reset  = getattr(args, "reset", None)
         log_cl = getattr(args, "clear_log", None)
-        scopes = getattr(args, "scopes", None)
         # Retrieving function.
         if func is None:
             if not (bin or home or reset or log_cl or scopes):
@@ -633,9 +633,6 @@ class Launcher:
             home_tree = str(subprocess.check_output(f'tree -a {self._DIR}', shell=True).decode())[len(self._DIR):]
             print(f"\n=> --home output <=\n{home_dir}{home_tree}", end='')
             return True
-        if scopes:
-            print(f"\n=> --scopes output <=\n\tTime: 10\n\tMessage: 9\n\tValue: 4")
-            return True
         # Since it was defined a function to run withing each subparser -,
         # The idea is to parse using that defined function       <--^___/
         return func(args)
@@ -647,7 +644,6 @@ class Launcher:
         interpreter.add_argument("--home", help=f"svROS local directory -> default: $HOME/{self._DIR[len(os.path.expanduser('~'))+1:]}", action='store_true')
         interpreter.add_argument("--reset", help=f"Reset the directory :: Including log {self._LOG} file!", action='store_true')
         interpreter.add_argument("--clear-log", help=f"Clear {self._LOG} file!", action='store_true')
-        interpreter.add_argument("--scopes", help=f"Alloy default analysis scopes!", action='store_true')
         bin = ''
         if os.path.exists(f'{self._BIN}'):
             try:
@@ -670,7 +666,7 @@ class Launcher:
 
     # Handler svROS init
     def setup(self, args, reset=False):
-        created = os.path.exists(f"{self._DIR}")
+        created = os.path.exists(f"{self._DIR}/.bin/")
         dir     =   f"{self._DIR}"
         init    = svINIT(args, _DIR=self._DIR, _BIN=self._BIN, _INIT=os.path.join(self._DIR, ".init"), ros=rf'{self.ros_version}=\t={self.distro}=\t={self.workspace}', log=self.log)
 

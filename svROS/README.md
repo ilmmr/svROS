@@ -9,6 +9,9 @@ The proper installation of *HOME/.svROS*, and starting of its main directory, is
 ```
 svROS init
 ```
+<p align="center">
+   <img width="70%" src=".images/init.png">
+</p>
 This functionality helps to easily set up a working environment for this specific purpose. After this operation, the reader can now proceed for the architecture extraction of a ROS application, and later, translate the inferred architecture to perform formal analysis.
 
 ---
@@ -18,6 +21,9 @@ Extracting of data through several nested parsers is made possible by this funct
 ```
 svROS extract -f $file
 ```
+<p align="center">
+   <img width="70%" src=".images/extract.png">
+</p>
 Every file path inputted must respect the following syntax: A project name must be instantiated along with paths to launch files, that will be interpreted and respectively parsed.
 
 ```
@@ -40,6 +46,9 @@ In order to run this, a project name *proj* must be given as a command argument.
 ```
 svROS launch -p $proj
 ```
+<p align="center">
+   <img width="70%" src=".images/launch.png">
+</p>
 The created models will be stored inside the project *proj* directory, in a sub-folder *models*.
 
 #### DSL
@@ -52,4 +61,7 @@ Lastly, analyzing instructs the tool to perform model-checking in the project's 
 ```
 svROS analyze -p $proj
 ```
+<p align="center">
+   <img width="70%" src=".images/analyze.png">
+</p>
 Upon running the latest command, the Alloy Analyzer captures possible counter-examples on the verification of Observational Determinism. These are temporally stored, to then be consequently parsed and displayed by the [Visualizer](./visualizer/).

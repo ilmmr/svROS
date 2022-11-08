@@ -166,7 +166,7 @@ class Node(object):
     @classmethod
     def process_config_file(cls):
         # Returning object.
-        nodes, topics = {}, {}, {}
+        nodes, topics = {}, {}
         for index in cls.NODES:
             node  = cls.NODES[index]
             nodes[index]               = {}
@@ -350,7 +350,7 @@ class svROSNode(object):
         if self.package not in list(map(lambda pkg: pkg.name, Package.PACKAGES)):
             raise svException(f'Package {self.package} defined in node {self.index} not defined.')
         # Constrain topic allowance.
-        self.subscribe, self.advertise = self.load_profile_topics()
+        self.subscribe, self.advertise = self.profile.subscribe, self.profile.advertise
         # GET from Pickle classes.
         if Node.NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
         # Store in class variable.
@@ -760,18 +760,8 @@ class svExecution(object):
             state = svState.STATES[state]
             states += str(state)
             _str_ += f""",\n\tvar {state.name.lower()}: one {state.signature}"""
-            # if state.private:
-            #     _str_ += f""",\n\tvar {state.name.lower()}: one {state.signature}"""
-            # if not state.private: 
-            #     # Execution signature:
-            #     _str_ += f""",\n\tvar {state.name.lower()}: {state.signature} lone -> (0 + 1)"""
-            #     only_one_per_state.append(f"""one {state.name.lower()}""")
-            #     # Aside from Execution Signature:
-            #     system_str   += f"""\n\tall s : {state.signature} | t.{state.name.lower()} = s->1 implies t.{state.name.lower()}' = s->0"""
-            #     # Public state equivalence?
-            #     public_state += f"""\n\tExecution.{state.name.lower()}) = {state.default}->0\n\talways (some T1.{state.name.lower()}.1 iff some T2.{state.name.lower()}.1)"""
             nop.add(state.name.lower())
-        _str_ += f"""\n}}""" # {{ {' and '.join(only_one_per_state)} }} \n"""
+        _str_ += f"""\n}}"""
         # Predicate NOP
         nop_str = f"""pred nop [t : Trace] {{\n\tt.inbox' = t.inbox"""
         for n in nop:
@@ -781,4 +771,4 @@ class svExecution(object):
         from svLanguage import svPredicate
         system_str += f"""\n\t// System trace executions.\n\t{'[t] or '.join(list(filter(lambda not_sub: not not_sub.is_sub_predicate, svPredicate.NODE_BEHAVIOURS.keys())))}[t]\n}}"""
         _str_ += f""" one sig {t1.signature}, {t2.signature} extends Trace {{}}\n"""
-        return '/* === STATES === */' + states + '\n/* === STATES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str # '\n// Public-State Equivalence and Synchronization:\n' + public_state 
+        return '/* === VARIABLES === */' + states + '\n/* === VARIABLES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str

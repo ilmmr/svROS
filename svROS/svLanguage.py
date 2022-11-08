@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from lark import Lark, tree
 import itertools
 
-from language.grammar import GrammarParser, Read, Publish, Alter
+from language.grammar import GrammarParser, Read, Publish, Update
 from svData import Topic, svROSNode, svState
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
@@ -62,8 +62,8 @@ class svPredicate(object):
         signature = svPredicate.signature(value=signature)
         self.signature, self.node, self.sub_predicates = signature, node, set()
         # CHANGABLE
-        node.changable_channels  == []
-        node.changable_variables == []
+        node.changable_channels  = []
+        node.changable_variables = []
         if properties: 
             properties = list(map(lambda prop: self.create_prop(text=prop), properties))
             properties = list(filter(lambda prop: not isinstance(prop, svPredicate), properties))
