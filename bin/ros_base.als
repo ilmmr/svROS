@@ -1,11 +1,10 @@
-open numeric
 /* === SIGNATURES === */
 abstract sig Node {
-	subscribes, advertises : set Channel
+	subscribes, advertises : set Topic
 }
-abstract sig Not_Numeric {}
-sig Message = Numeric + Not_Numeric
-abstract sig Channel {}
+abstract sig Not_Numerical {}
+sig Message = Not_Numeric + Int {}
+abstract sig Topic {}
 /* === SIGNATURES === */
 
 /* === INITIAL CONFIG === */
@@ -13,11 +12,11 @@ fact system_behaviour {
 	always (nop[T1] or system[T2])	
 	always (nop[T1] or system[T2])
 }
-pred publish[t : Trace, channel: Channel, m : Message] {
+pred publish[t : Trace, topic: Topic, m : Message] {
 	not (t.inbox[topic].lastIdx = max[seq/Int]) 
 	t.inbox'[topic] = add[t.inbox[topic], m]
 }
-fun isconnected [] : Node -> Channel -> Node {
+fun isconnected [] : Node -> Topic -> Node {
 	{ n : Node , t : n.advertises, n1 : Node | t in n1.subscribes }
 }
 /* === INITIAL CONFIG === */

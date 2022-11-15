@@ -13,12 +13,11 @@ GRAMMAR = f"""
              | updates
              | reads
 
-    reads       : "reads"     TOPIC topics
-    publishes   : "publishes" TOPIC topics
+    reads       : "reads"     TOPIC [ topics ]
+    publishes   : "publishes" TOPIC [ topics ]
     updates     : "updates"   STATE evaluate
-    topics      : AS_TOKEN message_token "::" implication
+    topics      : "as" message_token "where" implication
                 | evaluate
-                |
 
     implication : operation ( ";" operation )*
     operation   : "if" formula "then" "{{" formula "}}" [ "else" "{{" operation "}}" ]
@@ -54,7 +53,6 @@ GRAMMAR = f"""
     LESSER_OPERATOR  : "<"
     LS_EQ            : "<="
     INC_OPERATOR     : "+="
-    ADD_OPERATOR     : "++"
     DEC_OPERATOR     : "-="
     DIFF_OPERATOR    : "!="
 
@@ -70,7 +68,7 @@ GRAMMAR = f"""
 
 from lark import Lark, tree, Token, Transformer
 from lark.exceptions import UnexpectedCharacters, UnexpectedToken
-from svData import Topic, svState
+from svData import svTopic, svState
 class GrammarParser(object):
     """
         Grammar Main Parser
@@ -98,9 +96,11 @@ ALLOY_OPERATORS = {
     "EQUAL_OPERATOR": "=",
     "DIFF_OPERATOR": "!=",
     "GREATER_OPERATOR": "gt",
-    "LESSER_OPERATOR": "le",
+    "LESSER_OPERATOR": "lt",
     "INC_OPERATOR": "plus",
-    "DEC_OPERATOR": "minus"
+    "DEC_OPERATOR": "minus",
+    "GT_EQ": "gte",
+    "LT_EQ": "lte"
 }
 
 MESSAGE_TOKENS = {}
@@ -160,12 +160,12 @@ class LanguageTransformer(Transformer):
         return Conditional(no_quantifier=no_quantifier, predicate=children[1])
 
     def evaluate(self, children):
-        return Evaluate(binop=children[0].type, value=children[1])
+        return Evaluate(binop=children[0], value=children[1])
 
     def topics(self, children):
-        if children[0].type == "AS_TOKEN":
-            token = children[1].value
-            declaration = Declaration(token=token, conditions=children[2])
+        if children.__len__() > 1:
+            token = children[0].value
+            declaration = Declaration(token=token, conditions=children[1])
             if token in MESSAGE_TOKENS.keys() and MESSAGE_TOKENS[token] != None: 
                 raise svException(f"Two message tokens with the same value {token}.")
             MESSAGE_TOKENS[token] = declaration.parent
@@ -177,7 +177,7 @@ class LanguageTransformer(Transformer):
     # READ
     def reads(self, children):
         topic = children[0].value
-        entity = Topic.TOPICS[topic]
+        entity = svTopic.TOPICS[topic]
         #### #### ####
         if entity in self.node.non_accessable:
             raise svException(f"Property '{self.text}' failed: Node {self.node.rosname} can not access read object {topic}.")
@@ -188,7 +188,7 @@ class LanguageTransformer(Transformer):
     # PUBLISH
     def publishes(self, children):
         topic = children[0].value
-        entity = Topic.TOPICS[topic]
+        entity = svTopic.TOPICS[topic]
         #### #### ####
         if entity in self.node.non_accessable:
             raise svException(f"Property '{self.text}' failed: Node {self.node.rosname} can not access publish object {topic}.")
@@ -267,7 +267,7 @@ class Cond(object):
                 return f'{quantifier} {self.entity.value[1:]}[t]'
             if self.entity.type == "TOPIC":
                 quantifier = 'no' if no_quantifier else 'some'
-                entity = Topic.TOPICS[self.entity.value]
+                entity = svTopic.TOPICS[self.entity.value]
                 return f'{quantifier} t.inbox[{entity.signature}]'
             return None
 
@@ -304,7 +304,7 @@ class Evaluate(object):
             entity.message_type.values.add(self.value)
             return self.operation(binop=self.binop, signature=token, value=self.value, isint=isint)
         elif entity.type == "TOPIC":
-            entity = Topic.TOPICS[entity.value]
+            entity = svTopic.TOPICS[entity.value]
             isint = True if entity.message_type.isint else False
             if self.value not in list(MESSAGE_TOKENS.keys()):
                 entity.message_type.values.add(self.value)
@@ -321,7 +321,7 @@ class Evaluate(object):
             return None
 
     def publish(self, entity):
-        entity = Topic.TOPICS[entity.value]
+        entity = svTopic.TOPICS[entity.value]
         isint = True if entity.message_type.isint else False
         if self.value not in list(MESSAGE_TOKENS.keys()):
             entity.message_type.values.add(self.value)
@@ -386,7 +386,7 @@ class ReadImplication(object):
         _str_ = ""
         for f in frame:
             if f not in denial:
-                if isinstance(f, Topic):
+                if isinstance(f, svTopic):
                     _str_ += f" and t.inbox'[{f.signature}] = t.inbox[{f.signature}]"
                 if isinstance(f, svState):
                     _str_ += f" and t.{f.name.lower()}' = t.{f.name.lower()}"
@@ -412,7 +412,7 @@ class Read(object):
 
     def __init__(self, entity, read):
         try:
-            topic = Topic.TOPICS[entity]
+            topic = svTopic.TOPICS[entity]
         except AttributeError as e:
             raise svException(f"Topic {entity} does not exist!")
         self.entity, self.object = entity, topic
@@ -432,7 +432,7 @@ class Publish(object):
     
     def __init__(self, entity, publish):
         try:
-            topic = Topic.TOPICS[entity]
+            topic = svTopic.TOPICS[entity]
         except AttributeError as e:
             raise svException(f"Topic {entity} does not exist!")
         self.entity, self.object = entity, topic

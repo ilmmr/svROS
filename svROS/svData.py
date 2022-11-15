@@ -36,9 +36,8 @@ class Package:
 "ROS2-based for message topic_type as this tool focus on Topic-Message processing."
 class MessageType(object):
     TYPES  = {}
-    VALUES = set()
     def __init__(self, name, signature, topic):
-        self.name, self.signature, self.topics, self.values = name, signature, set(), set()
+        self.name, self.signature, self.topics = name, signature, set()
         self.topics.add(topic)
         MessageType.TYPES[name]   = self
 
@@ -50,27 +49,6 @@ class MessageType(object):
             return _type
         return cls(name=name, signature=signature, topic=topic)
     
-    @staticmethod
-    def abstract(tag): 
-        tag = tag.lower().replace('/', '_')
-        return tag.lower()[(tag.rfind('_'))+1:].capitalize()
-    
-    def __str__(self):
-        # {{\n\tvalue in {self.value.signature}\n}}
-        _str_ = f"""sig {self.signature} extends Message {{}}"""
-        values, isdigit = set(), False
-        for v in self.values:
-            if not v.lstrip("-").isdigit():
-                MessageType.VALUES.add(v)
-            else:
-                isdigit = True
-            values.add(v)
-        if isdigit:
-            _str_ += f"""\nfact {{ {self.signature} in {'+'.join(values)} + Int {{}} }}\n"""
-        else:
-            _str_ += f"""\nfact {{ {self.signature} in {'+'.join(values)} }}\n"""
-        return _str_
-
 "ROS2-based Topic already parse for node handling."
 class Topic(object):
     TOPICS   = {}
@@ -84,11 +62,11 @@ class Topic(object):
         Topic.TOPICS[name] = self
         
     @classmethod
-    def init_topic(cls, name, topic_type):
+    def init_topic(cls, name):
         if name in Topic.TOPICS:
             topic = Topic.TOPICS[name]
-            if topic_type != topic.type: raise svException(f'Same topic ({name}) with different types ({topic_type, topic.type}).')
-            else: return topic
+            # if topic_type != topic.type: raise svException(f'Same topic ({name}) with different types ({topic_type, topic.type}).')
+            # else: return topic
         message_type = MessageType.init_message_type(name=topic_type.lower().replace('/', '_'), signature=MessageType.abstract(tag=topic_type), topic=name.lower().replace('/', '_'))
         return cls(name=name, topic_type=topic_type, message_type=message_type)
 
@@ -331,14 +309,14 @@ class Node(object):
     The remaining of this file contains the necessary classes and methods to retrieve and use information for analysis purposes. 
 """
 "ROS2-based Node to be analyzed."
-class svROSNode(object):
+class svNode(object):
     NODES        = {}
     OBSDT        = {}
     # Set of channels that are published by private but seen as public
     PUBSYNC      = set()
     OBSERVATIONS = set()
     """
-        svROSNode
+        svNode
             \__ Already parsed node
             \__ Associated with Profile from SROS (can either be secured or unsecured)
     """
@@ -352,9 +330,9 @@ class svROSNode(object):
         # Constrain topic allowance.
         self.subscribe, self.advertise = self.profile.subscribe, self.profile.advertise
         # GET from Pickle classes.
-        if Node.NODES: self.remaps = svROSNode.load_remaps(node_name=self.index)
+        if Node.NODES: self.remaps = svNode.load_remaps(node_name=self.index)
         # Store in class variable.
-        svROSNode.NODES[self.index] = self
+        svNode.NODES[self.index] = self
     
     def load_profile_topics(self):
         subs, advs = list(), list()
@@ -394,7 +372,7 @@ class svROSNode(object):
         for topic in cls.OBSERVATIONS:
             if not isinstance(topic, Topic):
                 raise svException(f'{topic.signature} is not a topic!')
-            svROSNode.PUBSYNC.add(f"""\n\talways ((some m0 : Message | publish[T1, {topic.signature}, m0]) iff (some m1 : Message | publish[T2, {topic.signature}, m1]))""")
+            svNode.PUBSYNC.add(f"""\n\talways ((some m0 : Message | publish[T1, {topic.signature}, m0]) iff (some m1 : Message | publish[T2, {topic.signature}, m1]))""")
             observations.add(f'check {topic.signature} {{always (all m0, m1 : Message | publish[T1, {topic.signature}, m0] and publish[T2, {topic.signature}, m1] implies m0 = m1)}} for 4 but {inbox} seq, 1..{steps} steps')
         cls.OBSERVATIONS = observations
         return True
@@ -402,15 +380,15 @@ class svROSNode(object):
     def set_connection(self):
         if not self.advertise: return None
         access_to = {topic.name: set() for topic in self.advertise}
-        for node_name in svROSNode.NODES:
-            node = svROSNode.NODES[node_name]
+        for node_name in svNode.NODES:
+            node = svNode.NODES[node_name]
             if node == self or not node.subscribe: continue
             subscribes_in = list(filter(lambda sub_: sub_ in access_to, list(map(lambda sub: sub.name, node.subscribe))))
             if subscribes_in != []: 
                 for sub in subscribes_in:
                     if (not node.secure and self.secure):
                         print(svWarning(f'Connection through {sub} is not well supported. {node.rosname.capitalize()} is not secure, while {self.rosname.capitalize()} is secure: {color.color("BOLD", f"{self.rosname.capitalize()} -{sub}-> {node.rosname.capitalize()}")}'))
-                        svROSNode.OBSERVATIONS.add(Topic.TOPICS[sub])
+                        svNode.OBSERVATIONS.add(Topic.TOPICS[sub])
                     elif (not self.secure and node.secure):
                         print(svWarning(f'Connection through {sub} is not well supported. {self.rosname.capitalize()} is not secure, while {node.rosname.capitalize()} is secure: {color.color("BOLD", f"{self.rosname.capitalize()} -{sub}-> {node.rosname.capitalize()}")}'))
                     access_to[sub].add(node)
@@ -492,7 +470,7 @@ class svROSNode(object):
     # Retrieve JSON-based dict information
     @staticmethod
     def to_json(node: str):
-        node   = svROSNode.NODES[node]
+        node   = svNode.NODES[node]
         subscribe, advertise = [], []
         if node.subscribe:
             subscribe = list(map(lambda subs: subs.rosname(node=node), node.subscribe))
@@ -566,19 +544,19 @@ class svState(object):
     The remaining classes also help to check the SROS structure within Alloy. Some methods allow svROS to retrieve data into Alloy already-made model.
 """
 "SROS2-based Enclave with associated profiles."
-class svROSEnclave(object):
+class svEnclave(object):
     ENCLAVES = {}
     """
-        svROSEnclave
+        svEnclave
             \_ path
             \_ profiles
     """
     def __init__(self, path, profiles):
         self.name, self.profiles, self.signature, self.ispublic = path, {}, self.abstract(tag=path), True if path == '/public' else False
         for profile in profiles:
-            p = svROSProfile.init_profile(profile, enclave=self)
+            p = svProfile.init_profile(profile, enclave=self)
             self.profiles[p.profile] = p
-        svROSEnclave.ENCLAVES[self.name] = self
+        svEnclave.ENCLAVES[self.name] = self
 
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
@@ -592,12 +570,12 @@ class svROSEnclave(object):
         return {'name': self.name, 'profiles': [profile.to_json() for profile in self.profiles.values()]}
 
 "SROS2-based Profile with associated priveleges."
-class svROSProfile(object):
+class svProfile(object):
     PROFILES = {}
     """
         SROSProfile
             \_ Associated with priveleges
-            \_ Later associated with a svROSNode
+            \_ Later associated with a svNode
     """
     def __init__(self, name, namespace, can_advertise, can_subscribe, deny_advertise, deny_subscribe, enclave):
         self.name, self.namespace, self.enclave = name, namespace, enclave
@@ -607,7 +585,7 @@ class svROSProfile(object):
         self.signature, self.privileges  = self.abstract(tag=namespace + name), []
         self.profile_privileges()
         # INDEX processing.
-        svROSProfile.PROFILES[self.index] = self
+        svProfile.PROFILES[self.index] = self
 
     @classmethod
     def init_profile(cls, profile, enclave):
@@ -655,19 +633,19 @@ class svROSProfile(object):
         # Process topic privilege
         if self.advertise:
             for adv in self.advertise:
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv, method='privilege')
+                privilege = svPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv, method='privilege')
                 self.privileges.append(privilege)
         if self.subscribe:
             for sub in self.subscribe: 
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=sub, method='privilege')
+                privilege = svPrivilege.init_privilege(node=rosname, role='subscribe', rosname=sub, method='privilege')
                 self.privileges.append(privilege)
         if self.deny_advertise:
             for deny in self.deny_advertise:
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='advertise', rosname=deny, method='deny')
+                privilege = svPrivilege.init_privilege(node=rosname, role='advertise', rosname=deny, method='deny')
                 self.privileges.append(privilege)
         if self.deny_subscribe:
             for deny in self.deny_subscribe:
-                privilege = svROSPrivilege.init_privilege(node=rosname, role='subscribe', rosname=deny, method='deny')
+                privilege = svPrivilege.init_privilege(node=rosname, role='subscribe', rosname=deny, method='deny')
                 self.privileges.append(privilege)
         
     def abstract(self, tag): return tag.lower().replace('/', '_')
@@ -692,34 +670,66 @@ class svROSProfile(object):
         if self.subscribe: subscribe = self.subscribe
         return {'name': self.name if self.name else '', 'namespace': self.namespace if self.namespace else '', 'advertise': advertise, 'deny_advertise': self.deny_advertise, 'subscribe': subscribe, 'deny_subscribe': self.deny_subscribe}
 
-class svROSObject(object):
-    OBJECTS = {}
+class NonNumeric(object):
+    VALUES  = {}
     def __init__(self, name):
-        self.name = 'object' + name if name.startswith('_') else '_' + name
-        svROSObject.OBJECTS[name] = self
+        self.name, self.signature = name, self.abstract(tag=name)
+        VALUES[self.signature] = self
+    
+    @staticmethod
+    def abstract(tag): 
+        tag = tag.split(' ')
+        return ''.join(list(lambda w: w.capitalize(), tag))
+    
+    @classmethod
+    def __str__(cls):
+        return "one sig " + ', '.join(list(lambda value: value.signature, cls.VALUES)) + f" extends Non_Numerical {{}}"
+
+class svTopic(object):
+    TOPICS = {}
+    def __init__(self, rosname):
+        self.rosname   = self.namespace(tag=rosname)
+        self.signature = self.abstract(tag=self.rosname)
+        svTopic.TOPICS[rosname] = self
 
     @classmethod
-    def init_object(cls, name):
-        if name in cls.OBJECTS: return cls.OBJECTS[name]
-        return cls(name=name)
+    def init_topic(cls, rosname):
+        if rosname in cls.TOPICS: return cls.TOPICS[rosname]
+        return cls(rosname=rosname)
     
-    def __str__(self):
-        return f'one sig {self.name} extends Object {{}}\n'
+    @staticmethod
+    def namespace(tag: str):
+        return tag if tag.startswith('/') else f'/{tag}'
 
-class svROSPrivilege(object):
+    def abstract(self, tag): return tag.lower().replace('/', '_')
+
+    @classmethod
+    def ros_declaration(cls):
+        return "one sig " + ', '.join(list(lambda topic: topic.signature, cls.TOPICS)) + f" extends Topic {{}}\n" + NonNumeric.__str__()
+
+    def sros_declaration(self):
+        return f'one sig {self.sros_object} extends Object {{}}\n'
+    
+    @property
+    def sros_object(self):
+        return 'object' + self.name if self.name.startswith('_') else '_' + self.name
+
+class svPrivilege(object):
     PRIVILEGES       = {'Advertise', 'Subscribe'}
     METHODS          = {'Privilege', 'Deny'}
     PRIVILEGES_SET   = {}
     def __init__(self, index, signature, role, rosname, rule):
         self.signature       = self.abstract(tag=signature)
-        self.role, self.rule, self.object = role.capitalize(), rule.capitalize(), svROSObject.init_object(name=self.abstract(tag=rosname))
-        if not self.role in svROSPrivilege.PRIVILEGES: raise svException('Not identified role.')
-        svROSPrivilege.PRIVILEGES_SET[index] = self
+        self.role, self.rule, self.topic = role.capitalize(), rule.capitalize(), svTopic.init_topic(rosname=rosname)
+        if not self.role in svPrivilege.PRIVILEGES: raise svException('Not identified role.')
+        svPrivilege.PRIVILEGES_SET[index] = self
 
     @classmethod
     def init_privilege(cls, node, role, rosname, method):
-        if not role.capitalize() in svROSPrivilege.PRIVILEGES: raise svException('Not identified role.')
-        if not method.capitalize() in svROSPrivilege.METHODS:  raise svException('Not identified method.')
+        # call init Topic
+        svTopic.init_topic(rosname=rosname)
+        if not role.capitalize() in svPrivilege.PRIVILEGES: raise svException('Not identified role.')
+        if not method.capitalize() in svPrivilege.METHODS:  raise svException('Not identified method.')
         if method.capitalize().strip() == 'Deny': rule = 'Deny' 
         else: rule = 'Allow'
         # INDEX PROCESSING.
@@ -733,7 +743,7 @@ class svROSPrivilege(object):
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
     def __str__(self):
-        _str_ = f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}\nrule = {self.rule}\nobject = {self.object.name}}}\n""" 
+        _str_ = f"""one sig {self.signature} extends Privilege {{}} {{role = {self.role}\nrule = {self.rule}\nobject = {self.topic.sros_object}}}\n""" 
         return _str_
 
 ###############################

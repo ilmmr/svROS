@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, json, pickle
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, json
 from simple_term_menu import TerminalMenu
 from yaml import *
 from dataclasses import dataclass, field
@@ -11,7 +11,7 @@ from tools.InfoHandler import color, svException, svWarning, svInfo
 # Exporters
 from svExport import svrosExport
 from svAnalyzer import svProjectExtractor, svAnalyzer
-from svData import svROSEnclave, svROSNode, Topic, svExecution
+from svData import svEnclave, svNode, Topic, svExecution
 
 global WORKDIR, INIT_SCHEMA, _INIT_
 WORKDIR      = os.path.dirname(__file__)
@@ -459,15 +459,14 @@ class svRUN:
         if not os.path.exists(path=f'{self.project_path}policies.xml'):
             raise svException(f'Could not initiate running of project: SROS file does not exist. Please create a file named {color.color("RED", "policies.xml")} in the {self.project.capitalize()} directory or export a project.')
         # Loading pre-existing data:
-        existing_data     = self.load_pickle_files()
-        project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
+        project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path)
         print(svInfo(f'Enclaves paths can be defined as the user intends. However, path "/public" is restricted to nodes considered as non-trusted!'))
         time.sleep(1)
         if project_extractor.extract_sros() and project_extractor.extract_config():
             project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN)
             if not (project_analyzer.security_verification() and project_analyzer.ros_verification()):
                 raise svException('Could not initiate running of project => LAUNCHER FAILED.')
-            # UPDATE IMPORTED DATA
+            # UPDATE IMPORTED DATA - JSON files
             if not project_extractor.update_imported_data():
                 raise svException('Failed to update data on launching.')
             # Feedback reporting and information
@@ -484,8 +483,7 @@ class svRUN:
             exit
 
     def _analyze(self):
-        existing_data     = self.load_pickle_files(analyze=True)
-        project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path, IMPORTED_DATA=existing_data)
+        project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path)
         # SAVE IMPORTED DATA
         if not project_extractor.save_imported_data():
             raise svException('Failed to load imported data!')
@@ -501,16 +499,6 @@ class svRUN:
         if not project_analyzer.alloy_ros():
             raise svException('Could not initiate running of project => ANALYZER FAILED.')
         exit
-
-    def load_pickle_files(self, analyze=False):
-        DATADIR = f'{self.project_path}data/objects/'
-        package_file, topic_file, node_file = open(f'{DATADIR}Packages.obj', 'rb'), open(f'{DATADIR}Topics.obj', 'rb'), open(f'{DATADIR}Nodes.obj', 'rb')
-        if not (package_file and topic_file and node_file):
-            return {}
-        if analyze == True:
-            state, predicates, enclaves = open(f'{DATADIR}States.obj', 'rb'), open(f'{DATADIR}Predicates.obj', 'rb'), open(f'{DATADIR}Enclaves.obj', 'rb')
-            return {'topics': pickle.load(topic_file), 'nodes': pickle.load(node_file), 'states': pickle.load(state), 'predicates': pickle.load(predicates), 'enclaves': pickle.load(enclaves)}
-        return {'packages': pickle.load(package_file), 'topics': pickle.load(topic_file), 'nodes': pickle.load(node_file)}
     
     @property
     def project_path(self):

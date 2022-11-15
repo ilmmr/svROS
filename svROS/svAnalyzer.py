@@ -1,4 +1,4 @@
-import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, pickle, json
+import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, xmlschema, json
 from simple_term_menu import TerminalMenu
 from yaml import *
 from dataclasses import dataclass, field
@@ -9,7 +9,7 @@ from typing import ClassVar
 from tools.InfoHandler import color, svException, svWarning, svInfo
 from lark import Lark, tree
 # Node parser
-from svData import svROSNode, svROSProfile, svROSEnclave, svROSObject, svState, Node, Package, Topic, MessageType, svExecution
+from svData import svNode, svProfile, svEnclave, svTopic, svState, Node, Package, MessageType, svExecution
 from svLanguage import svPredicate
 import xml.etree.ElementTree as ET
 # Visualizer
@@ -54,7 +54,7 @@ class svAnalyzer(object):
 
     # ALLOY => Runs Model Checking in ROS_MODEL
     def ros_verification(self):
-        NODES, TOPICS = svROSNode.NODES, Topic.TOPICS
+        NODES, TOPICS = svNode.NODES, svTopic.TOPICS
         ROS_FILE = self.generate_ros_model(NODES=NODES, TOPICS=TOPICS)
         if not os.path.isfile(path=ROS_FILE): return False
         else: return True
@@ -100,21 +100,21 @@ class svAnalyzer(object):
         model += ''.join(list(map(lambda node: str(NODES[node]), NODES)))
         # TOPICS.
         model += '/* === NODES === */\n\n/* === TOPICS === */\n'
-        model += Topic.topic_declaration()
+        model += svTopic.ros_declaration()
         model +=  '/* === TOPICS === */\n\n'
         # SELF-COMPOSITION.
         model += svExecution.create_executions()
         model += '\n/* === NODE BEHAVIOUR === */\n'
         model += svPredicate.node_behaviour()
         model += '\n/* === NODE BEHAVIOUR === */\n\n/* === OBSERVATIONAL DETERMINISM === */\n'
-        model += svROSNode.observable_determinism(assumptions=self.EXTRACTOR.assumptions)
+        model += svNode.observable_determinism(assumptions=self.EXTRACTOR.assumptions)
         model += '\n/* === OBSERVATIONAL DETERMINISM === */'
         with open(file_path, 'w+') as ros: ros.write(model)
         return file_path
     
     # ALLOY => Runs Structure Checking in SROS_MODEL
     def security_verification(self):
-        ENCLAVES, OBJECTS, PROFILES = svROSEnclave.ENCLAVES, svROSObject.OBJECTS, svROSProfile.PROFILES
+        ENCLAVES, OBJECTS, PROFILES = svEnclave.ENCLAVES, svTopic.TOPICS, svProfile.PROFILES
         SROS_FILE = self.generate_sros_model(PROFILES=PROFILES, ENCLAVES=ENCLAVES, OBJECTS=OBJECTS)
         if not os.path.isfile(path=SROS_FILE): return False
         else: return True
@@ -161,7 +161,7 @@ class svAnalyzer(object):
         model += ''.join(list(map(lambda profile: str(PROFILES[profile]), PROFILES)))
         # OBJECTS.
         model += '/* === PROFILES === */\n\n/* === OBJECTS === */\n'
-        model += ''.join(list(map(lambda obj: str(OBJECTS[obj]), OBJECTS)))
+        model += ''.join(list(map(lambda obj: OBJECTS[obj].sros_declaration, OBJECTS)))
         model += '/* === OBJECTS === */'
         with open(file_path, 'w+') as sros: sros.write(model)
         return file_path
@@ -171,7 +171,6 @@ class svAnalyzer(object):
 class svProjectExtractor:
     project       : str
     PROJECT_DIR   : str
-    IMPORTED_DATA : dict
 
     # Draw Architecture
     def draw_architecture(self):
@@ -179,32 +178,14 @@ class svProjectExtractor:
         viz = svVisualizer(project=self, directory=viz_directory)
         return viz.run_file(type='ARCHITECTURE')
 
-    def save_imported_data(self):
-        try:
-            svROSNode.NODES, svState.STATES, Topic.TOPICS, svPredicate.NODE_BEHAVIOURS, svROSEnclave.ENCLAVES = self.IMPORTED_DATA.get('nodes', {}), self.IMPORTED_DATA.get('states', {}), self.IMPORTED_DATA.get('topics', {}), self.IMPORTED_DATA.get('predicates', {}), self.IMPORTED_DATA.get('enclaves', {})
-        except AttributeError as e:
-            return False
-        return True
-
     # Before Analyzing...
     def update_imported_data(self):
-        DATADIR, OBJDIR = f'{self.PROJECT_DIR}/data', f'{self.PROJECT_DIR}/data/objects'
-        if not os.path.exists(OBJDIR):
-            os.makedirs(OBJDIR)
-        # SAVE using PICKLE.
-        package_file, topic_file, node_file = open(f'{OBJDIR}/Packages.obj', 'wb+'), open(f'{OBJDIR}/Topics.obj', 'wb+'), open(f'{OBJDIR}/Nodes.obj', 'wb+')
-        state, predicates, enclaves = open(f'{OBJDIR}/States.obj', 'wb+'), open(f'{OBJDIR}/Predicates.obj', 'wb+'), open(f'{OBJDIR}/Enclaves.obj', 'wb+')
-        pickle.dump(Package.PACKAGES, package_file, pickle.HIGHEST_PROTOCOL)
-        pickle.dump(Topic.TOPICS, topic_file, pickle.HIGHEST_PROTOCOL)
-        pickle.dump(svROSNode.NODES, node_file, pickle.HIGHEST_PROTOCOL)
-        pickle.dump(svState.STATES, state, pickle.HIGHEST_PROTOCOL)
-        pickle.dump(svPredicate.NODE_BEHAVIOURS, predicates, pickle.HIGHEST_PROTOCOL)
-        pickle.dump(svROSEnclave.ENCLAVES, enclaves, pickle.HIGHEST_PROTOCOL)
+        DATADIR = f'{self.PROJECT_DIR}/data'
         # json files.
-        data_json = {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': list(map(lambda node: svROSNode.to_json(node) , svROSNode.NODES)), 'connections': svROSNode.connections_to_json(), 'states': list(set(map(lambda state: state.name.lower(), svState.STATES.values()))), 'predicates': dict(map(lambda predicate: (predicate.signature.lower(), predicate.node.rosname), svPredicate.NODE_BEHAVIOURS.values()))}
+        data_json = {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': list(map(lambda node: svNode.to_json(node) , svNode.NODES)), 'connections': svNode.connections_to_json(), 'states': list(set(map(lambda state: state.name.lower(), svState.STATES.values()))), 'predicates': dict(map(lambda predicate: (predicate.signature.lower(), predicate.node.rosname), svPredicate.NODE_BEHAVIOURS.values()))}
         with open(f'{DATADIR}/configurations.json', 'w+') as data:
             json.dump(data_json, data, sort_keys=False, indent=4)
-        enclaves_json = list(map(lambda enclave: enclave.to_json(), svROSEnclave.ENCLAVES.values()))
+        enclaves_json = list(map(lambda enclave: enclave.to_json(), svEnclave.ENCLAVES.values()))
         json_object = json.dumps(enclaves_json, indent=4)
         with open(f'{DATADIR}/enclaves.json', 'w+') as data:
             data.write(json_object)
@@ -224,7 +205,7 @@ class svProjectExtractor:
         self.sros, enclaves = root, root.findall('.//enclave')
         for enclave in enclaves:
             path, profiles = enclave.get('path'), enclave.findall('.//profile')
-            enclave        = svROSEnclave(path=path, profiles=profiles)
+            enclave        = svEnclave(path=path, profiles=profiles)
         return True
 
     def validate_sros(self, sros):
@@ -259,39 +240,37 @@ class svProjectExtractor:
         if not config_file:
             config_file = f'{self.PROJECT_DIR}config.yml'
         config = safe_load(stream=open(config_file, 'r'))
-        self.config, packages, nodes, topics = config, list(set(config.get('packages'))), config.get('nodes'), config.get('topics')
+        self.config, packages, nodes = config, list(set(config.get('packages'))), config.get('nodes')
         # ANALYSIS.
-        types, states = config.get('types', {}), config.get('states', {})
-        # LOAD PICKLE.
-        if not self.IMPORTED_DATA == {}: Node.NODES = self.IMPORTED_DATA['nodes']
+        states = config.get('states', {})
         for package in packages: 
             Package.init_package_name(name=package, index=packages.index(package))
         if not nodes:
             raise svException(f'Failed to import config file of project.')
-        if not self.load_nodes_profiles(nodes=nodes, topics=topics, states=states, types=types):
+        if not self.load_nodes_profiles(nodes=nodes, states=states):
             return False
         return True
 
-    def load_nodes_profiles(self, nodes, topics, states, types):
-        if svROSEnclave.ENCLAVES is {}:
+    def load_nodes_profiles(self, nodes, states):
+        if svEnclave.ENCLAVES is {}:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
         # Processing channels and types.
-        if topics:
-            for topic in topics:
-                name, topic_type = topic, topics[topic]
-                Topic.init_topic(name=name, topic_type=topic_type)
-        if set(map(lambda type: type.name, MessageType.TYPES.values())) < set(types.keys()):
-            raise svException(f'Failed to load some Messages Types. Please defined every type related to each topic.')
+        # if topics:
+        #     for topic in topics:
+        #         name, topic_type = topic, topics[topic]
+        #         Topic.init_topic(name=name, topic_type=topic_type)
+        # if set(map(lambda type: type.name, MessageType.TYPES.values())) < set(types.keys()):
+        #    raise svException(f'Failed to load some Messages Types. Please defined every type related to each topic.')
         if states:
             for state in states: svState.init_state(name=state)
         # Processing nodes.
         for node in nodes:
             name, node = node, nodes[node]            
             unsecured, enclave = False, None
-            if node.get('enclave') not in svROSEnclave.ENCLAVES:
-                raise svException(f"{node.get('rosname')} enclave is not defined. Enclaves available: {list(map(lambda enclave: enclave.name, svROSEnclave.ENCLAVES.values()))}.")
+            if node.get('enclave') not in svEnclave.ENCLAVES:
+                raise svException(f"{node.get('rosname')} enclave is not defined. Enclaves available: {list(map(lambda enclave: enclave.name, svEnclave.ENCLAVES.values()))}.")
             else:
-                enclave = svROSEnclave.ENCLAVES[node.get('enclave')]
+                enclave = svEnclave.ENCLAVES[node.get('enclave')]
             rosname = node.get('rosname')
             profile = enclave.profiles.get(rosname)
             if not profile: raise svException(f"{node.get('rosname')} profile is not defined in enclave {enclave.name}.")
@@ -300,17 +279,17 @@ class svProjectExtractor:
             if behaviour is None: raise svException(f'Must defined some node behaviour to {name}!')
             properties = node.get(behaviour)
             # Update NODE and PROFILE.
-            node         = svROSNode(full_name=name, profile=profile, **node)
+            node         = svNode(full_name=name, profile=profile, **node)
             profile.node                   = node
             # PROPERTIES...
             if not self.node_behaviour(node=node, behaviour=behaviour, properties=properties):
                 raise svException(f'Failed to properties from {node.rosname}.')
-        svROSNode.handle_connections()  # Set connections up.
+        svNode.handle_connections()  # Set connections up.
         steps, inbox = self.scopes
         svPredicate.parse_into_alloy()
         #if type.lower() == "od" or type.lower() == "observable determinism":
         # Observable determinism in Unsecured Nodes.
-        if not svROSNode.observalDeterminism(steps=steps, inbox=inbox): 
+        if not svNode.observalDeterminism(steps=steps, inbox=inbox): 
             return False
         return True
 

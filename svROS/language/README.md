@@ -17,3 +17,20 @@ A property is conceptually divided following the hierarchical structure depicted
 <p align="center">
    <img width="50%" src="./dsl-structure.png">
 </p>
+
+---
+
+### DSL for Initial Assumptions
+
+The language was mainly created to be able to express intra-node behaviour. Notwithstanding, the system can have assumptions that characterise how the application initiates. Remember that variables and topic inboxes have direct impact over self-composition and verification of OD. Inboxes start initially empty; therefore, no further assumptions about their initial values are necessary.
+
+For instance, consider an application variable *var*. As an initialisation assumption, consider that $var$ is initially set to *False*. Using the DSL for initialisation assumptions, the developer can specify this constraint as:
+```
+requires $var = False
+```
+
+The language syntax for initial assumptions, depicted right bellow, is actually a subpart of the initial DSL syntax, where only **Requires** pattern is used.
+
+<p align="center">
+   <img width="70%" src="./syntax-for-assumpt.png">
+</p>

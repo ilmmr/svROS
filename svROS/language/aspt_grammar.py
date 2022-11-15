@@ -12,7 +12,10 @@ GRAMMAR = f"""
     conjunction  : [ conjunction OR_OPERATOR ] condition
     condition    : [ NO_OPERATOR ] cond
 
-    cond         : STATE ( EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR ) VALUE
+    cond         : STATE evaluate
+    evaluate     : binop ( VALUE | STATE )
+
+    binop       : EQUAL_OPERATOR | DIFF_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR | GT_EQ | LS_EQ
 
     AND_OPERATOR    : "and" | "&&"
     OR_OPERATOR     : "or"  | "||"
@@ -20,7 +23,9 @@ GRAMMAR = f"""
     
     EQUAL_OPERATOR   : "="
     GREATER_OPERATOR : ">"
+    GT_EQ            : ">="
     LESSER_OPERATOR  : "<"
+    LS_EQ            : "<="
     DIFF_OPERATOR    : "!="
 
     VALUE     : /(?!=>)[a-zA-Z0-9_\/\-.\:]+/
@@ -32,7 +37,7 @@ GRAMMAR = f"""
 
 from lark import Lark, tree, Token, Transformer
 from lark.exceptions import UnexpectedCharacters, UnexpectedToken
-from svData import Topic, svState
+from svData import svState
 class GrammarParser(object):
     """
         Grammar Main Parser
@@ -60,11 +65,12 @@ ALLOY_OPERATORS = {
     "EQUAL_OPERATOR": "=",
     "DIFF_OPERATOR": "!=",
     "GREATER_OPERATOR": "gt",
-    "LESSER_OPERATOR": "le",
+    "LESSER_OPERATOR": "lt",
     "INC_OPERATOR": "plus",
-    "DEC_OPERATOR": "minus"
+    "DEC_OPERATOR": "minus",
+    "GT_EQ": "gte",
+    "LT_EQ": "lte"
 }
-        
 ###############################
 # === LANGUAGE TRANSFORMER  ===
 ###############################
@@ -76,6 +82,12 @@ class LanguageTransformer(Transformer):
         if children[0] is not None:
             assumpt.deny = True
         return assumpt
+
+    def binop(self, children):
+        return children[0].type
+
+    def evaluate(self, children):
+        return Evaluate(binop=children[0], value=children[1])
 
     def cond(self, children):
         relation, value = children[1].type, children[2].value
@@ -133,9 +145,15 @@ class TraceAssumption(object):
     def __alloy__(self):
         return self.assumption.__alloy__(trace=trace, no_quantifier=self.deny)
 
+class Evaluate(object):
+    
+    def __init__(self, binop, value):
+        value = value.value if value.type == "VALUE" else f"t.{value.value[1:]}"
+        self.binop, self.value = binop, value
+
 class State(object):
 
-    def __init__(self, entity, relation, value):
+    def __init__(self, entity, evaluate):
         try:
             state = svState.STATES[entity]
             if state.isint:

@@ -11,7 +11,7 @@ from lark import Lark, tree
 import itertools
 
 from language.grammar import GrammarParser, Read, Publish, Update
-from svData import Topic, svROSNode, svState
+from svData import Topic, svNode, svState
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
 SCHEMAS = os.path.join(WORKDIR, '../schemas/')
@@ -57,7 +57,7 @@ class svPredicate(object):
     """
     NODE_BEHAVIOURS = {}
     def __init__(self, signature, node, properties, is_sub_predicate=False):
-        if not isinstance(node, svROSNode):
+        if not isinstance(node, svNode):
             raise svException('Failed to create property parser since given node is not a Node.')
         signature = svPredicate.signature(value=signature)
         self.signature, self.node, self.sub_predicates = signature, node, set()
@@ -109,6 +109,7 @@ class svPredicate(object):
                 sub_predicate = svPredicate.init_predicate(signature, node, properties, is_sub_predicate=True)
                 if sub_predicate in self.sub_predicates: raise svException(f'Sub-Predicate {signature} of predicate {self.signature} already specified.')
                 self.sub_predicates.add(sub_predicate)
+                print(sub_predicate)
                 return sub_predicate
             elif isinstance(text, str):
                 property = GrammarParser.parse(text=text, node=self.node)
@@ -118,12 +119,12 @@ class svPredicate(object):
         except Exception: raise svException(f'Failed to parse property {text}.')
 
     @classmethod
-    def init_predicate(cls, signature, node, properties):
+    def init_predicate(cls, signature, node, properties, is_sub_predicate=False):
         if properties.__len__() == 1 and properties[0] == '': 
             properties = None
         if signature in cls.NODE_BEHAVIOURS:
             raise svException(f"Predicate {signature} is already defined.")
-        return cls(signature=signature, node=node, properties=properties)
+        return cls(signature=signature, node=node, properties=properties, is_sub_predicate=is_sub_predicate)
 
     @classmethod
     def node_behaviour(cls):
