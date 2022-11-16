@@ -31,11 +31,11 @@ class svAlloyPredicate(object):
         if properties is None:
             return svAlloyPredicate.frame_conditions()
         else:
-            return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in properties]) + svAlloyPredicate.frame_conditions(channels=changable_channels, variables=changable_variables)
+            return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.str) for p in properties]) + svAlloyPredicate.frame_conditions(channels=changable_channels, variables=changable_variables)
 
     @classmethod
     def parse_only_properties(cls, node, properties):
-        return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in properties])
+        return '\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.str) for p in properties])
     
     @staticmethod
     def frame_conditions(channels=None, variables=None):
@@ -109,7 +109,6 @@ class svPredicate(object):
                 sub_predicate = svPredicate.init_predicate(signature, node, properties, is_sub_predicate=True)
                 if sub_predicate in self.sub_predicates: raise svException(f'Sub-Predicate {signature} of predicate {self.signature} already specified.')
                 self.sub_predicates.add(sub_predicate)
-                print(sub_predicate)
                 return sub_predicate
             elif isinstance(text, str):
                 property = GrammarParser.parse(text=text, node=self.node)

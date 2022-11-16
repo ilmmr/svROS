@@ -333,22 +333,6 @@ class svNode(object):
         if Node.NODES: self.remaps = svNode.load_remaps(node_name=self.index)
         # Store in class variable.
         svNode.NODES[self.index] = self
-    
-    def load_profile_topics(self):
-        subs, advs = list(), list()
-        if self.profile.subscribe:
-            for subscribe in self.profile.subscribe:
-                if subscribe not in Topic.TOPICS:
-                    print(svWarning(f'Privilege {subscribe} of {self.rosname} defined in SROS file but not has no matching topic in config file!'))
-                else:
-                    subs.append(Topic.TOPICS[subscribe])
-        if self.profile.advertise:
-            for advertise in self.profile.advertise:
-                if advertise not in Topic.TOPICS:
-                    print(svWarning(f'Topic {advertise} of {self.rosname} of defined in SROS but not has no matching in config file!'))
-                else:
-                    advs.append(Topic.TOPICS[advertise])
-        return subs, advs
 
     # Get loaded Nodes from PICKLE.
     @classmethod
@@ -370,7 +354,7 @@ class svNode(object):
             return False
         observations = set()
         for topic in cls.OBSERVATIONS:
-            if not isinstance(topic, Topic):
+            if not isinstance(topic, svTopic):
                 raise svException(f'{topic.signature} is not a topic!')
             svNode.PUBSYNC.add(f"""\n\talways ((some m0 : Message | publish[T1, {topic.signature}, m0]) iff (some m1 : Message | publish[T2, {topic.signature}, m1]))""")
             observations.add(f'check {topic.signature} {{always (all m0, m1 : Message | publish[T1, {topic.signature}, m0] and publish[T2, {topic.signature}, m1] implies m0 = m1)}} for 4 but {inbox} seq, 1..{steps} steps')
@@ -379,16 +363,16 @@ class svNode(object):
 
     def set_connection(self):
         if not self.advertise: return None
-        access_to = {topic.name: set() for topic in self.advertise}
+        access_to = {topic.rosname: set() for topic in self.advertise}
         for node_name in svNode.NODES:
             node = svNode.NODES[node_name]
             if node == self or not node.subscribe: continue
-            subscribes_in = list(filter(lambda sub_: sub_ in access_to, list(map(lambda sub: sub.name, node.subscribe))))
+            subscribes_in = list(filter(lambda sub_: sub_ in access_to, list(map(lambda sub: sub.rosname, node.subscribe))))
             if subscribes_in != []: 
                 for sub in subscribes_in:
                     if (not node.secure and self.secure):
                         print(svWarning(f'Connection through {sub} is not well supported. {node.rosname.capitalize()} is not secure, while {self.rosname.capitalize()} is secure: {color.color("BOLD", f"{self.rosname.capitalize()} -{sub}-> {node.rosname.capitalize()}")}'))
-                        svNode.OBSERVATIONS.add(Topic.TOPICS[sub])
+                        svNode.OBSERVATIONS.add(svTopic.TOPICS[sub])
                     elif (not self.secure and node.secure):
                         print(svWarning(f'Connection through {sub} is not well supported. {self.rosname.capitalize()} is not secure, while {node.rosname.capitalize()} is secure: {color.color("BOLD", f"{self.rosname.capitalize()} -{sub}-> {node.rosname.capitalize()}")}'))
                     access_to[sub].add(node)
@@ -431,7 +415,7 @@ class svNode(object):
         if cls.NODES is {}: raise svException("No nodes found, can not process handling of topic behaviour.")
         # PUBLIC STATE
         public_state_equivalence = f"""// Public-State Equivalence:\nfact public_state_equivalence {{\n\tno inbox"""
-        states = list(filter(lambda state: not state.private and state not in svState.ASSUMPTIONS), svState.STATES.values())
+        states = list(filter(lambda state: not state.private and state not in svState.ASSUMPTIONS, svState.STATES.values()))
         initial_assumptions = ''
         if assumptions:
             initial_assumptions = 'fact initial_assumptions {\n\t' + '\n\t'.join([re.sub(r'[ ]+',' ',p.__alloy__()) for p in assumptions]) + '\n}\n'
@@ -465,7 +449,7 @@ class svNode(object):
     def non_accessable(self):
         node_access = list(self.advertise) if self.advertise is not None else []
         node_access += list(self.subscribe) if self.subscribe is not None else []
-        return list(filter(lambda t: t not in node_access, Topic.TOPICS.values()))
+        return list(filter(lambda t: t not in node_access, svTopic.TOPICS.values()))
 
     # Retrieve JSON-based dict information
     @staticmethod
@@ -473,9 +457,9 @@ class svNode(object):
         node   = svNode.NODES[node]
         subscribe, advertise = [], []
         if node.subscribe:
-            subscribe = list(map(lambda subs: subs.rosname(node=node), node.subscribe))
+            subscribe = list(map(lambda subs: subs.rosname, node.subscribe))
         if node.advertise:
-            advertise = list(map(lambda pubs: pubs.rosname(node=node), node.advertise))
+            advertise = list(map(lambda pubs: pubs.rosname, node.advertise))
         # Enclave is not needed at this point
         topics  = {'subscribe': subscribe, 'advertise': advertise}
         enclave = node.profile.enclave.name if node.profile else ''
@@ -631,14 +615,19 @@ class svProfile(object):
     def profile_privileges(self):
         rosname = self.signature
         # Process topic privilege
+        advertise, subscribe = [], []
         if self.advertise:
             for adv in self.advertise:
                 privilege = svPrivilege.init_privilege(node=rosname, role='advertise', rosname=adv, method='privilege')
                 self.privileges.append(privilege)
+                if adv not in self.deny_advertise:
+                    advertise.append(privilege.topic)
         if self.subscribe:
             for sub in self.subscribe: 
                 privilege = svPrivilege.init_privilege(node=rosname, role='subscribe', rosname=sub, method='privilege')
                 self.privileges.append(privilege)
+                if sub not in self.deny_subscribe:
+                    subscribe.append(privilege.topic)
         if self.deny_advertise:
             for deny in self.deny_advertise:
                 privilege = svPrivilege.init_privilege(node=rosname, role='advertise', rosname=deny, method='deny')
@@ -647,6 +636,7 @@ class svProfile(object):
             for deny in self.deny_subscribe:
                 privilege = svPrivilege.init_privilege(node=rosname, role='subscribe', rosname=deny, method='deny')
                 self.privileges.append(privilege)
+        self.subscribe, self.advertise = subscribe, advertise
         
     def abstract(self, tag): return tag.lower().replace('/', '_')
 
@@ -666,8 +656,8 @@ class svProfile(object):
 
     def to_json(self):
         advertise, subscribe = [], []
-        if self.advertise: advertise = self.advertise
-        if self.subscribe: subscribe = self.subscribe
+        if self.advertise: advertise = list(map(lambda t: t.rosname, self.advertise))
+        if self.subscribe: subscribe = list(map(lambda t: t.rosname, self.subscribe))
         return {'name': self.name if self.name else '', 'namespace': self.namespace if self.namespace else '', 'advertise': advertise, 'deny_advertise': self.deny_advertise, 'subscribe': subscribe, 'deny_subscribe': self.deny_subscribe}
 
 class NonNumeric(object):
@@ -679,11 +669,11 @@ class NonNumeric(object):
     @staticmethod
     def abstract(tag): 
         tag = tag.split(' ')
-        return ''.join(list(lambda w: w.capitalize(), tag))
+        return ''.join(list(map(lambda w: w.capitalize(), tag)))
     
     @classmethod
     def __str__(cls):
-        return "one sig " + ', '.join(list(lambda value: value.signature, cls.VALUES)) + f" extends Non_Numerical {{}}"
+        return "one sig " + ', '.join(list(map(lambda value: value.signature, cls.VALUES))) + f" extends Non_Numerical {{}}"
 
 class svTopic(object):
     TOPICS = {}
@@ -701,18 +691,22 @@ class svTopic(object):
     def namespace(tag: str):
         return tag if tag.startswith('/') else f'/{tag}'
 
-    def abstract(self, tag): return tag.lower().replace('/', '_')
+    def abstract(self, tag): return 'topic' + tag.lower().replace('/', '_')
 
     @classmethod
     def ros_declaration(cls):
-        return "one sig " + ', '.join(list(lambda topic: topic.signature, cls.TOPICS)) + f" extends Topic {{}}\n" + NonNumeric.__str__()
+        return "one sig " + ', '.join(list(map(lambda topic: topic.signature, cls.TOPICS.values()))) + f" extends Topic {{}}\n" + NonNumeric.__str__()
 
     def sros_declaration(self):
         return f'one sig {self.sros_object} extends Object {{}}\n'
     
     @property
     def sros_object(self):
-        return 'object' + self.name if self.name.startswith('_') else '_' + self.name
+        return 'object' + self.rosname if self.rosname.startswith('_') else '_' + self.rosname
+
+    @property
+    def name(self):
+        return self.rosname
 
 class svPrivilege(object):
     PRIVILEGES       = {'Advertise', 'Subscribe'}
@@ -779,6 +773,6 @@ class svExecution(object):
         nop_str += f"""\n}}\n"""
         # svPredicate
         from svLanguage import svPredicate
-        system_str += f"""\n\t// System trace executions.\n\t{'[t] or '.join(list(filter(lambda not_sub: not not_sub.is_sub_predicate, svPredicate.NODE_BEHAVIOURS.keys())))}[t]\n}}"""
+        system_str += f"""\n\t// System trace executions.\n\t{'[t] or '.join(list(filter(lambda not_sub: not svPredicate.NODE_BEHAVIOURS[not_sub].is_sub_predicate, svPredicate.NODE_BEHAVIOURS.keys())))}[t]\n}}"""
         _str_ += f""" one sig {t1.signature}, {t2.signature} extends Trace {{}}\n"""
         return '/* === VARIABLES === */' + states + '\n/* === VARIABLES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str

@@ -29,11 +29,14 @@ SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 class svAnalyzer(object):
     EXTRACTOR     : object
     MODELS_DIR    : str
+    MODE          : int = 0
     
     def __post_init__(self):
         # GET FROM EXTRACTOR
-        project, PROJECT_DIR, scopes = self.EXTRACTOR.project, self.EXTRACTOR.PROJECT_DIR, self.EXTRACTOR.scopes
-        self.meta_model, self.sros_model = self.load_configuration(MODELS_DIR=self.MODELS_DIR, PROJECT_DIR=PROJECT_DIR, name=project.lower())
+        project, PROJECT_DIR = self.EXTRACTOR.project, self.EXTRACTOR.PROJECT_DIR
+        if self.MODE == 0:
+            scopes = self.EXTRACTOR.scopes
+            self.meta_model, self.sros_model = self.load_configuration(MODELS_DIR=self.MODELS_DIR, PROJECT_DIR=PROJECT_DIR, name=project.lower())
         
     @staticmethod
     def run_dir():
@@ -71,20 +74,20 @@ class svAnalyzer(object):
             print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every observation seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
         else:
             print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Every observation seem to hold for the given configuration.'))
-        map = {}
+        map_dict = {}
         for prop in properties:
             if prop in list(map(lambda st: st.split('.xml')[0], counter)):
                 print(f'\n\t‣‣ Observation in topic {prop.split("topic_")[1].replace("_","/")} is not deterministic {color.color("RED", "☒")}')
-                map[prop.split("topic_")[1].replace("_","/")] = f'{prop}.xml'
+                map_dict[prop.split("topic_")[1].replace("_","/")] = f'{prop}.xml'
         # RUN VISUALIZER
         while True:
             # open visualizer
-            options = list(map(lambda option: option, map.keys())) + ['Exit']
+            options = list(map(lambda option: option, map_dict.keys())) + ['Exit']
             choice = TerminalMenu(options).show()
             if options[choice] == r'(?i)Exit':
                 break
             else:
-                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/ros/{map[options[choice]]}'
+                viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/ros/{map_dict[options[choice]]}'
                 viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
                 viz.run_file(type='OD', file=file)
                 print(svInfo(f'Application OD counter-example is being displayed on your browser'), end='')
@@ -142,10 +145,9 @@ class svAnalyzer(object):
 
     @staticmethod
     def execute_java(file, properties, type):
-        models_path = f'/tmp/generated_models/{type}'
-        os.system(javacmd)    
+        models_path = f'/tmp/generated_models/{type}'  
         for prop in properties:
-            javacmd = "java -jar ~/.svROS/bin/generator.jar " + file + " " + type + " " + prop
+            javacmd = "java -jar ~/.svROS/.bin/generator.jar " + file + " " + type + " " + prop
             os.system(javacmd)
         return os.listdir(models_path)
         
@@ -161,7 +163,7 @@ class svAnalyzer(object):
         model += ''.join(list(map(lambda profile: str(PROFILES[profile]), PROFILES)))
         # OBJECTS.
         model += '/* === PROFILES === */\n\n/* === OBJECTS === */\n'
-        model += ''.join(list(map(lambda obj: OBJECTS[obj].sros_declaration, OBJECTS)))
+        model += ''.join(list(map(lambda obj: OBJECTS[obj].sros_declaration(), OBJECTS)))
         model += '/* === OBJECTS === */'
         with open(file_path, 'w+') as sros: sros.write(model)
         return file_path
@@ -242,7 +244,7 @@ class svProjectExtractor:
         config = safe_load(stream=open(config_file, 'r'))
         self.config, packages, nodes = config, list(set(config.get('packages'))), config.get('nodes')
         # ANALYSIS.
-        states = config.get('states', {})
+        states = config.get('variables', {})
         for package in packages: 
             Package.init_package_name(name=package, index=packages.index(package))
         if not nodes:
@@ -254,13 +256,7 @@ class svProjectExtractor:
     def load_nodes_profiles(self, nodes, states):
         if svEnclave.ENCLAVES is {}:
             raise svException("No enclaves found, security in ROS is yet to be defined.")
-        # Processing channels and types.
-        # if topics:
-        #     for topic in topics:
-        #         name, topic_type = topic, topics[topic]
-        #         Topic.init_topic(name=name, topic_type=topic_type)
-        # if set(map(lambda type: type.name, MessageType.TYPES.values())) < set(types.keys()):
-        #    raise svException(f'Failed to load some Messages Types. Please defined every type related to each topic.')
+        # Variables
         if states:
             for state in states: svState.init_state(name=state)
         # Processing nodes.
@@ -335,7 +331,7 @@ class svProjectExtractor:
         if assumptions == []: return None
         return assumptions
 
-    def create_prop(self, txt):
+    def create_prop(self, text):
         try: 
             if isinstance(text, str):
                 property = GrammarParser.parse(text=text)

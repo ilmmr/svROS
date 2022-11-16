@@ -69,13 +69,19 @@ ALLOY_OPERATORS = {
     "INC_OPERATOR": "plus",
     "DEC_OPERATOR": "minus",
     "GT_EQ": "gte",
-    "LT_EQ": "lte"
+    "LS_EQ": "lte"
 }
 ###############################
 # === LANGUAGE TRANSFORMER  ===
 ###############################
 
 class LanguageTransformer(Transformer):
+
+    def property(self, children):
+        return children[0]
+
+    def pattern(self, children):
+        return children[0]
 
     def condition(self, children):
         assumpt = GlobalAssumption(assumption=children[1])
@@ -90,9 +96,7 @@ class LanguageTransformer(Transformer):
         return Evaluate(binop=children[0], value=children[1])
 
     def cond(self, children):
-        relation, value = children[1].type, children[2].value
-        state = State(entity=(children[0].value)[1:], relation=relation, value=value)
-        return state
+        return Variable(entity=(children[0].value)[1:], evaluate=children[1])
 
     def formula(self, children):
         return Disjunction(conditions=self.conditionals)
@@ -135,7 +139,7 @@ class GlobalAssumption(object):
         self.assumption, self.deny = assumption, False
 
     def __alloy__(self):
-        return self.assumption.__alloy__(trace=None, no_quantifier=self.deny)
+        return self.assumption.__alloy__(no_quantifier=self.deny)
 
 class TraceAssumption(object):
     
@@ -151,19 +155,45 @@ class Evaluate(object):
         value = value.value if value.type == "VALUE" else f"t.{value.value[1:]}"
         self.binop, self.value = binop, value
 
+    def __alloy__(self, entity):
+        isint = True if entity.isint else False
+        if isint and not self.value.lstrip("-").isdigit():
+            raise svException(f"Variable value is not a number but variable is numeric!")
+        entity.values.add(self.value)
+        return self.operation(binop=self.binop, signature=f"T1.{entity.name.lower()}", value=self.value, isint=isint) + " and " + self.operation(binop=self.binop, signature=f"T2.{entity.name.lower()}", value=self.value, isint=isint)
+
+    @staticmethod
+    def operation(binop, signature, value, isint, prefix="", sufix="", prev=""):
+        if binop in {"EQUAL_OPERATOR", "DIFF_OPERATOR"}:
+            return f"{prefix} {signature} {ALLOY_OPERATORS[binop]} {value} {sufix}"
+        assert isint
+        if binop in {"INC_OPERATOR", "DEC_OPERATOR"}:
+            if prev:
+                return f"{signature} = {ALLOY_OPERATORS[binop]}[{prev}, {value}]"
+        return f"{prefix} {ALLOY_OPERATORS[binop]}[{signature}, {value}] {sufix}"
+
+class Variable(object):
+
+    def __init__(self, entity, evaluate):
+        try:
+            state = svState.STATES[entity]
+        except AttributeError as e : raise svException(f'{e}')
+        svState.ASSUMPTIONS.add(state)
+        self.entity, self.object, self.evaluate = entity, state, evaluate
+
+    def __alloy__(self, trace=None, no_quantifier=False):
+        # CONDITION
+        quantifier, trace = 'no'        if no_quantifier else '', f'{trace}.' if trace         else ''
+        return f"{quantifier} {self.evaluate.__alloy__(entity=self.object)}"
+
 class State(object):
 
     def __init__(self, entity, evaluate):
         try:
             state = svState.STATES[entity]
-            if state.isint:
-                if not value.lstrip("-").isdigit():
-                    raise svException(f"State value is not a number but state is numeric!")
-            else:
-                state.values.add(value)
         except AttributeError as e : raise svException(f'{e}')
         svState.ASSUMPTIONS.add(state)
-        self.entity, self.object, self.relation, self.value = entity, state, relation, value
+        self.entity, self.object, self.evaluate = entity, state, evaluate
 
     def __alloy__(self, trace=None, no_quantifier=False):
         # CONDITION

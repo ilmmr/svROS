@@ -100,7 +100,7 @@ ALLOY_OPERATORS = {
     "INC_OPERATOR": "plus",
     "DEC_OPERATOR": "minus",
     "GT_EQ": "gte",
-    "LT_EQ": "lte"
+    "LS_EQ": "lte"
 }
 
 MESSAGE_TOKENS = {}
@@ -256,11 +256,11 @@ class Cond(object):
 
     def __init__(self, entity, cond):
         self.entity, self.cond = entity, cond
+        if not self.ismessage: return 
 
     def __alloy__(self, no_quantifier):
         quantifier = 'no' if no_quantifier else ''
         if self.cond:
-            true = self.ismessage
             return f'{quantifier} {self.cond.__alloy__(entity=self.entity)}'
         else:
             if self.entity.type == "PREDICATE":
@@ -289,28 +289,26 @@ class Evaluate(object):
         if action == "evaluate":
             return self.evaluate(entity)
         elif action == "publish":
-            assert entity.type == "TOPIC"
+            assert isinstance(entity, svTopic)
             return self.publish(entity)
         elif action == "state":
-            assert entity.type == "STATE"
+            assert isinstance(entity, svState)
             return self.state(entity)
         else:
             return None 
         
     def evaluate(self, entity):
         if entity.type == "MESSAGE":
-            token, entity = entity.value, MESSAGE_TOKENS[entity.value].object
-            isint = True if entity.message_type.isint else False
-            entity.message_type.values.add(self.value)
-            return self.operation(binop=self.binop, signature=token, value=self.value, isint=isint)
+            token = entity.value
+            # isint = True if entity.message_type.isint else False
+            # entity.message_type.values.add(self.value)
+            return self.operation(binop=self.binop, signature=token, value=self.value, isint=True)
         elif entity.type == "TOPIC":
-            entity = svTopic.TOPICS[entity.value]
-            isint = True if entity.message_type.isint else False
-            if self.value not in list(MESSAGE_TOKENS.keys()):
-                entity.message_type.values.add(self.value)
-            return self.operation(binop=self.binop, signature=f"first[t.inbox[{entity.signature}]]", value=self.value, isint=isint)
+            # isint = True if entity.message_type.isint else False
+            # if self.value not in list(MESSAGE_TOKENS.keys()):
+            #    entity.message_type.values.add(self.value)
+            return self.operation(binop=self.binop, signature=f"first[t.inbox[{entity.signature}]]", value=self.value, isint=True)
         elif entity.type == "STATE":
-            entity = svState.STATES[entity.value]
             isint = True if entity.isint else False
             if isint and not self.value.lstrip("-").isdigit():
                 raise svException(f"Variable value is not a number but variable is numeric!")
@@ -321,18 +319,16 @@ class Evaluate(object):
             return None
 
     def publish(self, entity):
-        entity = svTopic.TOPICS[entity.value]
-        isint = True if entity.message_type.isint else False
-        if self.value not in list(MESSAGE_TOKENS.keys()):
-            entity.message_type.values.add(self.value)
-        return self.operation(binop=self.binop, prefix="( some message : Message |", signature=f"message", sufix=f"implies t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], message] )", prev= "", value=self.value, isint=isint)
+        # isint = True if entity.message_type.isint else False
+        # if self.value not in list(MESSAGE_TOKENS.keys()):
+        #    entity.message_type.values.add(self.value)
+        return self.operation(binop=self.binop, prefix="( some message : Message |", signature=f"message", sufix=f"implies t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], message] )", prev= "", value=self.value, isint=True)
 
     def state(self, entity):
-        entity = svState.STATES[entity.value]
         isint = True if entity.isint else False
-        if isint and not self.value.lstrip("-").isdigit():
-            raise svException(f"Variable value is not a number but variable is numeric!")
         if self.value not in list(MESSAGE_TOKENS.keys()):
+            if isint and not self.value.lstrip("-").isdigit():
+                raise svException(f"Variable value is not a number but variable is numeric!")
             entity.values.add(self.value)
         return self.operation(binop=self.binop, signature=f"t.{entity.name.lower()}'", prev=f"t.{entity.name.lower()}", value=self.value, isint=isint)
 
@@ -376,26 +372,29 @@ class ReadImplication(object):
         if self.conditional is None:
             return f'{self.implication.__alloy__()}'
         if self.denial is None:
-            return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }}'
-        return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }} else {{ {self.denial.__alloy__()} {self.resolve_frame_conditions() }}}'
+            return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }} else {{ {self.resolve_frame_conditions()} }}'
+        return f'{self.conditional.__alloy__()} implies {{ {self.implication.__alloy__()} }} else {{ {self.denial.__alloy__()} {self.resolve_frame_conditions()} }}'
 
     def resolve_frame_conditions(self):
-        denial = self.denial.conditions
-        frame  = list(map(lambda c : c.object, list(map(lambda cond : cond.conditions, self.frame_conditions.conditions))))
-        denial = list(map(lambda c : c.object, list(map(lambda cond : cond.conditions, denial.conditions)))) 
-        _str_ = ""
+        if isinstance(self.denial, ReadImplication): return ''
+        denial = self.denial.conditions if self.denial else []
+        frame  = list(map(lambda c : c.object, sum(list(map(lambda cond : cond.conditions, self.frame_conditions)), [])))
+        if denial:
+            denial = list(map(lambda c : c.object, list(map(lambda cond : cond.conditions, denial.conditions)))) 
+        _str_ = []
         for f in frame:
             if f not in denial:
                 if isinstance(f, svTopic):
-                    _str_ += f" and t.inbox'[{f.signature}] = t.inbox[{f.signature}]"
+                    _str_.append(f"t.inbox'[{f.signature}] = t.inbox[{f.signature}]")
                 if isinstance(f, svState):
-                    _str_ += f" and t.{f.name.lower()}' = t.{f.name.lower()}"
-        return _str_
+                    _str_.append(f" and t.{f.name.lower()}' = t.{f.name.lower()}")
+        return ' and '.join(_str_)
 
 class Disjunction(object):
     
     def __init__(self, conditions):
         self.conditions = conditions
+        self.str = self.__alloy__()
     
     def __alloy__(self):
         return '(' + ' and '.join([f'{cond.__alloy__()}' for cond in self.conditions]) + ')'
@@ -419,12 +418,13 @@ class Read(object):
         if isinstance(read, Declaration):
             read.parent = self 
         self.read = read
+        self.str = self.__alloy__()
 
     def __alloy__(self):
         if isinstance(self.read, Declaration):
-            return f"let {self.read.token} = first[t.inbox[{self.object.signature}]] {{\n\t\t{self.read.conditions.__alloy__(entity=self.object)}\n\t}}\n\tt.inbox'[{self.object.signature}] = rest[t.inbox[{self.object.signature}]]"
+            return f"let {self.read.token} = first[t.inbox[{self.object.signature}]] {{\n\t\t{self.read.conditions.__alloy__()}\n\t}}\n\tt.inbox'[{self.object.signature}] = rest[t.inbox[{self.object.signature}]]"
         elif isinstance(self.read, Evaluate):
-            return f"{self.read.__alloy__(entity=self.object)}\n\tt.inbox'[{self.object.signature}] = rest[t.inbox[{self.object.signature}]]"
+            return f"{self.read.__alloy__()}\n\tt.inbox'[{self.object.signature}] = rest[t.inbox[{self.object.signature}]]"
         else:
             return f"t.inbox'[{self.object.signature}] = rest[t.inbox[{self.object.signature}]]"
 
@@ -439,10 +439,11 @@ class Publish(object):
         if isinstance(publish, Declaration):
             publish.parent = self 
         self.publish = publish
+        self.str = self.__alloy__()
 
     def __alloy__(self):
         if isinstance(self.publish, Declaration):
-            return f"some {self.publish.token} : Message {{\n\t\t{self.read.conditions.__alloy__(entity=self.object)}\n\tt.inbox'[{self.object.signature}] = add[t.inbox[{self.object.signature}], {self.publish.token}]\n\t}}"
+            return f"some {self.publish.token} : Message {{\n\t\t{self.publish.conditions.__alloy__()}\n\t\tt.inbox'[{self.object.signature}] = add[t.inbox[{self.object.signature}], {self.publish.token}]\n\t}}"
         elif isinstance(self.publish, Evaluate):
             return f"{self.publish.__alloy__(entity=self.object, action='publish')}"
         else:
@@ -456,9 +457,10 @@ class Update(object):
         except AttributeError as e : 
             raise svException(f'Variable {entity} does not exist!')
         self.entity, self.object, self.update = entity, state, update
+        self.str = self.__alloy__()
 
     def __alloy__(self):
-        return f"{self.publish.__alloy__(entity=self.object, action='state')}"
+        return f"{self.update.__alloy__(entity=self.object, action='state')}"
 
 class IffConditional(object):
 
