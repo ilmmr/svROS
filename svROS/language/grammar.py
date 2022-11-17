@@ -68,7 +68,10 @@ GRAMMAR = f"""
 
 from lark import Lark, tree, Token, Transformer
 from lark.exceptions import UnexpectedCharacters, UnexpectedToken
-from svData import svTopic, svState
+from svData import svTopic, svState, NonNumeric
+
+import random
+import string
 class GrammarParser(object):
     """
         Grammar Main Parser
@@ -112,7 +115,7 @@ class LanguageTransformer(Transformer):
 
     def __init__(self, node, text):
         MESSAGE_TOKENS.clear()
-        self.node, self.text = node, text
+        self.predicate, self.node, self.text = node, node.node, text
 
     def property(self, children):
         # CLEAR #
@@ -181,7 +184,7 @@ class LanguageTransformer(Transformer):
         #### #### ####
         if entity in self.node.non_accessable:
             raise svException(f"Property '{self.text}' failed: Node {self.node.rosname} can not access read object {topic}.")
-        self.node.changable_channels.append(entity)
+        self.predicate.changable_channels.append(entity)
         #### #### ####
         return Read(entity=topic, read=children[1])
 
@@ -192,7 +195,7 @@ class LanguageTransformer(Transformer):
         #### #### ####
         if entity in self.node.non_accessable:
             raise svException(f"Property '{self.text}' failed: Node {self.node.rosname} can not access publish object {topic}.")
-        self.node.changable_channels.append(entity)
+        self.predicate.changable_channels.append(entity)
         #### #### ####
         return Publish(entity=topic, publish=children[1])
 
@@ -203,7 +206,7 @@ class LanguageTransformer(Transformer):
         entity = svState.STATES[state[1:]]
         if entity.private and not self.node.secure:
             raise svException(f"Property '{self.text}' failed: Node {self.node.rosname} is public and can not access {entity.name}.")
-        self.node.changable_variables.append(entity)
+        self.predicate.changable_variables.append(entity)
         #### #### ####
         return Update(entity=state[1:], update=children[1])
 
@@ -280,10 +283,19 @@ class Cond(object):
         return True
 
 class Evaluate(object):
-    
+
     def __init__(self, binop, value):
-        value = value.value if value.type == "VALUE" else f"t.{value.value[1:]}"
-        self.binop, self.value = binop, value
+        self.binop = binop
+        # ADD NON_NUMERIC
+        if value.type == "VALUE":
+            value = value.value
+            if value not in list(MESSAGE_TOKENS.keys()):
+                if not value.lstrip("-").isdigit():
+                    NonNumeric(name=value)
+        else:
+            value = f"t.{value.value[1:]}'"
+        self.value = value
+
     
     def __alloy__(self, entity, action="evaluate"):
         if action == "evaluate":
@@ -310,19 +322,30 @@ class Evaluate(object):
             return self.operation(binop=self.binop, signature=f"first[t.inbox[{entity.signature}]]", value=self.value, isint=True)
         elif entity.type == "STATE":
             isint = True if entity.isint else False
-            if isint and not self.value.lstrip("-").isdigit():
-                raise svException(f"Variable value is not a number but variable is numeric!")
             if self.value not in list(MESSAGE_TOKENS.keys()):
+                if isint and not self.value.lstrip("-").isdigit():
+                    raise svException(f"Variable value is not a number but variable is numeric!")
                 entity.values.add(self.value)
             return self.operation(binop=self.binop, signature=f"t.{entity.name.lower()}", value=self.value, isint=isint)
         else:
             return None
 
     def publish(self, entity):
-        # isint = True if entity.message_type.isint else False
-        # if self.value not in list(MESSAGE_TOKENS.keys()):
-        #    entity.message_type.values.add(self.value)
-        return self.operation(binop=self.binop, prefix="( some message : Message |", signature=f"message", sufix=f"implies t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], message] )", prev= "", value=self.value, isint=True)
+        binop = self.binop
+        if binop in {"EQUAL_OPERATOR", "DIFF_OPERATOR", "LESSER_OPERATOR", "GREATER_OPERATOR"}:
+            _not = "" if binop != "DIFF_OPERATOR" else "not"
+            return f"( some msg : Message & {_not} {self.value} | t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], msg] )"
+        if binop == "LS_EQ":
+            return f"( some msg : Message & {self.value}.*prev | t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], msg] )"
+        if binop == "GT_EQ":
+            return f"( some msg : Message & {self.value}.*next | t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], msg] )"
+        if binop == "GREATER_OPERATOR":
+            return f"( some msg : Message & {self.value}.prevs | t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], msg] )"
+        if binop == "LESSER_OPERATOR":
+            return f"( some msg : Message & {self.value}.nexts | t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], msg] )"
+        return ''    
+        #operation = self.operation(binop=self.binop, prefix=f"( some msg : Message |", signature=f"msg", sufix=f"implies t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], msg] )", prev= "", value=self.value, isint=True)
+        #return operation
 
     def state(self, entity):
         isint = True if entity.isint else False

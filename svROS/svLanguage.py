@@ -62,8 +62,8 @@ class svPredicate(object):
         signature = svPredicate.signature(value=signature)
         self.signature, self.node, self.sub_predicates = signature, node, set()
         # CHANGABLE
-        node.changable_channels  = []
-        node.changable_variables = []
+        self.changable_channels  = []
+        self.changable_variables = []
         if properties: 
             properties = list(map(lambda prop: self.create_prop(text=prop), properties))
             properties = list(filter(lambda prop: not isinstance(prop, svPredicate), properties))
@@ -85,17 +85,15 @@ class svPredicate(object):
         return True
 
     def parse_predicate(self):
-        if self.properties is None: 
-            changable_channels, changable_variables = None, None
-        if self.node.changable_channels  == []: changable_channels  = None
-        if self.node.changable_variables == []: changable_variables = None
+        changable_channels  = list(set(self.changable_channels))
+        changable_variables = list(set(self.changable_variables))
         # try:
         #     changable_channels, changable_variables = self.check_accessable(non_accessable=non_accessable)
         #     if changable_channels  == []: changable_channels  = None
         #     if changable_variables == []: changable_variables = None
         # except AttributeError:
         #     raise svException(f"Failed to parse predicate {self.signature}.")
-        if self.sub_predicates is not set():
+        if not self.sub_predicates == set():
             return svAlloyPredicate.parse_only_properties(node=self.node, properties=self.properties)
         return svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
 
@@ -111,7 +109,7 @@ class svPredicate(object):
                 self.sub_predicates.add(sub_predicate)
                 return sub_predicate
             elif isinstance(text, str):
-                property = GrammarParser.parse(text=text, node=self.node)
+                property = GrammarParser.parse(text=text, node=self)
                 return property
             else:
                 raise svException(f'Failed to parse property {text}.')

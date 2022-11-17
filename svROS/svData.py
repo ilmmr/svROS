@@ -664,7 +664,7 @@ class NonNumeric(object):
     VALUES  = {}
     def __init__(self, name):
         self.name, self.signature = name, self.abstract(tag=name)
-        VALUES[self.signature] = self
+        self.VALUES[self.signature] = self
     
     @staticmethod
     def abstract(tag): 
@@ -673,7 +673,7 @@ class NonNumeric(object):
     
     @classmethod
     def __str__(cls):
-        return "one sig " + ', '.join(list(map(lambda value: value.signature, cls.VALUES))) + f" extends Non_Numerical {{}}"
+        return "one sig " + ', '.join(list(map(lambda value: value.signature, cls.VALUES.values()))) + f" extends Not_Numeric {{}}\n"
 
 class svTopic(object):
     TOPICS = {}

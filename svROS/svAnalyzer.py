@@ -71,9 +71,9 @@ class svAnalyzer(object):
         # EXECUTE JAVA
         counter    = svAnalyzer.execute_java(properties=properties, file=file_path, type="ros")
         if counter == []:
-            print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every observation seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
-        else:
             print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Every observation seem to hold for the given configuration.'))
+            return True
+        print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every observation seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
         map_dict = {}
         for prop in properties:
             if prop in list(map(lambda st: st.split('.xml')[0], counter)):
@@ -84,7 +84,7 @@ class svAnalyzer(object):
             # open visualizer
             options = list(map(lambda option: option, map_dict.keys())) + ['Exit']
             choice = TerminalMenu(options).show()
-            if options[choice] == r'(?i)Exit':
+            if options[choice] == 'Exit':
                 break
             else:
                 viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/ros/{map_dict[options[choice]]}'

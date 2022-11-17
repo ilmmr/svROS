@@ -97,7 +97,7 @@ class ODInstanceParser(object):
         self.path = file
 
     def parse(self):
-        tree = ET.parse(file)
+        tree = ET.parse(self.path)
         root = tree.getroot()
         instances = root.findall('./instance')
         if instances.__len__() <= 0: raise svException(f'Failed to parse Instance from file {self.file}.')
