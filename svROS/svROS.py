@@ -486,12 +486,12 @@ class svRUN:
         project_extractor = svProjectExtractor(project=self.project, PROJECT_DIR=self.project_path)
         project_analyzer  = svAnalyzer(EXTRACTOR=project_extractor, MODELS_DIR=self._BIN, MODE=1)
         # VERIFYING SROS
-        _continue_ = input(svWarning(f'Perform verification of SROS model... [N/y] ')).strip()
-        if _continue_ in ['y', 'Y']:
-            if not project_analyzer.alloy_sros():
-                raise svException('Could not initiate running of project => ANALYZER FAILED.')
+        # _continue_ = input(svWarning(f'Perform verification of SROS model... [N/y] ')).strip()
+        # if _continue_ in ['y', 'Y']:
+        #     if not project_analyzer.alloy_sros():
+        #        raise svException('Could not initiate running of project => ANALYZER FAILED.')
         # VERIFYING ROS
-        _continue_ = input(svWarning(f'Perform verification of ROS-Alloy... [Y/n] ')).strip()
+        _continue_ = input(svWarning(f'MODEL-CHECKING VERIFICATION MODEL... [Y/n] ')).strip()
         if not _continue_ in ['y',"", 'Y']: return
         if not project_analyzer.alloy_ros():
             raise svException('Could not initiate running of project => ANALYZER FAILED.')

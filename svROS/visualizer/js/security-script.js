@@ -1,8 +1,5 @@
-//var nodes = {{nodes}}
-//var edges = {{edges}}
-
-var nodes = [{'id': 'o', 'name': 'object o',  'type': 'object'}, {'id': 'p', 'name': 'profile p', 'type': 'profile'}]
-var edges = [{'relation': 'rel1', 'source': 'p', 'target': 'o', 'role': 'Subscribe', 'call': 'privilege', 'rule': 'Allow'}, {'relation': 'rel2', 'source': 'p', 'target': 'o', 'role': 'Subscribe', 'call': 'privilege', 'rule': 'Deny'}]
+var nodes = {{nodes}}
+var edges = {{edges}}
 
 var cy = (window.cy = cytoscape({
     container: document.getElementById('display_graph'), // container to render in

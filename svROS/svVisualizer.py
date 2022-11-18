@@ -111,24 +111,39 @@ class ODInstanceParser(object):
         return '/' + value.split('_', 1)[1]
 
     def get_nodes(self, instance):
-        edges, nodes, advertises, subscribes = instance.find(f'.//skolem[@label="$this/isconnected"]').findall('./tuple'), {}, instance.find(f'.//field[@label="advertises"]').findall('./tuple'), instance.find(f'.//field[@label="subscribes"]').findall('./tuple')
+        nodes, advertises, subscribes = {}, instance.find(f'.//field[@label="advertises"]').findall('./tuple'), instance.find(f'.//field[@label="subscribes"]').findall('./tuple')
+        edges = {}
         for adv in advertises:
-            node = adv.findall('./atom')[0].get('label').split('$')[0]
-            node = self.remove_signature(value=node)
+            # Process topic
+            topic = adv.findall('./atom')[1].get('label').split('$')[0]
+            if topic not in edges:
+                edges[topic] = (set(),set())
+            # node
+            node  = adv.findall('./atom')[0].get('label').split('$')[0]
+            node  = self.remove_signature(value=node)
+            edges[topic][0].add(node)
             if node not in nodes:
-                nodes[node] = {'name': node, 'type': 'node'}
+                nodes[node] = {'id': node, 'name': node, 'type': 'node'}
         for sub in subscribes:
+            # Process topic
+            topic = sub.findall('./atom')[1].get('label').split('$')[0]
+            if topic not in edges:
+                edges[topic] = (set(),set())
+            # node
             node = sub.findall('./atom')[0].get('label').split('$')[0]
             node = self.remove_signature(value=node)
+            edges[topic][1].add(node)
             if node not in nodes:
-                nodes[node] = {'name': node, 'type': 'node'}
+                nodes[node] = {'id': node, 'name': node, 'type': 'node'}
         # PROCESS EDGES ::
         edges_json = {}
         for edge in edges:
-            name, src, dest = edge.findall('./atom')[1].get('label').split('$')[0], edge.findall('./atom')[0].get('label').split('$')[0], edge.findall('./atom')[2].get('label').split('$')[0]
-            # name, src, dest = self.remove_signature(value=name), self.remove_signature(value=src), self.remove_signature(value=dest)
-            edges_json[name] = {'source': self.remove_signature(value=src), 'target': self.remove_signature(value=dest)}
-        # return list(map(lambda node: node, nodes.values())), edges_json
+            pairs = edges[edge]
+            for src in pairs[0]:
+                for dest in pairs[1]:
+                    if edge not in edges_json:
+                        edges_json[edge] = []
+                    edges_json[edge].append({'source': src, 'target': dest})
         return nodes, edges_json
 
     def get_states(self, instance):
@@ -147,18 +162,22 @@ class ODInstanceParser(object):
             object['id'], object['edges'], object['nodes'] = id, list(), list()
             # Treat inbox and nodes
             inboxs = instance.find('.//field[@label="inbox"]').findall('./tuple')
+            index  = 0
             for i in inboxs:
                 trace, name, pos, value = i.findall('./atom')[0].get('label').split('$')[0], i.findall('./atom')[1].get('label').split('$')[0], i.findall('./atom')[2].get('label').split('$')[0], i.findall('./atom')[3].get('label').split('$')[0]
-                channel = edges[name].copy()
-                # Treat nodes
-                node1, node2 = nodes[channel['source']].copy(), nodes[channel['target']].copy()
-                if node1 not in object['nodes']:
-                    object['nodes'].append(node1)
-                if node2 not in object['nodes']:
-                    object['nodes'].append(node2)
-                # Treat channel
-                channel['trace'], channel['relation'], channel['label'], channel['pos'] = trace, self.remove_signature(value=name), f'm = {value}', pos 
-                object['edges'].append(channel)
+                channel = edges[name]
+                for ind in range(len(channel)):
+                    c = channel[ind].copy()
+                    # Treat nodes
+                    node1, node2 = nodes[c['source']].copy(), nodes[c['target']].copy()
+                    if node1 not in object['nodes']:
+                        object['nodes'].append(node1)
+                    if node2 not in object['nodes']:
+                        object['nodes'].append(node2)
+                    # Treat channel
+                    c['trace'], c['relation'], c['label'], c['pos'] = trace, self.remove_signature(value=name), f'm = {value}', pos 
+                    object['edges'].append(c)
+                    index = index + 1
 
             # Process states
             parent_id = '24'

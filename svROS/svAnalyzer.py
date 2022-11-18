@@ -71,13 +71,13 @@ class svAnalyzer(object):
         # EXECUTE JAVA
         counter    = svAnalyzer.execute_java(properties=properties, file=file_path, type="ros")
         if counter == []:
-            print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Every observation seem to hold for the given configuration.'))
+            print(svInfo(f'{color.color("GREEN", color.color("BOLD", "VERIFICATION MODEL"))} Every observation seem to hold for the given configuration → It is advisable to run with increased configuration scopes...'))
             return True
-        print(svInfo(f'{color.color("BOLD", "Alloy-ROS")} → Not every observation seem to hold for the given configuration: It is advisable to run with increased configuration scopes.'))
+        print(svInfo(f'{color.color("RED", color.color("BOLD", "VERIFICATION MODEL"))}: Not every observation seem to hold for the given configuration...'))
         map_dict = {}
         for prop in properties:
             if prop in list(map(lambda st: st.split('.xml')[0], counter)):
-                print(f'\n\t‣‣ Observation in topic {prop.split("topic_")[1].replace("_","/")} is not deterministic {color.color("RED", "☒")}')
+                print(f'\t‣‣ OBSERVATION IN TOPIC {color.color("UNDERLINE", prop.split("topic_")[1].replace("_","/").upper())} IS NOT PUBLICLY DETERMINISTIC!')
                 map_dict[prop.split("topic_")[1].replace("_","/")] = f'{prop}.xml'
         # RUN VISUALIZER
         while True:
@@ -90,7 +90,7 @@ class svAnalyzer(object):
                 viz_directory, file = f'{self.EXTRACTOR.PROJECT_DIR}data/viz', f'/tmp/generated_models/ros/{map_dict[options[choice]]}'
                 viz = svVisualizer(project=self.EXTRACTOR, directory=viz_directory)
                 viz.run_file(type='OD', file=file)
-                print(svInfo(f'Application OD counter-example is being displayed on your browser'), end='')
+                print(svInfo(f'Counterexample is being displayed on your browser'), end='')
                 cont = input('...').strip()
         return True
 
@@ -133,7 +133,7 @@ class svAnalyzer(object):
         else:
             print(svInfo(f'{color.color("BOLD", "Alloy-SROS")} → Failed to verify SROS configuration.'))
             # RUN VISUALIZER
-            options = ['View SROS Counter-Example', 'Exit']
+            options = ['View SROS Counterexample', 'Exit']
             choice = TerminalMenu(options).show()
             if choice == 1:
                 return True
