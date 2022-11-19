@@ -52,7 +52,7 @@ svROS launch -p $proj
 The created models will be stored inside the project *proj* directory, in a sub-folder *models*.
 
 #### DSL
-To check the correctness of a ROS application behaviour in respect to OD, it is necessary to specify how the system behaves atomically in each node. For this, the tool incorporates a [specification language](./language/) that is more user-friendly than Alloy and, it enables the specification of intra-node operations, in respect to the publish-subscribe paradigm.
+To check the correctness of a ROS application behaviour in respect to OD, it is necessary to specify how the system behaves atomically in each node. For this, the tool incorporates a [specification language](./utils/language/) that is more user-friendly than Alloy and, it enables the specification of intra-node operations, in respect to the publish-subscribe paradigm.
 
 ---
 ### Analyzing
@@ -64,4 +64,4 @@ svROS analyze -p $proj
 <p align="center">
    <img width="70%" src="./images/analyze.png">
 </p>
-Upon running the latest command, the Alloy Analyzer captures possible counter-examples on the verification of Observational Determinism. These are temporally stored, to then be consequently parsed and displayed by the [Visualizer](./visualizer/).
+Upon running the latest command, the Alloy Analyzer captures possible counter-examples on the verification of Observational Determinism. These are temporally stored, to then be consequently parsed and displayed by the [Visualizer](./utils/visualizer/).

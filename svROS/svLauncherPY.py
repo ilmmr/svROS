@@ -18,10 +18,6 @@ from bonsai.analysis import (
 )
 from bonsai.py.py_parser import PyAstParser
 
-global WORKDIR, SCHEMAS
-WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, '../schemas/')
-
 "Functions that every class inherits."
 class BaseCall(object):
     """ === Static Methods === """

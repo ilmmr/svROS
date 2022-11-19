@@ -18,7 +18,7 @@ from language.aspt_grammar import GrammarParser
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, '../schemas/')
+SCHEMAS = os.path.join(WORKDIR, 'utils/schemas')
 
 """ 
     This file contains the necessary classes and methods to translate from Python Structures into Alloy configuration model.
@@ -99,7 +99,7 @@ class svAnalyzer(object):
         if not os.path.exists(path=file_path): open(file_path, 'w+').close()
         if not os.path.isfile(path=file_path): raise svException('Unexpected error happend while creating ROS file.')
         # NODES.
-        model += '/* === NODES === */\n'
+        model += '\n/* === NODES === */\n'
         model += ''.join(list(map(lambda node: str(NODES[node]), NODES)))
         # TOPICS.
         model += '/* === NODES === */\n\n/* === TOPICS === */\n'
@@ -145,7 +145,12 @@ class svAnalyzer(object):
 
     @staticmethod
     def execute_java(file, properties, type):
-        models_path = f'/tmp/generated_models/{type}'  
+        models_path = f'/tmp/generated_models/{type}' 
+        # clear directory
+        files = glob.glob(f'{models_path}/*')
+        for f in files:
+            os.remove(f)  
+        # execute 
         for prop in properties:
             javacmd = "java -jar ~/.svROS/.bin/generator.jar " + file + " " + type + " " + prop
             os.system(javacmd)
@@ -213,7 +218,7 @@ class svProjectExtractor:
     def validate_sros(self, sros):
         if not os.path.isfile(path=sros):
             raise svException(f'Policies file not found! Please define a {color.color("BOLD", "policies.xml")} file under project {self.project.capitalize()}\'s directory.')
-        sch      = f'{SCHEMAS}sros/sros.xsd'
+        sch      = f'{SCHEMAS}/sros/sros.xsd'
         schema   = xmlschema.XMLSchema(sch)
         template = ET.parse(sros).getroot()
         try:
@@ -225,7 +230,7 @@ class svProjectExtractor:
     def retrieve_sros_default_tag(_file_, template):
         default_tag = '<xi:include href="path/to/common/node.xml" xpointer="xpointer(/profile/*)"/>'
         default_    = ET.Element('{http://www.w3.org/2001/XInclude}include')
-        default_.set('href', f'{SCHEMAS}sros/common/node.xml')
+        default_.set('href', f'{SCHEMAS}/sros/common/node.xml')
         default_.set('xpointer', 'xpointer(/profile/*)')
         profiles = template.findall(f'.//profile')
         for profile in profiles:

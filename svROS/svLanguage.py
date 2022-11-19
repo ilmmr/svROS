@@ -12,9 +12,6 @@ import itertools
 
 from language.grammar import GrammarParser, Read, Publish, Update
 from svData import Topic, svNode, svState
-global WORKDIR, SCHEMAS
-WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, '../schemas/')
 
 ###############################
 # === ANALYSING !! YAY :))) ===

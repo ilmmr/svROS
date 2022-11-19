@@ -11,7 +11,7 @@ from lark import Lark, tree
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, '../schemas/')
+SCHEMAS = os.path.join(WORKDIR, 'utils/schemas')
 
 """ 
     This file contains the necessary classes and methods to store and retrieve information about the ros2 running environment => NODES, TOPICS AND PACKAGES INVOLVED.

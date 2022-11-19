@@ -28,7 +28,7 @@ from svData import Node, Topic, Package
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, '../schemas/')
+SCHEMAS = os.path.join(WORKDIR, 'utils/schemas')
 
 "YAML default dumper"
 # Worth-Mention https://stackoverflow.com/a/39681672
@@ -503,9 +503,9 @@ class svrosExport:
         return {'packages': list(set(map(lambda package: package.name.lower(), Package.PACKAGES))), 'nodes': dict(map(lambda node: (node.replace('::', '/'), Node.to_json(node)) , Node.NODES))}
     
     def generate_security_file(self):
-        sch      = f'{SCHEMAS}sros/sros.xsd'
+        sch      = f'{SCHEMAS}/sros/sros.xsd'
         schema   = xmlschema.XMLSchema(sch) 
-        tmp      = f'{SCHEMAS}sros/template.xml'
+        tmp      = f'{SCHEMAS}/sros/template.xml'
         template = ET.parse(tmp).getroot()
         template = Node.process_sros_file(template=template)
         try:

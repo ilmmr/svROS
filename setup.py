@@ -20,7 +20,8 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 
 SOURCE = os.path.relpath(os.path.join(os.path.dirname(__file__), 'svROS'))
-DATA = os.path.relpath(os.path.join(os.path.dirname(__file__), 'svROS/__init__.py'))
+DATA   = os.path.relpath(os.path.join(os.path.dirname(__file__), 'svROS/__init__.py'))
+UTILS  = os.path.relpath(os.path.join(os.path.dirname(__file__), 'svROS/utils'))
 requirements = [r for r in open(f'requirements.txt').readlines() if r]
 
 # Worth-Mention https://stackoverflow.com/a/38933723
@@ -40,6 +41,14 @@ def info(keyword : str) -> str:
         raise RuntimeError(f"Unable to find {keyword} variable-string in %s." % (DATA,))
     return str(str_)
 
+# Worth-Mention of https://stackoverflow.com/a/36693250
+def package_files(directory):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join(".", path, filename))
+    return paths
+
 # SETUP variables 
 __version__ = info('version')
 __author__  = info('author')
@@ -47,6 +56,8 @@ __email__   = info('email')
 __license__ = info('license')
 __README__  = os.path.join(os.path.dirname(__file__), 'README.md')
 # SETUP variables 
+
+extra = package_files(f"{UTILS}")
 
 setup(
     name             = "svROS",
@@ -59,12 +70,12 @@ setup(
     long_description = open(__README__, "rt").read(),
     long_description_content_type = "text/markdown",
     # README
-    keywords         = "sros2 ros2 property-specification model-checking alloy haros",
+    keywords         = "python sros2 ros2 property-specification model-checking alloy haros",
     url              = "https://github.com/luis1ribeiro/svROS",
     packages         = find_packages(SOURCE),
     package_dir      = {'': SOURCE},
     entry_points     = {"console_scripts": ["svROS = svROS.svROS:main"]},
-    package_data     = {"svROS": ['models/*.als', 'models/org.alloytools.alloy.dist']},
+    package_data     = {"svROS": extra},
     install_requires = requirements,
     extras_require   = {},
     cmdclass={

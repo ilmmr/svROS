@@ -15,13 +15,17 @@ svROS supports the following capabilities:
 
 You can find the full documentation [here](https://luis1ribeiro.github.io/svROS/).
 
+### HAROS - The High-Assurance ROS Framework
+
+A lot of work done here was based on using already existent procedures from [HAROS](https://github.com/git-afsantos/haros) to ROS2. HAROS is a notable framework for quality assurance of ROS-based code, mostly based on static analysis, which makes use of various plugins to extend its functionality. 
+
 ---
 ## INSTALL AND USE
 
-svROS functionalities was compacted into a single python package and can be easily installed using the python package installer *pip*.
+svROS functionalities was compacted into a single [python package](https://pypi.org/project/svROS/0.1.0/#description) and can be easily installed using the python package installer *pip*.
 
 ```
-pip install svROS
+pip install svROS==0.1.0
 ```
 After installing, see the [Quick Reference](./svROS/) to the see the tool's commands and usage instructions.
 

@@ -1,3 +1,2 @@
 [console_scripts]
 svROS = svROS.svROS:main
-

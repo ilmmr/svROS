@@ -5,6 +5,7 @@ from tools.InfoHandler import color, svException, svWarning, svInfo
 import xml.etree.ElementTree as ET
 global WORKDIR
 WORKDIR      = os.path.dirname(__file__)
+VISUALIZER   = os.path.join(WORKDIR, 'utils/visualizer')
 
 class svVisualizer(object):
     HOST_NAME = "localhost"
@@ -21,7 +22,7 @@ class svVisualizer(object):
         try:
             if os.path.isdir(self.directory) or os.path.exists(self.directory):
                 shutil.rmtree(path=self.directory)
-            shutil.copytree(src=f'{WORKDIR}/visualizer', dst=self.directory)        
+            shutil.copytree(src=f'{VISUALIZER}', dst=self.directory)        
         except OSError as error:
             print(error)
             return False
@@ -57,9 +58,9 @@ class svVisualizer(object):
         # GENERATE JINJA
         return os.system(f'{self.COMMAND} {file}')
         
-    def generate_jinja(self, path='visualizer/js'):
+    def generate_jinja(self, path='js'):
         return Environment(
-            loader=FileSystemLoader(f'{WORKDIR}/{path}'),
+            loader=FileSystemLoader(f'{VISUALIZER}/{path}'),
             line_statement_prefix=None,
             line_comment_prefix=None,
             trim_blocks=True,

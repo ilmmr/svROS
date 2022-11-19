@@ -344,8 +344,6 @@ class Evaluate(object):
         if binop == "LESSER_OPERATOR":
             return f"( some msg : Message & {self.value}.nexts | t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], msg] )"
         return ''    
-        #operation = self.operation(binop=self.binop, prefix=f"( some msg : Message |", signature=f"msg", sufix=f"implies t.inbox'[{entity.signature}] = add[t.inbox[{entity.signature}], msg] )", prev= "", value=self.value, isint=True)
-        #return operation
 
     def state(self, entity):
         isint = True if entity.isint else False

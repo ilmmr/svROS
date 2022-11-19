@@ -11,7 +11,7 @@ from tools.InfoHandler import color, svException, svWarning
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, '../schemas/')
+SCHEMAS = os.path.join(WORKDIR, 'utils/schemas')
 
 """ 
     This file contains the necessary classes and methods to export information from the launch file XML-based specified within the config file.
