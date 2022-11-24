@@ -65,14 +65,6 @@ svROS specification language is a user-orientated and context-specific DSL becau
    <img width="70%" src="./images/syntax.png">
 </p>
 
-A property is conceptually divided following the hierarchical structure depicted in the next figure. The tool is then capable of creating a direct translation between the language and Alloy using the respective parser and some intermediate data structures. Each node is specified by a sequence of properties, and the tool automatically creates an Alloy predicate encoding its behaviour following the above informal semantics. 
-
-<p align="center">
-   <img width="50%" src="./images/dsl-structure.png">
-</p>
-
----
-
 ---
 ### Analyzing
 
