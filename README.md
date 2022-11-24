@@ -22,7 +22,7 @@ A lot of work done here was based on using already existent procedures from [HAR
 ---
 ## INSTALL AND USE
 
-svROS functionalities was compacted into a single [python package](https://pypi.org/project/svROS/0.1.0/#description) and can be easily installed using the python package installer *pip*.
+svROS functionalities was compacted into a single [python package](https://pypi.org/project/svROS/) and can be easily installed using the python package installer *pip*.
 
 ```
 pip install svROS
