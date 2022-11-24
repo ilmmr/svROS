@@ -75,4 +75,5 @@ svROS analyze -p $proj
 <p align="center">
    <img width="70%" src="./images/analyze.png">
 </p>
+
 Upon running the latest command, the Alloy Analyzer captures possible counter-examples on the verification of Observational Determinism. These are temporally stored, to then be consequently parsed and displayed by the [Visualizer](https://github.com/luis1ribeiro/svROS/tree/main/svROS/visualizer).
