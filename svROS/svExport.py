@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning
+from .svInfo import color, svException, svWarning
 # Needed for cpp nodes...
 from haros.cmake_parser import RosCMakeParser
 from haros.extractor    import RoscppExtractor, RospyExtractor
@@ -21,14 +21,14 @@ from distutils.spawn import find_executable
 import xml.etree.ElementTree as ET
 from lark import Lark, tree
 # Launcher
-from svLauncherXML import LauncherParserXML, NodeTag
-from svLauncherPY import LauncherParserPY, NodeCall
+from .svLauncherXML import LauncherParserXML, NodeTag
+from .svLauncherPY import LauncherParserPY, NodeCall
 # Data
-from svData import Node, Topic, Package
+from .svData import Node, Topic, Package
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, 'utils/schemas')
+SCHEMAS = os.path.join(WORKDIR, 'schemas')
 
 "YAML default dumper"
 # Worth-Mention https://stackoverflow.com/a/39681672

@@ -7,7 +7,7 @@ from collections import defaultdict
 from lxml import etree
 from lark import Lark, tree, Token
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning
+from .svInfo import color, svException, svWarning
 # Python parser helper
 from bonsai.model import (
     CodeGlobalScope, CodeReference, CodeFunctionCall, pretty_str

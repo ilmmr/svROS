@@ -7,11 +7,11 @@ from collections import defaultdict
 import xml.etree.ElementTree as ET
 from lark import Lark, tree, Token
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning
+from .svInfo import color, svException, svWarning
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, 'utils/schemas')
+SCHEMAS = os.path.join(WORKDIR, 'schemas')
 
 """ 
     This file contains the necessary classes and methods to export information from the launch file XML-based specified within the config file.

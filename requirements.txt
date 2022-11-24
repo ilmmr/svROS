@@ -2,7 +2,7 @@ argparse
 bonsai_code>=0.6.7
 xmlschema
 hpl-specs
-lark
+lark<=0.12
 networkx
 simple_term_menu
 jinja2

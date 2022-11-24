@@ -1,7 +1,7 @@
 # Copyright © 2022 Luís Ribeiro
-# Grammar for svLanguage.
+# Grammar for Assumptions.
 
-from tools.InfoHandler import svException, svWarning
+from .svInfo import svException, svWarning
 GRAMMAR = f"""
     property : pattern
 
@@ -37,7 +37,7 @@ GRAMMAR = f"""
 
 from lark import Lark, tree, Token, Transformer
 from lark.exceptions import UnexpectedCharacters, UnexpectedToken
-from svData import svState
+from .svData import svState
 class GrammarParser(object):
     """
         Grammar Main Parser

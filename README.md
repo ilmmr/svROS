@@ -25,7 +25,7 @@ A lot of work done here was based on using already existent procedures from [HAR
 svROS functionalities was compacted into a single [python package](https://pypi.org/project/svROS/0.1.0/#description) and can be easily installed using the python package installer *pip*.
 
 ```
-pip install svROS==0.1.0
+pip install svROS
 ```
 After installing, see the [Quick Reference](./svROS/) to the see the tool's commands and usage instructions.
 

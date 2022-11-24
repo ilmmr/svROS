@@ -4,15 +4,13 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning
+from .svInfo import color, svException, svWarning
 # Parsers
 import xml.etree.ElementTree as ET
 from lark import Lark, tree
 
-global WORKDIR, SCHEMAS
+global WORKDIR
 WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, 'utils/schemas')
-
 """ 
     This file contains the necessary classes and methods to store and retrieve information about the ros2 running environment => NODES, TOPICS AND PACKAGES INVOLVED.
 """
@@ -440,7 +438,7 @@ class svNode(object):
 
     @predicate.setter
     def predicate(self, predicate):
-        from svLanguage import svPredicate
+        from .svLanguage import svPredicate
         if predicate is None: self._predicate = None
         elif not isinstance(predicate, svPredicate): raise svException("Not a predicate!")
         else: self._predicate = predicate
@@ -772,7 +770,7 @@ class svExecution(object):
             nop_str    += f"""\n\tt.{n}' = t.{n}"""
         nop_str += f"""\n}}\n"""
         # svPredicate
-        from svLanguage import svPredicate
+        from .svLanguage import svPredicate
         system_str += f"""\n\t// System trace executions.\n\t{'[t] or '.join(list(filter(lambda not_sub: not svPredicate.NODE_BEHAVIOURS[not_sub].is_sub_predicate, svPredicate.NODE_BEHAVIOURS.keys())))}[t]\n}}"""
         _str_ += f""" one sig {t1.signature}, {t2.signature} extends Trace {{}}\n"""
         return '/* === VARIABLES === */' + states + '\n/* === VARIABLES === */\n\n/* === SELF-COMPOSITION === */\n' + _str_ + '/* === SELF-COMPOSITION === */\n\n' + nop_str + system_str

@@ -1,7 +1,7 @@
 # Copyright © 2022 Luís Ribeiro
-# Grammar for svLanguage.
+# Grammar for Nodes.
 
-from tools.InfoHandler import svException, svWarning
+from .svInfo import svException, svWarning
 GRAMMAR = f"""
 
     property : pattern [ "iff" formula ]
@@ -68,7 +68,7 @@ GRAMMAR = f"""
 
 from lark import Lark, tree, Token, Transformer
 from lark.exceptions import UnexpectedCharacters, UnexpectedToken
-from svData import svTopic, svState, NonNumeric
+from .svData import svTopic, svState, NonNumeric
 
 import random
 import string
@@ -142,6 +142,7 @@ class LanguageTransformer(Transformer):
 
     def cond(self, children):
         return Cond(entity=children[0], cond=children[1])
+
 
     def message_cond(self, children):
         return MessageCond(token=children[0].value, relation=children[1].type, value=children[2].value)

@@ -1,11 +1,11 @@
 import os, argparse, time, shutil, glob, warnings, logging, re, sys, subprocess, json
 from jinja2 import Environment, FileSystemLoader
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning, svInfo
+from .svInfo import color, svException, svWarning, svInfo
 import xml.etree.ElementTree as ET
 global WORKDIR
 WORKDIR      = os.path.dirname(__file__)
-VISUALIZER   = os.path.join(WORKDIR, 'utils/visualizer')
+VISUALIZER   = os.path.join(WORKDIR, 'visualizer')
 
 class svVisualizer(object):
     HOST_NAME = "localhost"

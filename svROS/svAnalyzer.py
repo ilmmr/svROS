@@ -6,19 +6,19 @@ from logging import FileHandler
 from collections import defaultdict
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning, svInfo
+from .svInfo import color, svException, svWarning, svInfo
 from lark import Lark, tree
 # Node parser
-from svData import svNode, svProfile, svEnclave, svTopic, svState, Node, Package, MessageType, svExecution
-from svLanguage import svPredicate
+from .svData import svNode, svProfile, svEnclave, svTopic, svState, Node, Package, MessageType, svExecution
+from .svLanguage import svPredicate
 import xml.etree.ElementTree as ET
 # Visualizer
-from svVisualizer import svVisualizer
-from language.aspt_grammar import GrammarParser
+from .svVisualizer import svVisualizer
+from .svInitGrammar import GrammarParser
 
 global WORKDIR, SCHEMAS
 WORKDIR = os.path.dirname(__file__)
-SCHEMAS = os.path.join(WORKDIR, 'utils/schemas')
+SCHEMAS = os.path.join(WORKDIR, 'schemas')
 
 """ 
     This file contains the necessary classes and methods to translate from Python Structures into Alloy configuration model.

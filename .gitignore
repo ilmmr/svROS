@@ -1,2 +1,4 @@
 dist/
 build/
+svROS.egg-info/
+./svROS/svROS.egg-info/

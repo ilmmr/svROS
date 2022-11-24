@@ -20,8 +20,8 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 
 SOURCE = os.path.relpath(os.path.join(os.path.dirname(__file__), 'svROS'))
-DATA   = os.path.relpath(os.path.join(os.path.dirname(__file__), 'svROS/__init__.py'))
-UTILS  = os.path.relpath(os.path.join(os.path.dirname(__file__), 'svROS/utils'))
+DATA   = ""
+UTILS  = os.path.relpath(os.path.join(os.path.dirname(__file__), 'svROS'))
 requirements = [r for r in open(f'requirements.txt').readlines() if r]
 
 # Worth-Mention https://stackoverflow.com/a/38933723
@@ -46,18 +46,21 @@ def package_files(directory):
     paths = []
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            paths.append(os.path.join(".", path, filename))
+            paths.append(os.path.join('..', path, filename))
     return paths
 
 # SETUP variables 
-__version__ = info('version')
-__author__  = info('author')
-__email__   = info('email')
-__license__ = info('license')
+__author__ = u"Luís Ribeiro"
+__email__ = u"lmmr@outlook.pt"
+__copyright__ = "Copyright © 2022 Luís Ribeiro"
+__license__ = "MIT License"
+__version__ = '0.1.1'
 __README__  = os.path.join(os.path.dirname(__file__), 'README.md')
 # SETUP variables 
 
-extra = package_files(f"{UTILS}")
+extra = package_files(UTILS+'/bin')
+extra = extra + package_files(UTILS+'/visualizer')
+extra = extra + package_files(UTILS+'/schemas')
 
 setup(
     name             = "svROS",
@@ -72,10 +75,12 @@ setup(
     # README
     keywords         = "python sros2 ros2 property-specification model-checking alloy haros",
     url              = "https://github.com/luis1ribeiro/svROS",
-    packages         = find_packages(SOURCE),
-    package_dir      = {'': SOURCE},
+    packages         = find_packages(),
     entry_points     = {"console_scripts": ["svROS = svROS.svROS:main"]},
-    package_data     = {"svROS": extra},
+    package_data = {
+        # If any package contains *.txt or *.rst files, include them:
+        'svROS': extra,
+    },
     install_requires = requirements,
     extras_require   = {},
     cmdclass={

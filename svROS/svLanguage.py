@@ -4,14 +4,14 @@ from dataclasses import dataclass, field
 from logging import FileHandler
 from typing import ClassVar
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning, svInfo
+from .svInfo import color, svException, svWarning, svInfo
 # Parsers
 import xml.etree.ElementTree as ET
 from lark import Lark, tree
 import itertools
 
-from language.grammar import GrammarParser, Read, Publish, Update
-from svData import Topic, svNode, svState
+from .svGrammar import GrammarParser, Read, Publish, Update
+from .svData import Topic, svNode, svState
 
 ###############################
 # === ANALYSING !! YAY :))) ===
@@ -109,6 +109,7 @@ class svPredicate(object):
                 property = GrammarParser.parse(text=text, node=self)
                 return property
             else:
+                print(text)
                 raise svException(f'Failed to parse property {text}.')
         except Exception: raise svException(f'Failed to parse property {text}.')
 

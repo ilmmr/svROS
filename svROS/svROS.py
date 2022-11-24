@@ -7,16 +7,14 @@ from cerberus import Validator
 from logging import FileHandler
 from pick import pick
 # InfoHandler => Prints, Exceptions and Warnings
-from tools.InfoHandler import color, svException, svWarning, svInfo
+from .svInfo import color, svException, svWarning, svInfo
 # Exporters
-from svExport import svrosExport
-from svAnalyzer import svProjectExtractor, svAnalyzer
-from svData import svEnclave, svNode, Topic, svExecution
+from .svExport import svrosExport
+from .svAnalyzer import svProjectExtractor, svAnalyzer
+from .svData import svEnclave, svNode, Topic, svExecution
 
 global WORKDIR, INIT_SCHEMA, _INIT_
 WORKDIR  = os.path.dirname(__file__)
-UTILS    = os.path.join(os.path.dirname(__file__), "utils")
-
 _INIT_       = os.path.join(os.path.dirname(__file__),"__init__.py")
 _INIT_SCHEMA =  """
 {
@@ -186,12 +184,12 @@ class svINIT:
             return False
         # Copy and generate files.
         try:
-            files = glob.iglob(os.path.join(f'{UTILS}/bin', "*.als"))
+            files = glob.iglob(os.path.join(f'{WORKDIR}/bin', "*.als"))
             for xfile in (list(filter(lambda x : os.path.isfile(x), files))):
                 shutil.copy(xfile, f'{dir}/.bin/')
             # Create environment dir with content. => ALLOY and GENERATOR jar
-            shutil.copy(f'{UTILS}/bin/org.alloytools.alloy.dist.jar', f'{dir}/.bin/')
-            shutil.copy(f'{UTILS}/bin/generator.jar', f'{dir}/.bin/')
+            shutil.copy(f'{WORKDIR}/bin/org.alloytools.alloy.dist.jar', f'{dir}/.bin/')
+            shutil.copy(f'{WORKDIR}/bin/generator.jar', f'{dir}/.bin/')
         except Exception as error:
             print("[svROS] Failed to set up svROS default directory!")
             return False
