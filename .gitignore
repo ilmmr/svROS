@@ -1,7 +1,7 @@
 dist/
 build/
 svROS.egg-info/
-./svROS/svROS.egg-info/
-./svROS/visualizer/js/cytoscape.js
-./svROS/visualizer/js/cytoscape-cose-bilkent.js
-./svROS/visualizer/css
+/svROS/svROS.egg-info/
+/svROS/visualizer/js/cytoscape.js
+/svROS/visualizer/js/cytoscape-cose-bilkent.js
+/svROS/visualizer/css
