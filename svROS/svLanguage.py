@@ -91,7 +91,7 @@ class svPredicate(object):
         # except AttributeError:
         #     raise svException(f"Failed to parse predicate {self.signature}.")
         if not self.sub_predicates == set():
-            return svAlloyPredicate.parse_only_properties(node=self.node, properties=self.properties)
+            return svAlloyPredicate.parse_only_properties(node=self.node, properties=self.properties) if self.properties else ""
         return svAlloyPredicate.parse(node=self.node, properties=self.properties, changable_channels=changable_channels, changable_variables=changable_variables)
 
     # Method to extract and parse text properties into class properties!

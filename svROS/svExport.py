@@ -285,7 +285,6 @@ class PackageFinder:
         # Package processing.
         try:
             pkglist = subprocess.check_output(command).decode().split('\n')[:-1]
-            svrosExport.remove_log_dir()
         except Exception:
             raise svException(message=f'Failed to load ROS2 packages.')
         pkgs={}
@@ -519,9 +518,6 @@ class svrosExport:
     def enclave_file(self):
         return self.project_dir + f'/{self.project}-sros.xml'
         
-    @staticmethod
-    def remove_log_dir(LOG=f'{WORKDIR}/log'):
-        return shutil.rmtree(LOG)
     """ === Predefined functions === """
 
 ### TESTING ###

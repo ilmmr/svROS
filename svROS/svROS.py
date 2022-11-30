@@ -212,7 +212,7 @@ class svINIT:
                 return False
         else:
             name = 'svROS'
-            version = re.search(r"^__version__\s*=\s*(u|f|r)?['\"]([^'\"]*)['\"]", open(_INIT_, "rt").read(), re.M).group(2)
+            version = '1.0'
             creation_time = datetime.now().strftime("%B %d, %Y => %H:%M:%S")
             ros_version, ros_distro, ros_workspace = self._get_ros_info()
             # Validating.

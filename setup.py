@@ -54,7 +54,7 @@ __author__ = u"Luís Ribeiro"
 __email__ = u"lmmr@outlook.pt"
 __copyright__ = "Copyright © 2022 Luís Ribeiro"
 __license__ = "MIT License"
-__version__ = '1.0'
+__version__ = '1.0.1'
 __README__  = os.path.join(os.path.dirname(__file__), 'README.md')
 # SETUP variables 
 
